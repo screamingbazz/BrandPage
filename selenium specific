@@ -1,0 +1,1064 @@
+What is a Locator?
+
+A locator is a way to identify elements on a webpage (like buttons, input fields, links) so Selenium can interact with them.
+
+Types of Locators in Selenium
+
+Selenium provides 8 types of locators:
+
+1️⃣ id
+
+Finds an element using its unique ID attribute.
+
+Most preferred because it’s fast and unique.
+
+driver.findElement(By.id("username")).sendKeys("admin");
+
+2️⃣ name
+
+Finds an element using its name attribute.
+
+Can be used if ID is missing, but name may not be unique.
+
+driver.findElement(By.name("password")).sendKeys("12345");
+
+3️⃣ className
+
+Finds elements using the class attribute.
+
+Can return multiple elements if the class is used multiple times.
+
+
+What are XPath Axes?
+
+XPath axes are directions to traverse the DOM relative to the current node.
+
+Think of it as giving Selenium a path to move around: parent, child, sibling, ancestor, etc.
+
+Common XPath Axes in Selenium
+Axis	Meaning	Example
+child	Selects direct children of the current node	//div[@id='login']/child::input
+parent	Selects the parent of the current node	//input[@id='username']/parent::div
+ancestor	Selects all ancestors (parent, grandparent, etc.)	//input[@id='username']/ancestor::form
+descendant	Selects all descendants (children, grandchildren)	//div[@id='login']/descendant::input
+following	Selects everything after the current node in the DOM	//label[@for='username']/following::input[1]
+following-sibling	Selects all siblings after the current node	//label[@for='username']/following-sibling::input
+preceding	Selects everything before the current node in the DOM	//input[@id='password']/preceding::label
+preceding-sibling	Selects all siblings before the current node	//input[@id='password']/preceding-sibling::label
+self	Refers to the current node itself	//input[@id='username']/self::input
+descendant-or-self	Current node + all descendants	//div[@id='login']/descendant-or-self::input
+Examples in Selenium
+1️⃣ Using parent axis
+driver.findElement(By.xpath("//input[@id='username']/parent::div"));
+
+
+Finds the <div> that contains the input.
+
+2️⃣ Using following-sibling axis
+driver.findElement(By.xpath("//label[text()='Username']/following-sibling::input"));
+
+
+Finds the input next to the label.
+
+3️⃣ Using ancestor axis
+driver.findElement(By.xpath("//input[@id='username']/ancestor::form"));
+
+
+Finds the <form> containing the input.
+
+get() method
+
+Used to open a URL in the browser.
+
+Waits for the page to fully load before performing the next command.
+
+Simple and most commonly used.
+
+Syntax
+driver.get("https://example.com");
+
+Key points
+
+Equivalent to entering the URL in the browser’s address bar.
+
+Cannot do additional browser navigation (back, forward) directly.
+
+2️⃣ navigate().to() method
+
+Also used to open a URL.
+
+Part of the Navigation interface (driver.navigate()).
+
+Can be used along with:
+
+back() → go back
+
+forward() → go forward
+
+refresh() → reload page
+
+Syntax
+driver.navigate().to("https://example.com");
+
+Key points
+
+Can accept a URL or a java.net.URL object.
+
+More flexible for browser history navigation.
+
+Side-by-side comparison
+Feature	get()	navigate().to()
+Purpose	Open a URL	Open a URL / Navigate forward/back/refresh
+Page load	Waits until fully loaded	Usually waits, but less strict
+Browser navigation	No	Yes (back(), forward(), refresh())
+Syntax	driver.get("url")	driver.navigate().to("url")
+Use case	Simple URL opening	Complex navigation / history management
+Example using navigate()
+driver.navigate().to("https://example.com"); // open URL
+driver.navigate().refresh();                  // refresh page
+driver.navigate().back();                     // go back
+driver.navigate().forward();                  // go forward
+
+Interview-ready answer (one-liner)
+
+"get() is used to open a URL and waits for the page to load, while navigate().to() can also open a URL but is mainly used for advanced browser navigation like back, forward, and refresh."
+
+
+close() method
+
+Closes the current browser window that WebDriver is controlling.
+
+If multiple windows/tabs are open, other windows remain open.
+
+WebDriver session does NOT end if other windows are open.
+
+Syntax
+driver.close();
+
+Example
+WebDriver driver = new ChromeDriver();
+driver.get("https://example.com");
+
+// Open a new tab/window
+driver.switchTo().newWindow(WindowType.TAB);
+driver.get("https://google.com");
+
+// Close current window (Google)
+driver.close(); 
+
+// Original window (example.com) is still open
+
+2️⃣ quit() method
+
+Closes all browser windows opened by the WebDriver.
+
+Ends the WebDriver session completely.
+
+After quit(), trying to use the driver will throw SessionNotFoundException.
+
+Syntax
+driver.quit();
+
+
+getText()
+
+Returns the visible text of a web element on the page.
+
+Ignores hidden elements or attributes.
+
+Usually used for labels, buttons, links, messages.
+
+Syntax
+String text = element.getText();
+
+Example
+<button id="loginBtn">Login</button>
+
+WebElement button = driver.findElement(By.id("loginBtn"));
+String text = button.getText();  // Returns "Login"
+
+
+Key point: Only retrieves what the user sees on the page.
+
+2️⃣ getAttribute()
+
+Returns the value of a specified attribute of an element.
+
+Can retrieve value, id, name, href, class, type, etc.
+
+Often used for input fields, links, hidden elements, and custom attributes.
+
+Syntax
+String attr = element.getAttribute("attributeName");
+
+Example
+<input id="username" type="text" value="admin">
+
+WebElement input = driver.findElement(By.id("username"));
+String value = input.getAttribute("value"); // Returns "admin"
+String type = input.getAttribute("type");   // Returns "text"
+
+
+What is an Alert?
+
+Alerts are pop-up boxes that appear on a webpage.
+
+Types of alerts:
+
+Simple Alert – only OK button
+
+Confirm Alert – OK and Cancel buttons
+
+Prompt Alert – OK, Cancel, and an input field
+
+These alerts are JavaScript pop-ups, so Selenium cannot interact with them using normal findElement().
+
+2️⃣ Switching to Alert
+
+Before interacting with an alert, you must switch WebDriver focus to it.
+
+Alert alert = driver.switchTo().alert();
+
+
+driver.switchTo().alert() returns an Alert object.
+
+Now you can interact with the alert.
+
+3️⃣ Interacting with Alerts
+Action	Method	Description
+Accept / OK	alert.accept()	Clicks the OK button
+Dismiss / Cancel	alert.dismiss()	Clicks the Cancel button
+Get text	alert.getText()	Reads the alert message
+Send text	alert.sendKeys("text")	Enters text (only for prompt alerts)
+Examples
+1️⃣ Simple Alert
+driver.findElement(By.id("simpleAlertBtn")).click();
+
+// Switch to alert
+Alert alert = driver.switchTo().alert();
+
+// Get text
+System.out.println(alert.getText());
+
+// Click OK
+alert.accept();
+
+2️⃣ Confirm Alert
+driver.findElement(By.id("confirmAlertBtn")).click();
+Alert alert = driver.switchTo().alert();
+
+// Click Cancel
+alert.dismiss();
+
+3️⃣ Prompt Alert
+driver.findElement(By.id("promptAlertBtn")).click();
+Alert alert = driver.switchTo().alert();
+
+// Enter text
+alert.sendKeys("Selenium");
+
+// Click OK
+alert.accept();
+
+4️⃣ Going back to main page
+
+After interacting with an alert, WebDriver automatically returns to the main page, so usually no extra step is needed.
+
+If you want to explicitly check, you can switch back to default content:
+
+driver.switchTo().defaultContent();
+
+
+What is a Frame?
+
+A frame or iframe is an HTML element that embeds another HTML document inside the main page.
+
+Elements inside a frame are isolated from the main page, so Selenium cannot interact with them directly.
+
+2️⃣ How to handle frames
+
+Selenium provides three ways to switch to a frame:
+
+By index
+
+By name or ID
+
+By WebElement
+
+Step 1: Switch to frame
+1️⃣ By index
+
+Index starts from 0.
+
+Example: Switch to the first frame on the page
+
+driver.switchTo().frame(0);
+
+2️⃣ By name or ID
+driver.switchTo().frame("frameName");
+driver.switchTo().frame("frameID");
+
+3️⃣ By WebElement
+WebElement frameElement = driver.findElement(By.xpath("//iframe[@id='frame1']"));
+driver.switchTo().frame(frameElement);
+
+Step 2: Interact with elements inside the frame
+
+Once inside, you can interact normally:
+
+driver.findElement(By.id("insideFrameButton")).click();
+
+Step 3: Go back to main page
+
+After finishing, you must switch back to the main page to interact with elements outside the frame.
+
+1️⃣ Switch to parent frame
+
+Goes one level up
+
+driver.switchTo().parentFrame();
+
+2️⃣ Switch to main page
+
+Goes all the way back to the main content
+
+driver.switchTo().defaultContent();
+
+Step 4: Handling nested frames
+
+For frames inside frames, switch step by step:
+
+driver.switchTo().frame("outerFrame");
+driver.switchTo().frame("innerFrame");
+driver.findElement(By.id("btn")).click();
+
+// Go back to outer frame
+driver.switchTo().parentFrame();
+
+// Go back to main page
+driver.switchTo().defaultContent();
+
+Pro Tips
+
+Always switch to the frame first, otherwise NoSuchElementException.
+
+Use WebElement method if frames don’t have name or ID.
+
+Check nested frames using driver.findElements(By.tagName("iframe")).
+
+Interview-ready answer
+
+“In Selenium, to handle frames, first switch to the frame using driver.switchTo().frame() (by index, name/ID, or WebElement). After interacting with elements inside the frame, use driver.switchTo().parentFrame() to go one level up or driver.switchTo().defaultContent() to return to the main page.”
+
+What is a Window or Tab?
+
+Modern web apps often open links or pop-ups in new windows or tabs.
+
+Selenium cannot interact with a new window directly until you switch focus to it.
+
+2️⃣ Step 1: Get Window Handles
+
+Every window/tab has a unique ID called a window handle.
+You can get them using:
+
+String mainWindow = driver.getWindowHandle(); // current window
+Set<String> allWindows = driver.getWindowHandles(); // all open windows
+
+
+getWindowHandle() → returns current window ID
+
+getWindowHandles() → returns all window IDs as a Set
+
+3️⃣ Step 2: Switch to the new window/tab
+
+Use a loop to find the window you want:
+
+for (String window : allWindows) {
+    if (!window.equals(mainWindow)) {
+        driver.switchTo().window(window);
+        break;
+    }
+}
+
+
+Now WebDriver focuses on the new window.
+
+You can interact with elements there.
+
+4️⃣ Step 3: Perform actions in new window
+driver.findElement(By.id("submit")).click();
+
+5️⃣ Step 4: Go back to main window
+
+After finishing, switch back to the original window:
+
+driver.switchTo().window(mainWindow);
+
+
+Types of Waits in Selenium
+
+There are three main waits:
+
+A) Implicit Wait
+
+Applies globally for the lifetime of WebDriver.
+
+Selenium will poll the DOM for a set time before throwing NoSuchElementException.
+
+Simple and less flexible.
+
+Syntax
+driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+
+Key points
+
+Applied once and affects all element searches.
+
+Polls DOM automatically.
+
+Does not wait for specific conditions.
+
+B) Explicit Wait
+
+Waits for a specific condition for a specific element.
+
+More flexible and powerful than implicit wait.
+
+Uses WebDriverWait and ExpectedConditions.
+
+Syntax
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("loginBtn")));
+element.click();
+
+Key points
+
+Works for specific elements.
+
+Can wait for conditions like:
+
+visibilityOfElementLocated
+
+elementToBeClickable
+
+alertIsPresent
+
+Throws TimeoutException if condition not met.
+
+C) Fluent Wait
+
+Advanced version of explicit wait.
+
+Allows you to specify:
+
+Maximum wait time
+
+Polling interval
+
+Ignored exceptions (like NoSuchElementException)
+
+Great for dynamic pages where elements appear irregularly.
+
+Syntax
+Wait<WebDriver> wait = new FluentWait<>(driver)
+    .withTimeout(Duration.ofSeconds(20))
+    .pollingEvery(Duration.ofSeconds(2))
+    .ignoring(NoSuchElementException.class);
+
+WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("loginBtn")));
+element.click();
+
+Key points
+
+More customizable than explicit wait.
+
+Polls the DOM at custom intervals.
+
+Can ignore exceptions during wait.
+
+
+ypes of Dropdowns in Selenium
+
+Static Dropdown (HTML <select> tag)
+
+The options are hard-coded in HTML.
+
+Selenium provides the Select class to handle them.
+
+Dynamic/Custom Dropdown (Non-<select> tag)
+
+Options are created dynamically with JavaScript.
+
+Cannot use Select class — use WebElement clicks or loops.
+
+2️⃣ Handling Static Dropdowns (<select> tag)
+Step 1: Import Select class
+import org.openqa.selenium.support.ui.Select;
+
+Step 2: Locate the dropdown
+WebElement dropdown = driver.findElement(By.id("country"));
+
+Step 3: Create Select object
+Select select = new Select(dropdown);
+
+Step 4: Select options
+
+By visible text
+
+select.selectByVisibleText("India");
+
+
+By index
+
+select.selectByIndex(2); // third option
+
+
+By value
+
+select.selectByValue("IN");
+
+Step 5: Get all options
+List<WebElement> allOptions = select.getOptions();
+for(WebElement option : allOptions) {
+    System.out.println(option.getText());
+}
+
+3️⃣ Handling Dynamic / Custom Dropdowns (Non-<select> tag)
+
+Dynamic dropdowns require manual click operations:
+
+Example HTML
+<div class="dropdown">
+  <button>Choose Country</button>
+  <ul>
+    <li>India</li>
+    <li>USA</li>
+    <li>UK</li>
+  </ul>
+</div>
+
+Selenium Code
+// Click dropdown to expand options
+driver.findElement(By.xpath("//button[text()='Choose Country']")).click();
+
+// Get all options
+List<WebElement> options = driver.findElements(By.xpath("//ul/li"));
+
+// Loop and select
+for(WebElement option : options) {
+    if(option.getText().equals("USA")) {
+        option.click();
+        break;
+    }
+}
+
+4️⃣ Multi-select Dropdowns
+
+Use Select class and check isMultiple()
+
+Select select = new Select(driver.findElement(By.id("fruits")));
+if(select.isMultiple()) {
+    select.selectByIndex(0);
+    select.selectByValue("apple");
+    select.selectByVisibleText("Orange");
+    select.deselectAll(); // Deselect all if needed
+}
+
+5️⃣ Interview-ready answer
+
+“For static dropdowns with <select> tags, Selenium provides the Select class which can select options by index, value, or visible text. For dynamic or custom dropdowns built with JavaScript, we locate the dropdown and options as WebElements, click to expand, and then loop through the options to select the desired one.”
+
+
+What is the Actions Class?
+
+The Actions class in Selenium is used to perform complex user interactions like:
+
+Mouse hover
+
+Right click (context click)
+
+Double click
+
+Drag and drop
+
+Click and hold
+
+Located in:
+
+import org.openqa.selenium.interactions.Actions;
+
+2️⃣ How to use the Actions class
+Step 1: Create Actions object
+Actions actions = new Actions(driver);
+
+Step 2: Perform action on a WebElement
+
+Most actions require build().perform() at the end to execute.
+
+3️⃣ Common Mouse Actions
+A) Mouse Hover (Move to element)
+WebElement menu = driver.findElement(By.id("menu"));
+actions.moveToElement(menu).build().perform();
+
+
+Hover over an element to reveal dropdowns or tooltips.
+
+B) Right Click (Context Click)
+WebElement element = driver.findElement(By.id("rightClickBtn"));
+actions.contextClick(element).build().perform();
+
+C) Double Click
+WebElement button = driver.findElement(By.id("doubleClickBtn"));
+actions.doubleClick(button).build().perform();
+
+D) Drag and Drop
+WebElement source = driver.findElement(By.id("drag"));
+WebElement target = driver.findElement(By.id("drop"));
+
+actions.dragAndDrop(source, target).build().perform();
+
+
+Alternative: Click and hold → move → release
+
+actions.clickAndHold(source).moveToElement(target).release().build().perform();
+
+E) Click and Hold / Move
+actions.clickAndHold(source)
+       .moveByOffset(100, 50)  // Move by x and y offset
+       .release()
+       .build()
+       .perform();
+
+4️⃣ Chaining Actions
+
+You can chain multiple actions together:
+
+actions.moveToElement(menu)
+       .click(subMenu)
+       .build()
+       .perform();
+
+5️⃣ Pro Tips
+
+Always use build().perform() to execute the action.
+
+For hover and dropdowns, combine Actions + Explicit Wait to wait for sub-menu visibility.
+
+For drag-and-drop, offset coordinates can be useful for precise movements.
+
+6️⃣ Interview-ready answer
+
+“In Selenium, the Actions class is used for advanced user interactions like mouse hover, right click, double click, and drag-and-drop. You create an Actions object, define the action on a WebElement, chain actions if needed, and execute them using build().perform().”
+
+
+What are Keyboard Actions?
+
+Selenium provides the Actions class and sendKeys() method to simulate keyboard interactions.
+
+Common uses:
+
+Typing text
+
+Pressing Enter, Tab, or Escape
+
+Copy, paste, select all
+
+Combining keys (Ctrl, Shift, Alt)
+
+2️⃣ Using Actions class for keyboard actions
+Step 1: Import Actions
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.Keys;
+
+Step 2: Create Actions object
+Actions actions = new Actions(driver);
+
+3️⃣ Common Keyboard Actions
+A) Type text
+WebElement input = driver.findElement(By.id("username"));
+input.sendKeys("admin");  // simple typing
+
+B) Press Enter / Tab / Escape
+actions.sendKeys(input, Keys.ENTER).build().perform();  // Press Enter
+actions.sendKeys(Keys.TAB).build().perform();           // Press Tab
+actions.sendKeys(Keys.ESCAPE).build().perform();        // Press Escape
+
+C) Keyboard shortcuts (Ctrl + A / C / V)
+// Select all text
+actions.keyDown(Keys.CONTROL).sendKeys("a").keyUp(Keys.CONTROL).build().perform();
+
+// Copy
+actions.keyDown(Keys.CONTROL).sendKeys("c").keyUp(Keys.CONTROL).build().perform();
+
+// Paste
+actions.keyDown(Keys.CONTROL).sendKeys("v").keyUp(Keys.CONTROL).build().perform();
+
+D) Combine multiple keys
+// Example: Ctrl + Shift + N (new window in Chrome)
+actions.keyDown(Keys.CONTROL).keyDown(Keys.SHIFT).sendKeys("n").keyUp(Keys.SHIFT).keyUp(Keys.CONTROL).build().perform();
+
+4️⃣ Using sendKeys() on WebElement directly
+
+For simple inputs, you can also do:
+
+driver.findElement(By.id("username")).sendKeys("admin" + Keys.TAB + "password" + Keys.ENTER);
+
+
+This types text and presses keys in sequence.
+
+5️⃣ Pro Tips
+
+Use Actions class for advanced keyboard combinations.
+
+Use sendKeys() on elements for simple typing and key presses.
+
+Always use build().perform() with Actions to execute the action.
+
+For dynamic inputs, combine Explicit Wait + sendKeys() to avoid ElementNotInteractableException.
+
+6️⃣ Interview-ready answer
+
+“In Selenium, keyboard actions can be handled using the Actions class or the sendKeys() method. sendKeys() can type text or simulate single keys like Enter or Tab, while Actions class can perform complex key combinations like Ctrl+C, Ctrl+V, or Shift+key. All actions in Actions class need to be executed with build().perform().”
+
+
+Uploading Files via Input Box (<input type="file">)
+
+Selenium can directly send the file path to the input element.
+
+No need to click browse dialog — it’s handled automatically.
+
+Example HTML
+<input type="file" id="uploadFile">
+
+Selenium Code
+WebElement upload = driver.findElement(By.id("uploadFile"));
+upload.sendKeys("C:\\Users\\User\\Desktop\\file.txt");
+
+
+Notes:
+
+Provide absolute path of the file.
+
+Works for all browsers.
+
+After sendKeys(), the file is automatically selected and ready for submission.
+
+2️⃣ Uploading Files via Non-Input Box (Custom Buttons)
+
+Many modern websites use custom buttons (like drag & drop, or <div> triggers).
+
+Selenium cannot interact directly because sendKeys() works only on <input type="file">.
+
+Approaches:
+A) Use AutoIT (Windows only)
+
+AutoIT scripts interact with OS-level dialogs.
+
+Steps:
+
+Write an AutoIT script to handle the file upload window.
+
+Compile it into an .exe.
+
+Trigger the script from Selenium.
+
+driver.findElement(By.id("customUploadButton")).click();
+Runtime.getRuntime().exec("C:\\Scripts\\FileUpload.exe");
+
+B) Use Robot Class (Java built-in)
+
+java.awt.Robot simulates keyboard events.
+
+Steps:
+
+Click the custom button to open dialog.
+
+Use Robot to type file path and press Enter.
+
+driver.findElement(By.id("customUploadButton")).click();
+Thread.sleep(2000);  // wait for dialog
+
+StringSelection ss = new StringSelection("C:\\Users\\User\\Desktop\\file.txt");
+Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ss, null);
+
+Robot robot = new Robot();
+robot.keyPress(KeyEvent.VK_CONTROL);
+robot.keyPress(KeyEvent.VK_V);
+robot.keyRelease(KeyEvent.VK_V);
+robot.keyRelease(KeyEvent.VK_CONTROL);
+robot.keyPress(KeyEvent.VK_ENTER);
+robot.keyRelease(KeyEvent.VK_ENTER);
+
+C) JavaScript / jQuery Trigger
+
+If the <input type="file"> is hidden (e.g., display:none), you can make it visible using JS, then sendKeys():
+
+WebElement input = driver.findElement(By.cssSelector("input[type='file']"));
+((JavascriptExecutor) driver).executeScript("arguments[0].style.display='block';", input);
+input.sendKeys("C:\\Users\\User\\Desktop\\file.txt");
+
+3️⃣ Key Differences
+Feature	Input Box	Non-Input Box
+Direct sendKeys()	✅ Works	❌ Doesn’t work
+OS Dialog Needed	❌	✅ Robot / AutoIT
+JS Trick	Optional	Sometimes needed
+Browser independent	✅	Robot is platform dependent
+4️⃣ Interview-ready answer
+
+“For file upload in Selenium, if the element is an <input type='file'>, you can directly use sendKeys() with the file path. For custom buttons or non-input elements, Selenium cannot interact directly, so we use OS-level automation like Robot class or AutoIT, or manipulate the hidden input via JavaScript and then use sendKeys().”
+
+💡 Pro Tip:
+
+
+What is the Robot Class?
+
+java.awt.Robot is a Java built-in class used to generate native system events like:
+
+Keyboard key press/release
+
+Mouse move/click
+
+Useful when Selenium cannot interact directly (e.g., OS-level dialogs, print dialogs, file download/upload dialogs).
+
+Import:
+
+import java.awt.Robot;
+import java.awt.event.KeyEvent;
+
+2️⃣ When to Use Robot Class
+
+Uploading files when <input type="file"> is hidden
+
+Downloading files where browser shows Save As dialog
+
+Performing keyboard shortcuts like Ctrl+C, Ctrl+V
+
+Handling print dialogs or alert pop-ups that are outside the browser
+
+Selenium can only control browser DOM elements, not OS dialogs. Robot class bridges this gap.
+
+3️⃣ How to Use Robot Class (Basic Example)
+Step 1: Create Robot Object
+Robot robot = new Robot();
+
+Step 2: Press and release keys
+robot.keyPress(KeyEvent.VK_CONTROL);  // Press CTRL
+robot.keyPress(KeyEvent.VK_A);        // Press A (Select All)
+robot.keyRelease(KeyEvent.VK_A);      // Release A
+robot.keyRelease(KeyEvent.VK_CONTROL); // Release CTRL
+
+Step 3: Type text (using clipboard)
+// Copy file path to clipboard
+StringSelection path = new StringSelection("C:\\Users\\User\\Desktop\\file.txt");
+Toolkit.getDefaultToolkit().getSystemClipboard().setContents(path, null);
+
+// Paste path in dialog
+robot.keyPress(KeyEvent.VK_CONTROL);
+robot.keyPress(KeyEvent.VK_V);
+robot.keyRelease(KeyEvent.VK_V);
+robot.keyRelease(KeyEvent.VK_CONTROL);
+
+// Press Enter to submit
+robot.keyPress(KeyEvent.VK_ENTER);
+robot.keyRelease(KeyEvent.VK_ENTER);
+
+4️⃣ How to Use Robot for File Download
+
+Scenario: Browser opens Save As dialog (common in IE or when download is blocked).
+
+Steps:
+
+Click Download button in Selenium to open OS dialog.
+
+Use Robot to:
+
+Paste the file path in the Save As window
+
+Press Enter to save
+
+driver.findElement(By.id("downloadBtn")).click(); // Opens Save As
+
+Robot robot = new Robot();
+Thread.sleep(2000); // Wait for dialog
+
+// Copy file path to clipboard
+StringSelection filePath = new StringSelection("C:\\Users\\User\\Downloads\\report.pdf");
+Toolkit.getDefaultToolkit().getSystemClipboard().setContents(filePath, null);
+
+// Paste path
+robot.keyPress(KeyEvent.VK_CONTROL);
+robot.keyPress(KeyEvent.VK_V);
+robot.keyRelease(KeyEvent.VK_V);
+robot.keyRelease(KeyEvent.VK_CONTROL);
+
+// Press Enter
+robot.keyPress(KeyEvent.VK_ENTER);
+robot.keyRelease(KeyEvent.VK_ENTER);
+
+
+✅ Tip: Always add a small Thread.sleep() to ensure the dialog appears before typing.
+
+5️⃣ Advantages
+
+Can interact with OS-level dialogs which Selenium cannot handle.
+
+Works for keyboard shortcuts and mouse movements outside the browser.
+
+
+
+Downloading Files via Direct Link Click
+
+If clicking a link or button directly triggers a download (no popup), you can simply do:
+
+driver.findElement(By.linkText("Download Report")).click();
+
+
+Selenium will click the link, and the browser will start downloading the file to the default download folder.
+
+Problem: You don’t control the file location or handle the dialog if the browser asks “Save As”.
+
+2️⃣ Handling File Downloads in Chrome / Firefox
+
+You can configure the browser profile to auto-download files to a specific folder.
+
+A) Chrome
+Step 1: Set Chrome options
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.chrome.ChromeDriver;
+import java.util.HashMap;
+import java.util.Map;
+
+Map<String, Object> prefs = new HashMap<>();
+prefs.put("download.default_directory", "C:\\Users\\User\\Downloads");
+prefs.put("download.prompt_for_download", false); // Disable Save As dialog
+prefs.put("profile.default_content_settings.popups", 0);
+
+ChromeOptions options = new ChromeOptions();
+options.setExperimentalOption("prefs", prefs);
+
+WebDriver driver = new ChromeDriver(options);
+driver.get("https://example.com");
+driver.findElement(By.id("downloadBtn")).click();
+
+
+Key points:
+
+download.default_directory → folder path where file will be saved.
+
+download.prompt_for_download → disables “Save As” popup.
+
+Works for any file type Chrome supports.
+
+
+Using TakesScreenshot Interface
+
+TakesScreenshot is a Selenium interface implemented by WebDriver.
+
+Steps to take a full-page screenshot:
+
+Example
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.io.FileHandler;
+import java.io.File;
+
+File src = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+File dest = new File("C:\\Users\\User\\Desktop\\screenshot.png");
+FileHandler.copy(src, dest);
+
+
+Explanation:
+
+getScreenshotAs(OutputType.FILE) → captures screenshot and stores in temp file.
+
+Copy the file to desired location using FileHandler.copy().
+
+3️⃣ Screenshot of a Specific WebElement
+
+You can capture only a particular element instead of the whole page:
+
+WebElement element = driver.findElement(By.id("loginForm"));
+File src = element.getScreenshotAs(OutputType.FILE);
+File dest = new File("C:\\Users\\User\\Desktop\\element.png");
+FileHandler.copy(src, dest);
+
+
+Useful for highlighting errors in a specific section.
+
+
+
+
+What is JavaScriptExecutor?
+
+Selenium provides the JavascriptExecutor interface to run JavaScript code directly in the browser.
+
+All WebDriver implementations (ChromeDriver, FirefoxDriver, etc.) support it.
+
+Syntax:
+
+JavascriptExecutor js = (JavascriptExecutor) driver;
+
+2️⃣ When to Use JavaScriptExecutor
+
+Clicking on elements that are not clickable due to overlay or hidden state.
+
+Scrolling to specific elements or coordinates.
+
+Fetching values or attributes not exposed in DOM.
+
+Highlighting elements for testing/debugging.
+
+Handling dynamic content or lazy-loaded elements.
+
+3️⃣ Common JavaScriptExecutor Examples
+A) Scroll Down / Scroll Into View
+WebElement element = driver.findElement(By.id("footer"));
+
+// Scroll to specific element
+js.executeScript("arguments[0].scrollIntoView(true);", element);
+
+// Scroll by pixels
+js.executeScript("window.scrollBy(0, 500);");
+
+B) Click on Hidden Element
+WebElement hiddenButton = driver.findElement(By.id("hiddenBtn"));
+js.executeScript("arguments[0].click();", hiddenButton);
+
+C) Get Page Title / URL / Domain
+String title = (String) js.executeScript("return document.title;");
+String url = (String) js.executeScript("return document.URL;");
+String domain = (String) js.executeScript("return document.domain;");
+
+D) Enter Text in Input Box
+WebElement input = driver.findElement(By.id("username"));
+js.executeScript("arguments[0].value='admin';", input);
+
+E) Highlight Element
+WebElement element = driver.findElement(By.id("loginBtn"));
+js.executeScript("arguments[0].style.border='3px solid red'", element);
+
+
+Useful for debugging or visual confirmation during tests.
+
+F) Refresh Page
+js.executeScript("history.go(0)");
+
+4️⃣ Full Syntax
+JavascriptExecutor js = (JavascriptExecutor) driver;
+js.executeScript("JavaScript code here", optional WebElements or arguments);
+
+
+arguments[0] → first WebElement passed
+
+arguments[1] → second WebElement passed, etc.
+
+Can return values with return keyword.
+
+5️⃣ Interview-ready answer
+
+“In Selenium, the JavascriptExecutor interface allows you to execute JavaScript code directly in the browser. It is useful for clicking hidden elements, scrolling to elements, fetching page details, entering text, highlighting elements, or refreshing pages. You cast WebDriver to JavascriptExecutor and use executeScript() to run JavaScript commands.”
+
+
+
+
+
