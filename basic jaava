@@ -1,0 +1,542 @@
+What is try-catch-finally in java?
+try–catch–finally is how you handle runtime errors (exceptions) so your program doesn’t crash and can recover gracefully.
+
+Think of it like:
+
+“Try this risky thing → if it fails, handle it → no matter what, clean up.”
+
+Basic structure
+try {
+    // code that might throw an exception
+} catch (ExceptionType e) {
+    // code that runs if an exception occurs
+} finally {
+    // code that always runs (cleanup)
+}
+
+try
+
+Contains risky code (file I/O, division, database access, etc.)
+
+If no exception happens → catch is skipped
+
+If an exception happens → control jumps to a matching catch
+
+Example:
+
+int result = 10 / 0;  // risky → ArithmeticException
+
+catch
+
+Handles the exception so the program doesn’t crash
+
+You can have multiple catch blocks
+
+They must go from most specific → most general
+
+try {
+    int[] arr = new int[3];
+    System.out.println(arr[5]);
+} catch (ArrayIndexOutOfBoundsException e) {
+    System.out.println("Index is out of range");
+} catch (Exception e) {
+    System.out.println("Some other error occurred");
+}
+
+finally
+
+Always runs, whether:
+
+an exception occurs
+
+an exception is caught
+
+no exception occurs
+
+Used for cleanup (closing files, database connections, releasing resources)
+
+finally {
+    System.out.println("This always executes");
+}
+
+
+Even if you return from try or catch, finally still runs.
+
+Complete example
+try {
+    int a = 10;
+    int b = 0;
+    System.out.println(a / b);
+} catch (ArithmeticException e) {
+    System.out.println("Cannot divide by zero");
+} finally {
+    System.out.println("Program finished");
+}
+
+
+Output:
+
+Cannot divide by zero
+Program finished
+
+Important rules
+
+try must be followed by at least one catch or a finally
+
+finally is optional, but very useful
+
+You can have:
+
+try + catch
+
+try + finally
+
+try + catch + finally
+
+What is throw vs throws?
+
+throw
+
+throw is used to actually create and send an exception.
+
+Used inside a method or block
+
+Throws one specific exception
+
+Happens at runtime
+
+Syntax
+throw new ExceptionType("error message");
+
+Example
+public void withdraw(int amount) {
+    if (amount > balance) {
+        throw new IllegalArgumentException("Insufficient balance");
+    }
+}
+
+
+Here:
+
+You are manually triggering an exception
+
+Program flow stops immediately unless it’s caught
+
+throws
+
+throws is used to declare that a method might pass an exception upward.
+
+Used in the method signature
+
+Can declare multiple exceptions
+
+Does not throw anything by itself
+
+Syntax
+returnType methodName() throws ExceptionType
+
+Example
+public void readFile() throws IOException {
+    FileReader file = new FileReader("data.txt");
+}
+
+
+Here:
+
+You’re telling Java:
+“This method might cause an IOException — caller must handle it.”
+
+Using throw and throws together
+
+Very common pattern 👇
+
+public void readFile() throws IOException {
+    if (fileNotFound) {
+        throw new IOException("File not found");
+    }
+}
+
+
+throw → creates the exception
+
+throws → declares responsibility to the caller
+
+Key differences (side-by-side)
+throw	throws
+Used inside method body	Used in method signature
+Throws an actual exception	Declares possible exceptions
+Throws only one exception	Can declare multiple exceptions
+Followed by new keyword	Followed by exception class names
+
+
+Exceptions in Java
+
+Java exceptions are split into two categories:
+
+Checked and Unchecked
+
+The difference is when Java checks them.
+
+Checked Exceptions
+
+Checked at compile time.
+Java forces you to handle them.
+
+Rules
+
+You must either:
+
+handle with try-catch, or
+
+declare with throws
+
+Examples
+
+IOException
+
+SQLException
+
+FileNotFoundException
+
+ClassNotFoundException
+
+Example (compile-time error)
+public void readFile() {
+    FileReader fr = new FileReader("data.txt"); // ❌ compile error
+}
+
+Correct versions
+// Option 1: Handle it
+try {
+    FileReader fr = new FileReader("data.txt");
+} catch (IOException e) {
+    e.printStackTrace();
+}
+
+// Option 2: Declare it
+public void readFile() throws IOException {
+    FileReader fr = new FileReader("data.txt");
+}
+
+Why they exist
+
+They represent recoverable situations:
+
+missing file
+
+database down
+
+network failure
+
+Java wants you to think about recovery.
+
+Unchecked Exceptions
+
+Not checked at compile time.
+They happen at runtime.
+
+Rules
+
+No requirement to handle or declare
+
+Program crashes if not handled
+
+Examples
+
+NullPointerException
+
+ArithmeticException
+
+ArrayIndexOutOfBoundsException
+
+IllegalArgumentException
+
+Example
+int x = 10 / 0;  // ArithmeticException (runtime)
+
+
+Compiles fine ❗
+Fails at runtime ❗
+
+Why they exist
+
+They represent programming mistakes:
+
+null access
+
+bad indexes
+
+invalid logic
+
+Fix the code instead of catching the error.
+
+Main difference table
+Checked	Unchecked
+Compile-time checking	Runtime only
+Must be handled or declared	Optional to handle
+Extend Exception	Extend RuntimeException
+Recoverable conditions	Programming bugs
+Inheritance rule (super important)
+
+Checked → Exception (excluding RuntimeException)
+
+Unchecked → RuntimeException
+
+RuntimeException extends Exception
+
+Interview one-liner 💡
+
+Checked exceptions are forced by the compiler.
+Unchecked exceptions are your fault.
+
+When to use what (real-world tip)
+
+Use checked for external problems (I/O, DB, network)
+
+Use unchecked for invalid arguments or logic errors
+
+Example:
+
+throw new IllegalArgumentException("Age cannot be negative");
+
+Selenium architecture
+
+High-level idea
+
+Selenium follows a client–server architecture.
+
+Your test code → Selenium WebDriver → Browser Driver → Real Browser
+
+Main components
+1️⃣ Selenium Client Library
+
+This is the language binding you write code in
+(Java, Python, C#, JS, etc.)
+
+Converts your commands into Selenium instructions
+
+Example:
+
+driver.findElement(By.id("login")).click();
+
+2️⃣ Selenium WebDriver
+
+Acts as a middleman
+
+Receives commands from your test code
+
+Sends them to the browser driver using W3C WebDriver protocol
+
+Key point:
+
+WebDriver talks directly to the browser, not through JavaScript.
+
+3️⃣ Browser Driver
+
+Each browser has its own driver:
+
+Chrome → ChromeDriver
+
+Firefox → GeckoDriver
+
+Edge → EdgeDriver
+
+Safari → SafariDriver
+
+Responsibilities:
+
+Accept commands from WebDriver
+
+Convert them into browser-specific actions
+
+Send response back
+
+4️⃣ Real Browser
+
+Actual browser installed on the machine
+
+Performs real user actions:
+
+click
+
+type
+
+scroll
+
+navigate
+
+Architecture flow (step-by-step)
+
+You write test script (Java/Python/etc.)
+
+Selenium Client Library sends command
+
+WebDriver converts command to HTTP request
+
+Browser Driver receives request
+
+Browser performs action
+
+Response travels back the same path
+
+Simple text diagram
+Test Script
+   ↓
+Selenium Client Library
+   ↓
+Selenium WebDriver
+   ↓
+Browser Driver (ChromeDriver, GeckoDriver)
+   ↓
+Real Browser
+
+Selenium Grid architecture (bonus)
+
+Used when tests must run in parallel or on multiple machines.
+
+Components
+
+Hub – central controller
+
+Nodes – machines with browsers
+
+Flow
+Test Script
+   ↓
+Hub
+   ↓
+Node (Browser)
+
+
+Benefits:
+
+Parallel execution
+
+Cross-browser testing
+
+Faster test runs
+
+Why this architecture matters
+
+No dependency on browser internals
+
+Each browser controls itself
+
+More stable and secure than old Selenium RC
+
+WebDriver is a tool in Selenium that directly communicates with browsers to automate actions like clicking, typing, and navigation using the W3C WebDriver protocol.
+
+Key points to mention
+
+Controls real browsers
+
+No JavaScript injection
+
+Faster and more stable than old Selenium RC
+
+Supports multiple browsers (Chrome, Firefox, Edge)
+
+One-line example
+WebDriver driver = new ChromeDriver();
+
+2️⃣ What is Selenium (interview explanation)
+
+Selenium is an open-source test automation framework used to test web applications.
+
+Interview answer
+
+Selenium is a suite of tools used to automate and test web applications across different browsers and platforms.
+
+Selenium includes:
+
+WebDriver – browser automation
+
+Selenium IDE – record & playback
+
+Selenium Grid – parallel execution
+
+3️⃣ Difference between Selenium and WebDriver
+
+This is usually the follow-up question 👇
+
+Interview-ready comparison
+Selenium	WebDriver
+Test automation framework	Browser automation tool
+Contains multiple components	Core component of Selenium
+Includes IDE, Grid, WebDriver	Only controls browsers
+High-level concept	Low-level execution
+One-liner difference (gold answer 🏆)
+
+Selenium is the framework, while WebDriver is the core component within Selenium that actually automates browsers.
+
+4️⃣ How to explain confidently in an interview (script)
+
+You can literally say this 👇:
+
+“Selenium is an open-source automation framework for testing web applications. WebDriver is a key component of Selenium that directly interacts with browsers using the W3C WebDriver protocol to perform user actions like clicking, typing, and navigation.”
+
+5️⃣ Extra point (to impress interviewer)
+
+Add this at the end if they seem interested:
+
+“In real projects, when people say Selenium, they usually mean Selenium WebDriver.”
+
+Selenium WebDriver follows a client–server architecture.
+
+Test Script → WebDriver → Browser Driver → Real Browser
+
+Main components
+1️⃣ Test Script (Client Code)
+
+Written in Java, Python, C#, etc.
+
+Uses Selenium WebDriver APIs
+
+Example:
+
+driver.findElement(By.id("login")).click();
+
+2️⃣ Selenium Client Library
+
+Language bindings for Selenium
+
+Converts your code into WebDriver commands
+
+3️⃣ Selenium WebDriver
+
+Core component of Selenium
+
+Acts as a bridge between test code and browser
+
+Sends commands using W3C WebDriver protocol (HTTP + JSON)
+
+Key point for interview:
+
+WebDriver communicates directly with the browser, not via JavaScript.
+
+4️⃣ Browser Driver
+
+Each browser has its own driver:
+
+Chrome → ChromeDriver
+
+Firefox → GeckoDriver
+
+Edge → EdgeDriver
+
+Safari → SafariDriver
+
+Responsibilities:
+
+Receives commands from WebDriver
+
+Converts them into browser-specific actions
+
+Sends responses back
+
+5️⃣ Real Browser
+
+Actual browser installed on the system
+
+Executes real user actions (click, type, scroll)
+
