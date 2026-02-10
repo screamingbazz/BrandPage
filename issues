@@ -1,0 +1,1091 @@
+Issues
+
+
+Synchronization issues in Selenium occur when the WebDriver tries to interact with a web element before it is available, visible, or clickable. This happens because web pages are dynamic and elements may take time to load, leading to exceptions like:
+
+ElementNotVisibleException
+
+NoSuchElementException
+
+StaleElementReferenceException
+
+ElementNotInteractableException
+
+1️⃣ Types of Waits in Selenium
+a) Implicit Wait (Global wait)
+
+Tells WebDriver to poll the DOM for a certain time when trying to find elements.
+
+Applies to all elements.
+
+driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+
+
+✅ Pros: Simple, applies globally.
+❌ Cons: Not precise; may slow tests if overused.
+
+b) Explicit Wait (Conditional wait)
+
+Waits only for a specific condition on a specific element.
+
+Uses WebDriverWait + ExpectedConditions.
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("submitBtn")));
+element.click();
+
+
+Common ExpectedConditions:
+
+visibilityOfElementLocated
+
+elementToBeClickable
+
+presenceOfElementLocated
+
+textToBePresentInElement
+
+✅ Pros: More precise, waits only for specific element.
+❌ Cons: Need to write for each element separately.
+
+c) Fluent Wait (Flexible wait)
+
+Waits for a condition with polling intervals and can ignore specific exceptions.
+
+Wait<WebDriver> wait = new FluentWait<>(driver)
+    .withTimeout(Duration.ofSeconds(15))
+    .pollingEvery(Duration.ofSeconds(2))
+    .ignoring(NoSuchElementException.class);
+
+WebElement element = wait.until(driver -> driver.findElement(By.id("dynamicElement")));
+
+
+✅ Pros: Highly configurable for dynamic web pages.
+❌ Cons: Slightly more complex.
+
+
+Handling StaleElementReferenceException in Selenium happens when you try to interact with an element that is no longer attached to the DOM (e.g., the page refreshed, table updated, or element was removed and re-rendered).
+
+Here’s a detailed explanation with Java Selenium code:
+
+1️⃣ Why Stale Element Happens
+
+Page refreshes or reloads after locating an element.
+
+Element is removed or replaced in the DOM.
+
+Example:
+
+WebElement button = driver.findElement(By.id("submitBtn"));
+driver.navigate().refresh(); // DOM is refreshed
+button.click(); // StaleElementReferenceException!
+
+2️⃣ How to Handle Stale Elements
+Approach 1: Re-locate Element After DOM Changes
+// Incorrect way: element becomes stale
+WebElement button = driver.findElement(By.id("submitBtn"));
+driver.navigate().refresh();
+button.click(); // StaleElementReferenceException
+
+// Correct way: re-locate element
+driver.navigate().refresh();
+WebElement buttonNew = driver.findElement(By.id("submitBtn"));
+buttonNew.click(); // works
+
+Approach 2: Using Explicit Wait
+
+Wait until the element is clickable or visible after the DOM update.
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement button = wait.until(ExpectedConditions.elementToBeClickable(By.id("submitBtn")));
+button.click();
+
+
+✅ This ensures Selenium interacts only when the element is ready in the DOM.
+
+Approach 3: Retry Mechanism (Loop)
+
+Retry finding the element multiple times before failing.
+
+int attempts = 0;
+while (attempts < 3) {
+    try {
+        WebElement button = driver.findElement(By.id("submitBtn"));
+        button.click();
+        break; // if click successful, exit loop
+    } catch (StaleElementReferenceException e) {
+        System.out.println("Element became stale, retrying... Attempt: " + (attempts + 1));
+    }
+    attempts++;
+}
+
+
+✅ Useful for dynamic tables or lists where elements frequently refresh.
+
+Approach 4: Using FluentWait
+
+FluentWait allows polling periodically until element is available and ignores exceptions.
+
+Wait<WebDriver> wait = new FluentWait<>(driver)
+        .withTimeout(Duration.ofSeconds(15))
+        .pollingEvery(Duration.ofSeconds(2))
+        .ignoring(StaleElementReferenceException.class);
+
+WebElement button = wait.until(driver -> driver.findElement(By.id("submitBtn")));
+button.click();
+
+
+✅ Best for highly dynamic content that updates frequently.
+
+
+Locator problems in Selenium occur when WebDriver cannot find an element on a web page. This is one of the most common issues in automation testing, and it usually happens due to wrong, dynamic, or changing locators.
+
+Here’s a detailed explanation:
+
+1️⃣ Common Causes of Locator Problems
+
+Incorrect Locator Syntax
+
+Misspelled ID, class, or XPath.
+
+driver.findElement(By.id("submitBtnn")); // typo
+
+
+Dynamic Elements
+
+IDs or classes change on page load.
+
+<input id="user_12345" /> <!-- dynamic ID -->
+
+
+Element Not Yet Loaded
+
+Page or element takes time to render → NoSuchElementException.
+
+iFrames
+
+Element is inside an <iframe> → need driver.switchTo().frame().
+
+Element Hidden or Invisible
+
+Element exists in DOM but not visible → ElementNotVisibleException.
+
+Multiple Matching Elements
+
+Locator matches multiple elements → Selenium interacts with the first one.
+
+2️⃣ How to Solve Locator Problems
+a) Use Unique and Stable Locators
+
+Prefer IDs → most reliable.
+
+Use name, CSS selector, or XPath if ID is not available.
+
+driver.findElement(By.id("submitBtn")).click();
+driver.findElement(By.cssSelector(".btn-primary")).click();
+
+b) Handle Dynamic IDs or Attributes
+
+Use XPath functions like contains(), starts-with(), or ends-with():
+
+driver.findElement(By.xpath("//input[contains(@id,'user_')]")).sendKeys("John");
+driver.findElement(By.xpath("//button[starts-with(@id,'submit')]")).click();
+
+c) Wait for Element
+
+Use Explicit Wait for elements that take time to load:
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement button = wait.until(ExpectedConditions.elementToBeClickable(By.id("submitBtn")));
+button.click();
+
+d) Handle iFrames
+
+Switch to frame before locating element:
+
+driver.switchTo().frame("frame1");
+driver.findElement(By.id("innerButton")).click();
+driver.switchTo().defaultContent();
+
+e) Handle Hidden Elements
+
+Make sure the element is visible or use JavaScript click if needed:
+
+WebElement button = driver.findElement(By.id("hiddenBtn"));
+((JavascriptExecutor)driver).executeScript("arguments[0].click();", button);
+
+f) Verify Locator with Browser Tools
+
+Use Inspect Element → Test XPath or CSS in browser console:
+
+$x("//input[contains(@id,'user_')]")  // for XPath
+
+
+WebDriverManager is a Java library that automatically manages the browser driver binaries (like ChromeDriver, GeckoDriver, EdgeDriver) required by Selenium WebDriver. It simplifies setup and avoids the need to manually download, configure, or maintain driver executables.
+
+1️⃣ Why WebDriverManager is Useful
+
+Automatic Driver Management
+
+Downloads the correct driver version for the installed browser automatically.
+
+Avoids mismatches between browser and driver versions.
+
+No Manual Path Setup
+
+Eliminates System.setProperty("webdriver.chrome.driver", "path/to/driver").
+
+Supports Multiple Browsers
+
+Chrome, Firefox, Edge, Opera, and more.
+
+Cross-Platform Friendly
+
+Works on Windows, macOS, Linux.
+
+Keeps Drivers Updated
+
+Ensures latest compatible driver version is used automatically.
+
+2️⃣ How to Use WebDriverManager
+Step 1: Add Dependency (Maven)
+<dependency>
+    <groupId>io.github.bonigarcia</groupId>
+    <artifactId>webdrivermanager</artifactId>
+    <version>5.5.3</version>
+</dependency>
+
+Step 2: Initialize Driver Without Manual Path
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+public class TestExample {
+    public static void main(String[] args) {
+        // Automatically download and setup ChromeDriver
+        WebDriverManager.chromedriver().setup();
+        
+        // Create driver instance
+        WebDriver driver = new ChromeDriver();
+        
+        driver.get("https://www.example.com");
+        System.out.println(driver.getTitle());
+        driver.quit();
+    }
+}
+
+
+✅ No need for System.setProperty("webdriver.chrome.driver", "path/to/chromedriver.exe").
+
+Step 3: Other Browsers
+WebDriverManager.firefoxdriver().setup();
+WebDriver driver = new FirefoxDriver();
+
+WebDriverManager.edgedriver().setup();
+WebDriver driver = new EdgeDriver();
+
+3️⃣ Key Advantages
+Feature	Benefit
+Automatic Download	Always uses correct driver version
+Cross-Platform	Works on Windows, Mac, Linux
+Multiple Browsers	Supports Chrome, Firefox, Edge, Opera
+Less Maintenance	No manual driver path configuration
+CI/CD Friendly	Integrates easily with Jenkins, GitHub Actions
+Interview-friendly one-liner
+
+WebDriverManager is a library that automatically downloads and manages browser drivers, eliminating manual setup, avoiding version mismatches, and simplifying Selenium WebDriver automation.
+
+
+ElementNotInteractableException
+
+Description:
+Occurs when an element is present in the DOM but cannot be interacted with (click, send keys, etc.).
+
+Common Causes:
+
+Element is hidden, display: none or visibility: hidden.
+
+Element is behind another element (overlay, modal, popup).
+
+Element is not yet rendered on the page.
+
+Example:
+
+WebElement button = driver.findElement(By.id("submitBtn"));
+button.click(); // Throws ElementNotInteractableException if hidden or not clickable
+
+
+How to Handle:
+
+Wait until element is clickable/visible
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement button = wait.until(ExpectedConditions.elementToBeClickable(By.id("submitBtn")));
+button.click();
+
+
+Use JavaScript click if Selenium cannot click:
+
+JavascriptExecutor js = (JavascriptExecutor) driver;
+js.executeScript("arguments[0].click();", button);
+
+
+Check for overlays or modals that block interaction.
+
+2️⃣ TimeoutException
+
+Description:
+Occurs when an operation takes longer than the specified wait time, typically with WebDriverWait or FluentWait.
+
+Common Causes:
+
+Element never becomes visible, clickable, or present within the timeout.
+
+Page takes longer to load than expected.
+
+Example:
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("submitBtn"))); 
+// Throws TimeoutException if element not visible within 5 seconds
+
+
+How to Handle:
+
+Increase wait time for slow-loading elements:
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+
+
+Use correct ExpectedConditions.
+
+Ensure page or AJAX calls have finished loading before locating the element.
+
+3️⃣ SessionNotCreatedException
+
+Description:
+Occurs when Selenium cannot create a browser session. Usually happens with WebDriver version/browser version mismatch.
+
+Common Causes:
+
+Browser updated but driver is old or incompatible.
+
+Browser not installed properly.
+
+Incorrect driver path.
+
+Example:
+
+WebDriver driver = new ChromeDriver(); 
+// Throws SessionNotCreatedException if ChromeDriver version incompatible with installed Chrome
+
+
+How to Handle:
+
+Update driver to match browser version
+
+Using WebDriverManager (highly recommended):
+
+WebDriverManager.chromedriver().setup();
+WebDriver driver = new ChromeDriver();
+
+
+Check browser installation and compatibility.
+
+Use correct driver executable if WebDriverManager is not used.
+
+
+Flaky tests are tests that sometimes pass and sometimes fail without any changes to the code, often due to timing, environment, or test design issues. Handling them is crucial to maintain reliable automation suites.
+
+Here’s a detailed guide:
+
+1️⃣ Common Causes of Flaky Tests
+Cause	Explanation
+Timing / Synchronization issues	Element not ready when WebDriver interacts (needs waits)
+Dynamic Data / Environment	Test relies on data that changes or environment state (databases, APIs)
+Parallel Execution	Shared resources or non-thread-safe code cause conflicts
+Test Dependencies	Tests depending on other tests that may fail intermittently
+Animations / UI transitions	Elements moving, modals appearing/disappearing
+2️⃣ How to Handle Flaky Tests
+a) Use Proper Synchronization
+
+Replace Thread.sleep() with Explicit/Fluent waits to wait for elements.
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement button = wait.until(ExpectedConditions.elementToBeClickable(By.id("submitBtn")));
+button.click();
+
+b) Isolate Tests
+
+Each test should run independently without depending on other tests.
+
+Avoid shared state or data dependencies.
+
+c) Use Retry Logic
+
+TestNG allows re-running failed tests automatically using IRetryAnalyzer.
+
+public class RetryFailedTest implements IRetryAnalyzer {
+    private int retryCount = 0;
+    private static final int maxRetry = 2;
+
+    @Override
+    public boolean retry(ITestResult result) {
+        if (retryCount < maxRetry) {
+            retryCount++;
+            return true;
+        }
+        return false;
+    }
+}
+
+
+Apply to test:
+
+@Test(retryAnalyzer = RetryFailedTest.class)
+public void flakyTest() {
+    // test code
+}
+
+d) Stabilize Test Data
+
+Use fixed or controlled test data.
+
+Mock APIs if responses are unpredictable.
+
+Reset application state before each test.
+
+e) Avoid Timing / Animation Issues
+
+Wait for animations, modals, or transitions to complete before interacting with elements.
+
+Example:
+
+wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("loadingSpinner")));
+
+f) Use Thread-Safe Practices in Parallel Execution
+
+Each thread should have its own WebDriver instance.
+
+private static ThreadLocal<WebDriver> driver = new ThreadLocal<>();
+
+3️⃣ Key Tips
+
+Use Explicit/Fluent waits instead of Thread.sleep().
+
+Make tests independent and repeatable.
+
+Retry flaky tests only after fixing root cause.
+
+Keep test data stable and predictable.
+
+Use logging and screenshots to analyze intermittent failures.
+
+4️⃣ Interview-friendly one-liner
+
+Flaky tests are handled by using proper waits, isolating tests, stabilizing test data, retrying failed tests with retry analyzers, and ensuring thread safety in parallel execution.
+
+
+What is Headless Mode?
+
+Headless mode means running a browser without opening a GUI window.
+
+✅ Advantages:
+
+Faster execution since no UI is rendered.
+
+Useful for CI/CD pipelines or server environments without a display.
+
+Same functionality as normal browser, just invisible.
+
+❌ Disadvantages:
+
+Cannot see what is happening visually (use screenshots for debugging).
+
+2️⃣ How to Run Browsers in Headless Mode
+a) Chrome Headless
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+public class HeadlessExample {
+    public static void main(String[] args) {
+        WebDriverManager.chromedriver().setup();
+
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless");  // Headless mode
+        options.addArguments("--disable-gpu"); // Optional for Windows
+        options.addArguments("--window-size=1920,1080"); // Set window size
+
+        WebDriver driver = new ChromeDriver(options);
+
+        driver.get("https://www.example.com");
+        System.out.println(driver.getTitle());
+
+        driver.quit();
+    }
+}
+
+
+
+sing Window Maximize
+driver.manage().window().maximize();
+
+
+Extent Reports in Selenium + TestNG
+
+Purpose:
+
+Beautiful HTML reports for your tests
+
+Includes pass/fail status, screenshots, logs, and timestamps
+
+Step 1: Add Maven Dependency
+<dependency>
+    <groupId>com.aventstack</groupId>
+    <artifactId>extentreports</artifactId>
+    <version>5.0.9</version>
+</dependency>
+
+Step 2: Initialize Extent Reports
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+
+public class BaseTest {
+
+    public static ExtentReports extent;
+    public static ExtentTest test;
+
+    public static void setupReport() {
+        ExtentSparkReporter spark = new ExtentSparkReporter("test-output/ExtentReport.html");
+        extent = new ExtentReports();
+        extent.attachReporter(spark);
+    }
+
+    public static void flushReport() {
+        extent.flush();
+    }
+}
+
+Step 3: Use Extent in Tests
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.Test;
+
+public class LoginTest extends BaseTest {
+
+    @BeforeTest
+    public void startReport() {
+        setupReport();
+        test = extent.createTest("Login Test");
+    }
+
+    @Test
+    public void loginTest() {
+        test.info("Opening browser");
+        // WebDriver code
+        test.pass("Login test passed successfully");
+    }
+
+    @AfterTest
+    public void endReport() {
+        flushReport();
+    }
+}
+
+
+✅ This will generate a nice HTML report with logs.
+
+2️⃣ Logging in Automation (with Log4j or Java Logger)
+
+Purpose:
+
+Helps track what happened in the test
+
+Easier to debug when tests fail
+
+Step 1: Add Log4j Dependency
+<dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-core</artifactId>
+    <version>2.20.0</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-api</artifactId>
+    <version>2.20.0</version>
+</dependency>
+
+Step 2: Log4j Configuration (log4j2.xml)
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+        <File name="File" fileName="logs/test.log">
+            <PatternLayout pattern="%d %p %c{1.} [%t] %m%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+</Configuration>
+
+Step 3: Use Logger in Code
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class LoginTest {
+
+    private static final Logger logger = LogManager.getLogger(LoginTest.class);
+
+    @Test
+    public void loginTest() {
+        logger.info("Opening browser");
+        logger.debug("Debug: username entered");
+        logger.warn("Warning: slow response detected");
+        logger.error("Error: login failed");
+        logger.fatal("Fatal: cannot continue");
+    }
+}
+
+
+Data-driven testing (DDT) from Excel in Selenium means running the same test multiple times using data stored in an Excel file (e.g., usernames, passwords, inputs). This allows you to separate test logic from test data, making tests more flexible and maintainable.
+
+Here’s a complete guide using Java + Selenium + Apache POI:
+
+1️⃣ Setup: Add Apache POI Dependencies
+
+If you are using Maven, add:
+
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi</artifactId>
+    <version>5.2.3</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi-ooxml</artifactId>
+    <version>5.2.3</version>
+</dependency>
+
+2️⃣ Sample Excel File
+
+File: TestData.xlsx
+
+Username	Password
+user1	pass1
+user2	pass2
+user3	pass3
+
+Sheet name: Sheet1
+
+Save in project folder: src/test/resources/TestData.xlsx
+
+3️⃣ Reading Excel Data with Apache POI
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+public class ExcelUtils {
+
+    public static Object[][] getExcelData(String filePath, String sheetName) {
+        Object[][] data = null;
+        try {
+            FileInputStream fis = new FileInputStream(new File(filePath));
+            Workbook workbook = new XSSFWorkbook(fis);
+            Sheet sheet = workbook.getSheet(sheetName);
+            
+            int rowCount = sheet.getPhysicalNumberOfRows();
+            int colCount = sheet.getRow(0).getLastCellNum();
+            
+            data = new Object[rowCount-1][colCount]; // Exclude header row
+            
+            for(int i=1; i<rowCount; i++) {
+                Row row = sheet.getRow(i);
+                for(int j=0; j<colCount; j++) {
+                    Cell cell = row.getCell(j);
+                    data[i-1][j] = cell.toString();
+                }
+            }
+            workbook.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
+}
+
+4️⃣ Using TestNG @DataProvider
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+public class LoginTest {
+
+    @DataProvider(name = "excelData")
+    public Object[][] getData() {
+        String path = "src/test/resources/TestData.xlsx";
+        return ExcelUtils.getExcelData(path, "Sheet1");
+    }
+
+    @Test(dataProvider = "excelData")
+    public void loginTest(String username, String password) {
+        WebDriverManager.chromedriver().setup();
+        WebDriver driver = new ChromeDriver();
+
+        driver.get("https://example.com/login");
+
+        driver.findElement(By.id("username")).sendKeys(username);
+        driver.findElement(By.id("password")).sendKeys(password);
+        driver.findElement(By.id("loginBtn")).click();
+
+        System.out.println("Login attempted for: " + username);
+
+        driver.quit();
+    }
+}
+
+
+How the URL Works for Basic Auth
+
+If they give you a URL like:
+
+https://example-app.herokuapp.com
+
+
+And they provide credentials:
+
+Username: admin  
+Password: admin123
+
+
+You combine the credentials with the URL:
+
+https://admin:admin123@example-app.herokuapp.com
+
+
+admin:admin123@ → this is the username and password part.
+
+example-app.herokuapp.com → this is the domain.
+
+When Selenium navigates to this URL, the browser automatically logs in, bypassing the popup.
+
+2️⃣ Selenium Code Example
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+public class HerokuAuthTest {
+    public static void main(String[] args) {
+        WebDriverManager.chromedriver().setup();
+        WebDriver driver = new ChromeDriver();
+
+        // Navigate to URL with credentials
+        driver.get("https://admin:admin123@example-app.herokuapp.com");
+
+        // Print page title to verify login
+        System.out.println("Page title: " + driver.getTitle());
+
+        driver.quit();
+    }
+}
+
+PageFactory is a Selenium design pattern utility that helps implement the Page Object Model (POM) more efficiently. It provides a convenient way to initialize web elements and organize your automation code for better readability, maintainability, and reusability.
+
+Let’s break it down step by step.
+
+1️⃣ What is PageFactory?
+
+Part of Selenium’s org.openqa.selenium.support.PageFactory class.
+
+Used to initialize WebElements declared in a Page Object class with @FindBy annotations.
+
+Helps avoid repeatedly calling driver.findElement(By...) in test methods.
+
+Key Features
+
+Automatic initialization of WebElements.
+
+Supports multiple locator strategies (id, name, xpath, css, className, etc.).
+
+Improves readability and maintainability in Page Object Model.
+
+2️⃣ Why Use PageFactory?
+Advantage	Explanation
+Cleaner Code	No need to repeatedly call driver.findElement.
+Maintainability	All element locators are in one place (the page class).
+Reusability	Page classes can be reused across multiple tests.
+Lazy Initialization	Elements are only initialized when used, not at object creation.
+3️⃣ How to Use PageFactory
+Step 1: Create a Page Object Class
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+
+public class LoginPage {
+
+    WebDriver driver;
+
+    // Locate elements using @FindBy
+    @FindBy(id = "username")
+    WebElement usernameField;
+
+    @FindBy(id = "password")
+    WebElement passwordField;
+
+    @FindBy(id = "loginBtn")
+    WebElement loginButton;
+
+    // Constructor to initialize PageFactory elements
+    public LoginPage(WebDriver driver) {
+        this.driver = driver;
+        PageFactory.initElements(driver, this); // Initialize WebElements
+    }
+
+    // Page actions
+    public void enterUsername(String username) {
+        usernameField.sendKeys(username);
+    }
+
+    public void enterPassword(String password) {
+        passwordField.sendKeys(password);
+    }
+
+    public void clickLogin() {
+        loginButton.click();
+    }
+}
+
+
+ated link validation.
+
+
+
+
+Simple Input Field
+
+Example: <input type="date">
+
+You can directly use sendKeys().
+
+Custom Calendar Widget (JS-based)
+
+Example: jQuery UI, Bootstrap, or React calendars.
+
+You need to click the calendar widget and select the date programmatically.
+
+2️⃣ Handling Simple HTML <input> Fields
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+public class SimpleDatePicker {
+    public static void main(String[] args) {
+        WebDriverManager.chromedriver().setup();
+        WebDriver driver = new ChromeDriver();
+
+        driver.get("https://example.com");
+
+        // Find the date input field
+        WebElement dateInput = driver.findElement(By.id("dateField"));
+
+        // Enter date in required format (e.g., yyyy-MM-dd)
+        dateInput.sendKeys("2026-02-15");
+
+        driver.quit();
+    }
+}
+
+
+✅ Works if the field accepts text input.
+
+3️⃣ Handling Complex JS Calendar Widgets
+
+Click the date field to open the calendar.
+
+Navigate to correct month/year (if needed).
+
+Select the correct day by clicking the element.
+
+// Example for a JS calendar
+driver.findElement(By.id("dateField")).click(); // open calendar
+
+// Navigate months/years if necessary
+driver.findElement(By.xpath("//button[@class='next-month']")).click();
+
+// Select day
+driver.findElement(By.xpath("//td[text()='15']")).click();
+
+
+💡 Tip: Always inspect the HTML structure to identify which element corresponds to month, year, and day.
+
+4️⃣ Handling Date Picker Dynamically
+
+You can write a utility method to select any date:
+
+public void selectDate(String date) {
+    // date format: "yyyy-MM-dd"
+    String[] parts = date.split("-");
+    String year = parts[0];
+    String month = parts[1]; // May need conversion to month name
+    String day = parts[2];
+
+    // Open calendar
+    driver.findElement(By.id("dateField")).click();
+
+    // Navigate to correct month/year
+    // Click day
+    driver.findElement(By.xpath("//td[text()='" + Integer.parseInt(day) + "']")).click();
+}
+
+
+1️⃣ WebDriver get Methods
+a) get(String URL)
+
+Opens a web page in the browser.
+
+Example:
+
+WebDriver driver = new ChromeDriver();
+driver.get("https://example.com");  // Opens the URL
+
+
+✅ This is different from retrieving data — it’s for navigation.
+
+b) getTitle()
+
+Returns the title of the current page as a String.
+
+Example:
+
+String title = driver.getTitle();
+System.out.println("Page title: " + title);
+
+c) getCurrentUrl()
+
+Returns the current URL of the page.
+
+Example:
+
+String url = driver.getCurrentUrl();
+System.out.println("Current URL: " + url);
+
+d) getWindowHandle()
+
+Returns the unique ID (handle) of the current browser window.
+
+Example:
+
+String mainWindow = driver.getWindowHandle();
+
+e) getWindowHandles()
+
+Returns a Set of all open window handles.
+
+Example:
+
+Set<String> allWindows = driver.getWindowHandles();
+
+f) getPageSource()
+
+Returns the HTML source code of the current page.
+
+Example:
+
+String pageSource = driver.getPageSource();
+System.out.println(pageSource);
+
+2️⃣ WebElement get Methods
+
+These retrieve data from elements:
+
+a) getText()
+
+Returns the visible text of the element.
+
+Example:
+
+WebElement heading = driver.findElement(By.id("title"));
+String text = heading.getText();
+System.out.println("Heading: " + text);
+
+b) getAttribute(String attributeName)
+
+Returns the value of an attribute of the element.
+
+Example:
+
+WebElement input = driver.findElement(By.id("username"));
+String value = input.getAttribute("value");  // e.g., prefilled value
+
+c) getCssValue(String propertyName)
+
+Returns the CSS property value of an element.
+
+Example:
+
+WebElement button = driver.findElement(By.id("submit"));
+String color = button.getCssValue("background-color");
+System.out.println("Button color: " + color);
+
+d) getTagName()
+
+Returns the HTML tag name of the element.
+
+Example:
+
+String tagName = button.getTagName();
+System.out.println("Tag name: " + tagName); // e.g., "button"
+
+e) getSize() / getLocation() (technically not get* methods for text, but useful)
+
+getSize() → returns element dimensions (height & width)
+
+getLocation() → returns element position (x & y)
+
+
+In Selenium Java, Explicit Wait is used to wait for a specific condition to occur before performing an action. Unlike implicit wait, which applies globally, explicit wait targets a particular element or condition.
+
+Explicit Wait is implemented using:
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+wait.until(ExpectedConditions.<condition>);
+
+1️⃣ Common ExpectedConditions Methods
+
+These are the methods you can use with WebDriverWait:
+
+Condition	Usage	Example
+visibilityOf(element)	Waits until the element is visible on the page	wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("username"))));
+visibilityOfAllElements(elements)	Waits until all elements in the list are visible	wait.until(ExpectedConditions.visibilityOfAllElements(listOfElements));
+elementToBeClickable(element)	Waits until the element is clickable (visible + enabled)	wait.until(ExpectedConditions.elementToBeClickable(btnLogin)).click();
+presenceOfElementLocated(locator)	Waits until the element is present in the DOM, but not necessarily visible	wait.until(ExpectedConditions.presenceOfElementLocated(By.id("username")));
+presenceOfAllElementsLocatedBy(locator)	Waits until all elements located by a locator are present in DOM	wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector(".items")));
+textToBePresentInElement(element, text)	Waits until the element contains specific text	wait.until(ExpectedConditions.textToBePresentInElement(lblStatus, "Success"));
+textToBePresentInElementValue(element, value)	Waits until the element’s value attribute contains the text	wait.until(ExpectedConditions.textToBePresentInElementValue(inputBox, "Admin"));
+alertIsPresent()	Waits until an alert is present	wait.until(ExpectedConditions.alertIsPresent());
+frameToBeAvailableAndSwitchToIt(frameLocator)	Waits until a frame is available and switches to it	wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("frame1"));
+invisibilityOf(element)	Waits until the element is invisible	wait.until(ExpectedConditions.invisibilityOf(loader));
+stalenessOf(element)	Waits until the element is no longer attached to DOM	wait.until(ExpectedConditions.stalenessOf(oldElement));
+elementSelectionStateToBe(element, selected)	Waits until checkbox/radio is selected/unselected	wait.until(ExpectedConditions.elementSelectionStateToBe(chkbox, true));
+elementToBeSelected(element)	Waits until checkbox/radio is selected	wait.until(ExpectedConditions.elementToBeSelected(chkbox));
+numberOfElementsToBe(locator, number)	Waits until a certain number of elements are present	wait.until(ExpectedConditions.numberOfElementsToBe(By.className("row"), 5));
+titleIs(title) / titleContains(text)	Waits until page title matches/contains text	wait.until(ExpectedConditions.titleContains("Dashboard"));
+urlContains(text) / urlToBe(url)	Waits until URL matches/contains	wait.until(ExpectedConditions.urlContains("/home"));
+
+
