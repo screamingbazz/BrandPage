@@ -1,0 +1,1660 @@
+@Test
+
+Marks a method as a test case
+
+This is where your actual test logic lives
+
+@Test
+public void loginTest() {
+    System.out.println("Executing test");
+}
+
+@BeforeMethod / @AfterMethod
+
+Runs before and after each @Test method
+
+Used for per-test setup and cleanup
+
+@BeforeMethod
+public void setup() {
+    System.out.println("Before each test");
+}
+
+@AfterMethod
+public void teardown() {
+    System.out.println("After each test");
+}
+
+
+🧠 Runs every time a test method runs.
+
+@BeforeClass / @AfterClass
+
+Runs once before and after all @Test methods in a class
+
+Used for class-level setup (e.g., initializing a browser once)
+
+@BeforeClass
+public void beforeClass() {
+    System.out.println("Before class");
+}
+
+@AfterClass
+public void afterClass() {
+    System.out.println("After class");
+}
+
+@BeforeTest / @AfterTest
+
+Runs before and after <test> tag in testng.xml
+
+Often confused with @BeforeMethod—they’re very different
+
+@BeforeTest
+public void beforeTest() {
+    System.out.println("Before <test> in XML");
+}
+
+@AfterTest
+public void afterTest() {
+    System.out.println("After <test> in XML");
+}
+
+
+📌 If multiple classes are under the same <test> tag, this runs once for all of them.
+
+@BeforeSuite / @AfterSuite
+
+Runs once before and after the entire test suite
+
+Perfect for global setup (DB connection, reports, environment config)
+
+@BeforeSuite
+public void beforeSuite() {
+    System.out.println("Before entire suite");
+}
+
+@AfterSuite
+public void afterSuite() {
+    System.out.println("After entire suite");
+}
+
+Execution Order (Big Picture)
+@BeforeSuite
+  @BeforeTest
+    @BeforeClass
+      @BeforeMethod
+        @Test
+      @AfterMethod
+    @AfterClass
+  @AfterTest
+@AfterSuite
+
+When to use what (quick intuition)
+Annotation	Use for
+@BeforeSuite	Global setup
+@BeforeTest	Test-level config
+@BeforeClass	One-time class setup
+@BeforeMethod	Reset state before each test
+@Test	Actual test
+@AfterMethod	Cleanup after each test
+
+If you want, I can also:
+
+Explain real interview examples
+
+Compare TestNG vs JUnit annotations
+
+Show a full runnable example
+
+Explain tricky cases (parallel execution, priorities, dependsOn)
+
+Just say the word 🙂
+
+THERE IS A DOUBT BEFORE CLASS After class will run bfore a class in java file or class tag in testng.xml
+
+Good question — this trips a lot of people up 👍
+Let’s clear it cleanly.
+
+🔑 Key rule
+
+@BeforeClass and @AfterClass are tied to the Java test class, NOT the <class> tag position in testng.xml.
+
+What they actually mean
+@BeforeClass
+
+Runs once before the first @Test method in that Java class
+
+Independent of where the <class> tag appears in testng.xml
+
+@AfterClass
+
+Runs once after the last @Test method in that same Java class
+
+Again, tied to the Java class, not XML order
+
+Example
+testng.xml
+<suite name="Suite">
+  <test name="Test">
+    <classes>
+      <class name="tests.LoginTest"/>
+      <class name="tests.DashboardTest"/>
+    </classes>
+  </test>
+</suite>
+
+Java classes
+public class LoginTest {
+
+    @BeforeClass
+    public void beforeClass() {
+        System.out.println("LoginTest - BeforeClass");
+    }
+
+    @Test
+    public void test1() {}
+
+    @AfterClass
+    public void afterClass() {
+        System.out.println("LoginTest - AfterClass");
+    }
+}
+
+public class DashboardTest {
+
+    @BeforeClass
+    public void beforeClass() {
+        System.out.println("DashboardTest - BeforeClass");
+    }
+
+    @Test
+    public void test2() {}
+
+    @AfterClass
+    public void afterClass() {
+        System.out.println("DashboardTest - AfterClass");
+    }
+}
+
+Execution order (important part)
+LoginTest   -> @BeforeClass
+LoginTest   -> @Test
+LoginTest   -> @AfterClass
+
+DashboardTest -> @BeforeClass
+DashboardTest -> @Test
+DashboardTest -> @AfterClass
+
+
+📌 Even though <class> tags are in testng.xml,
+@AfterClass of LoginTest runs before @BeforeClass of DashboardTest
+
+What does NOT happen ❌
+
+@AfterClass does not wait until all classes in XML finish
+
+@BeforeClass does not depend on <class> tag position internally
+
+Quick comparison to avoid confusion
+Annotation	Scope
+@BeforeClass / @AfterClass	Java test class
+<class> tag	Just tells TestNG which class to run
+@BeforeTest / @AfterTest	<test> tag in XML
+@BeforeSuite / @AfterSuite	Entire suite
+One-line answer (interview-safe)
+
+@BeforeClass and @AfterClass execute based on the Java test class, not the <class> tag in testng.xml. @AfterClass of one class runs before @BeforeClass of the next class.
+
+
+What is testng.xml used for?
+
+With testng.xml, you can:
+
+Decide which test classes/methods to execute
+
+Control execution order
+
+Group tests and run specific groups
+
+Enable parallel execution
+
+Pass parameters to tests
+
+Define multiple test environments
+
+Control listeners and reports
+
+Basic structure of testng.xml
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="MySuite">
+  
+  <test name="LoginTests">
+    <classes>
+      <class name="tests.LoginTest"/>
+      <class name="tests.DashboardTest"/>
+    </classes>
+  </test>
+
+</suite>
+
+Using testng.xml + @Parameters (most common)
+
+This is the classic interview answer.
+
+Step 1: Define parameter in testng.xml
+<suite name="Suite">
+  <test name="LoginTest">
+    <parameter name="browser" value="chrome"/>
+    <classes>
+      <class name="tests.LoginTest"/>
+    </classes>
+  </test>
+</suite>
+
+Step 2: Receive parameter in Java using @Parameters
+@Parameters("browser")
+@BeforeClass
+public void setup(String browser) {
+    System.out.println("Browser is: " + browser);
+}
+
+
+📌 Parameter name must match between XML and annotation.
+
+
+Using @DataProvider (multiple test data)
+
+Used when you want multiple sets of data for a test.
+
+@DataProvider(name = "loginData")
+public Object[][] getData() {
+    return new Object[][] {
+        {"user1", "pass1"},
+        {"user2", "pass2"}
+    };
+}
+
+@Test(dataProvider = "loginData")
+public void loginTest(String user, String pass) {
+    System.out.println(user + " " + pass);
+}
+
+
+📌 This is data-driven testing, not XML-based parameters.
+
+
+Suite-level vs Test-level parameters
+Suite-level (available to all tests)
+<suite name="Suite">
+  <parameter name="env" value="QA"/>
+
+Test-level (specific to one <test>)
+<test name="Test1">
+  <parameter name="browser" value="firefox"/>
+
+Parameters in TestNG are passed using @Parameters with values defined in testng.xml, and for multiple data sets we use @DataProvider.
+
+
+@DataProvider in TestNG is used for data-driven testing.
+It allows you to run the same test method multiple times with different sets of data.
+
+Instead of writing many test methods, you write one test and feed it multiple inputs.
+
+Why use @DataProvider?
+
+Run tests with multiple input values
+
+Avoid duplicate test code
+
+Ideal for login tests, form validation, APIs, etc.
+
+TestNG automatically loops over the data
+
+Basic example
+DataProvider method
+@DataProvider(name = "loginData")
+public Object[][] getData() {
+    return new Object[][] {
+        {"user1", "pass1"},
+        {"user2", "pass2"},
+        {"user3", "pass3"}
+    };
+}
+
+Test method
+@Test(dataProvider = "loginData")
+public void loginTest(String username, String password) {
+    System.out.println(username + " " + password);
+}
+
+
+📌 Result: loginTest runs 3 times, once for each data set.
+
+How it works internally
+
+Each row in Object[][] = one test execution
+
+Each column = parameter for the test method
+
+Number & order of parameters must match test method arguments
+
+DataProvider in a separate class
+@DataProvider(name = "loginData")
+public static Object[][] getData() {
+    return new Object[][] {
+        {"admin", "admin123"},
+        {"guest", "guest123"}
+    };
+}
+
+@Test(dataProvider = "loginData", dataProviderClass = DataUtil.class)
+public void loginTest(String user, String pass) {
+}
+
+Passing data dynamically
+
+You can read data from:
+
+Excel
+
+CSV
+
+Database
+
+API response
+
+Properties file
+
+(DataProvider just returns Object[][], source doesn’t matter.)
+
+Parallel execution with DataProvider
+@DataProvider(name = "loginData", parallel = true)
+
+
+Each data set can run in parallel threads
+
+
+TestNG groups are a way to categorize and control which tests run.
+Instead of running all tests, you can run only specific groups like smoke, regression, or sanity.
+
+Think of groups as labels for your test methods (or classes).
+
+Why use TestNG groups?
+
+Run only selected tests
+
+Separate smoke / regression / sanity
+
+Speed up execution
+
+Easy CI/CD control
+
+No code changes needed to switch test sets
+
+How to create a group
+Grouping a test method
+@Test(groups = {"smoke"})
+public void loginTest() {
+}
+
+Multiple groups for one test
+@Test(groups = {"smoke", "regression"})
+public void logoutTest() {
+}
+
+Grouping at class level
+
+Applies to all test methods in the class.
+
+@Test(groups = "regression")
+public class PaymentTest {
+
+    @Test
+    public void paymentTest1() {}
+
+    @Test
+    public void paymentTest2() {}
+}
+
+Running groups using testng.xml
+Include groups
+<suite name="Suite">
+  <test name="SmokeTests">
+    <groups>
+      <run>
+        <include name="smoke"/>
+      </run>
+    </groups>
+    <classes>
+      <class name="tests.LoginTest"/>
+      <class name="tests.PaymentTest"/>
+    </classes>
+  </test>
+</suite>
+
+Exclude groups
+<exclude name="regression"/>
+
+Group dependencies
+
+Run one group before another.
+
+@Test(groups = "regression", dependsOnGroups = "smoke")
+public void advancedTest() {
+}
+
+Groups with @BeforeMethod / @AfterMethod
+
+You can make setup/teardown run only for certain groups.
+
+@BeforeMethod(onlyForGroups = "smoke")
+public void smokeSetup() {
+}
+
+
+
+In TestNG, dependency means one test depends on another test (or group of tests).
+A dependent test will run only if the test it depends on passes.
+
+It’s used to control execution order and flow, especially when tests must follow a sequence.
+
+Types of dependencies in TestNG
+1️⃣ Method dependency (dependsOnMethods)
+
+A test runs only after another test method passes.
+
+@Test
+public void login() {
+    System.out.println("Login successful");
+}
+
+@Test(dependsOnMethods = "login")
+public void dashboard() {
+    System.out.println("Dashboard loaded");
+}
+
+
+📌 If login() fails → dashboard() is skipped.
+
+2️⃣ Group dependency (dependsOnGroups)
+
+A test depends on a whole group of tests.
+
+@Test(groups = "smoke")
+public void login() {}
+
+@Test(groups = "regression", dependsOnGroups = "smoke")
+public void advancedFeature() {}
+
+
+📌 advancedFeature() runs only if all smoke tests pass.
+
+Dependency vs priority (important interview point)
+Feature	Dependency	Priority
+Controls execution	Based on result	Based on order
+Skips on failure	✅	❌
+Real test flow	✅	❌
+
+➡️ Dependency is preferred over priority when tests rely on each other.
+
+Using alwaysRun = true
+
+For cleanup or logout tests that must run even if dependency fails.
+
+@Test(dependsOnMethods = "login", alwaysRun = true)
+public void logout() {
+    System.out.println("Logout executed");
+}
+
+Multiple dependencies
+@Test(dependsOnMethods = {"login", "search"})
+public void checkout() {}
+
+
+In TestNG, if a test that another test depends on fails, then the dependent test is skipped — it does not fail, it does not run.
+
+What exactly happens?
+Example
+@Test
+public void login() {
+    Assert.fail();   // login fails
+}
+
+@Test(dependsOnMethods = "login")
+public void dashboard() {
+    System.out.println("Dashboard");
+}
+
+Result
+
+login → ❌ FAILED
+
+dashboard → ⚠️ SKIPPED
+
+📌 TestNG marks it as SKIPPED due to dependency failure.
+
+Important points to remember
+1️⃣ Dependent tests are skipped, not failed
+
+This is a key interview question.
+
+2️⃣ Same rule for group dependencies
+@Test(dependsOnGroups = "smoke")
+public void regressionTest() {}
+
+
+If any test in the smoke group fails, regressionTest is skipped.
+
+3️⃣ Using alwaysRun = true
+
+For teardown or cleanup that must run even if dependency fails.
+
+@Test(dependsOnMethods = "login", alwaysRun = true)
+public void logout() {
+    System.out.println("Logout runs anyway");
+}
+
+4️⃣ Report behavior
+
+In TestNG reports:
+
+Failed dependency → FAILED
+
+Dependent test → SKIPPED (dependency failed)
+
+
+In TestNG, running tests in parallel lets you execute multiple tests simultaneously, which speeds up execution, especially for large suites or cross-browser testing. You can configure this in testng.xml or programmatically.
+
+Here’s a detailed breakdown:
+
+1️⃣ Parallel execution in testng.xml
+
+The parallel attribute in the <suite> or <test> tag defines what runs in parallel.
+The thread-count specifies how many threads to use.
+
+Example: Parallel at the test level
+<suite name="Suite" parallel="tests" thread-count="2">
+  <test name="Test1">
+    <classes>
+      <class name="tests.LoginTest"/>
+    </classes>
+  </test>
+  <test name="Test2">
+    <classes>
+      <class name="tests.PaymentTest"/>
+    </classes>
+  </test>
+</suite>
+
+
+✅ Here:
+
+<test> tags run in parallel
+
+Two threads allow two tests to run simultaneously
+
+Example: Parallel at the class level
+<suite name="Suite" parallel="classes" thread-count="2">
+  <test name="RegressionTests">
+    <classes>
+      <class name="tests.LoginTest"/>
+      <class name="tests.PaymentTest"/>
+    </classes>
+  </test>
+</suite>
+
+
+✅ Here:
+
+Each class in the <test> tag runs in parallel
+
+All test methods in a class still run sequentially (unless you set methods parallel)
+
+Example: Parallel at the method level
+<suite name="Suite" parallel="methods" thread-count="4">
+  <test name="RegressionTests">
+    <classes>
+      <class name="tests.LoginTest"/>
+    </classes>
+  </test>
+</suite>
+
+
+✅ Here:
+
+All @Test methods in the class run simultaneously
+
+Useful when tests are independent
+
+Parallel at instance level (rare)
+<suite name="Suite" parallel="instances" thread-count="2">
+
+
+Runs different instances of the same class in parallel
+
+2️⃣ Using @DataProvider in parallel
+@DataProvider(name = "loginData", parallel = true)
+public Object[][] getData() {
+    return new Object[][] {
+        {"user1", "pass1"},
+        {"user2", "pass2"}
+    };
+}
+
+@Test(dataProvider = "loginData")
+public void loginTest(String user, String pass) {
+    System.out.println(user + " " + pass);
+}
+
+
+✅ Each data set runs in parallel threads.
+
+
+In TestNG, thread-count is the number of threads TestNG will use when running tests in parallel.
+
+It controls how many tests or methods can execute simultaneously.
+
+Key points
+
+Used only with parallel execution
+
+If parallel is not set, thread-count is ignored.
+
+Defines concurrency
+
+For example, thread-count="3" means up to 3 tests/methods/classes (depending on the parallel level) can run at the same time.
+
+Works with all parallel levels:
+
+tests → multiple <test> tags
+
+classes → multiple classes in a test
+
+methods → multiple test methods in a class
+
+instances → multiple instances of a class
+
+Example: Parallel at test level
+<suite name="Suite" parallel="tests" thread-count="2">
+  <test name="Test1">
+    <classes>
+      <class name="tests.LoginTest"/>
+    </classes>
+  </test>
+  <test name="Test2">
+    <classes>
+      <class name="tests.PaymentTest"/>
+    </classes>
+  </test>
+  <test name="Test3">
+    <classes>
+      <class name="tests.DashboardTest"/>
+    </classes>
+  </test>
+</suite>
+
+
+✅ Here:
+
+thread-count=2 → 2 tests run simultaneously
+
+The 3rd test waits until a thread is free
+
+Example: Parallel at method level
+<suite name="Suite" parallel="methods" thread-count="3">
+  <test name="RegressionTests">
+    <classes>
+      <class name="tests.LoginTest"/>
+    </classes>
+  </test>
+</suite>
+
+
+Each @Test method in LoginTest can run in up to 3 threads simultaneously.
+
+Things to keep in mind
+
+Thread safety
+
+Shared objects like WebDriver, database connections, or static variables can cause flaky tests in parallel execution.
+
+Solution: use ThreadLocal for per-thread instances.
+
+Thread count vs system resources
+
+Too high → slows down or crashes tests
+
+Too low → underutilizes CPU/cores
+
+thread-count is ignored if parallel="none"
+
+Parallel execution must be enabled.
+
+In TestNG, Assert is used to verify test conditions, but there are two types of assertions: Hard Assert and Soft Assert. They behave differently when a check fails.
+
+Here’s the detailed breakdown:
+
+1️⃣ Hard Assert (Assert)
+
+Comes from org.testng.Assert
+
+Stops test execution immediately if the assertion fails
+
+Fails the test instantly
+
+Used when continuing the test after failure doesn’t make sense
+
+Example
+@Test
+public void hardAssertExample() {
+    System.out.println("Step 1");
+    Assert.assertEquals(5, 6);  // fails here
+    System.out.println("Step 2"); // won't execute
+}
+
+
+Output:
+
+Step 1
+Test failed at Assert.assertEquals
+Step 2 → NOT executed
+
+
+✅ Good for critical validations.
+
+2️⃣ Soft Assert (SoftAssert)
+
+Comes from org.testng.asserts.SoftAssert
+
+Does NOT stop test execution when assertion fails
+
+All assertions in the test method are executed
+
+You must call assertAll() at the end to mark the test as failed if any soft assertion failed
+
+Example
+@Test
+public void softAssertExample() {
+    SoftAssert soft = new SoftAssert();
+
+    System.out.println("Step 1");
+    soft.assertEquals(5, 6); // fails but continues
+    System.out.println("Step 2");
+    soft.assertTrue(false);   // fails but continues
+
+    soft.assertAll(); // reports all failures
+}
+
+
+Output:
+
+Step 1
+Step 2
+Test failed at soft.assertAll → shows all failures
+
+
+✅ Good when you want to verify multiple conditions in a single test.
+
+3️⃣ Key Differences
+Feature	Hard Assert	Soft Assert
+Execution after failure	Stops immediately	Continues execution
+Test failure reporting	Fails instantly	Fails at assertAll()
+Class used	org.testng.Assert	org.testng.asserts.SoftAssert
+Use case	Critical checks	Multiple verifications in one test
+4️⃣ Practical use cases
+
+Hard Assert: Login test — if login fails, no point testing dashboard.
+
+Soft Assert: Form validation — check all fields, collect all errors before failing.
+
+Interview-friendly one-liner
+
+Hard Assert stops execution on failure, while Soft Assert allows execution to continue and reports all failures at the end with assertAll().
+
+If you want, I can also make a side-by-side flow diagram showing Hard vs Soft Assert execution — it’s really helpful for interviews.
+
+Do you want me to do that?
+
+what are assert methods
+
+In TestNG, assert methods are used to verify conditions in your test and determine whether a test passes or fails. They come from the org.testng.Assert class (for hard asserts) and org.testng.asserts.SoftAssert (for soft asserts).
+
+1️⃣ Hard Assert Methods (Assert)
+Commonly used methods:
+Method	Description	Example
+assertEquals(actual, expected)	Checks if two values are equal	Assert.assertEquals(5, 5);
+assertNotEquals(actual, expected)	Checks if two values are not equal	Assert.assertNotEquals(5, 6);
+assertTrue(condition)	Checks if condition is true	Assert.assertTrue(isLoggedIn);
+assertFalse(condition)	Checks if condition is false	Assert.assertFalse(isError);
+assertNull(object)	Checks if object is null	Assert.assertNull(user);
+assertNotNull(object)	Checks if object is not null	Assert.assertNotNull(response);
+fail()	Fails the test explicitly	Assert.fail("Test failed intentionally");
+
+If any hard assert fails, execution stops immediately.
+
+2️⃣ Soft Assert Methods (SoftAssert)
+
+SoftAssert uses the same assertion methods but does not stop execution:
+
+SoftAssert soft = new SoftAssert();
+
+soft.assertEquals(actual, expected);
+soft.assertTrue(condition);
+soft.assertNotNull(object);
+
+// Finally call assertAll() to report failures
+soft.assertAll();
+
+3️⃣ Example: Hard vs Soft Assert
+@Test
+public void hardAssertExample() {
+    Assert.assertEquals(5, 6); // fails immediately
+    System.out.println("This won't execute");
+}
+
+@Test
+public void softAssertExample() {
+    SoftAssert soft = new SoftAssert();
+    soft.assertEquals(5, 6); // fails but continues
+    System.out.println("This will execute");
+    soft.assertAll(); // reports all failures at end
+}
+
+4️⃣ Key Points
+
+Hard asserts → stop execution on failure
+
+Soft asserts → continue execution, check all validations
+
+Use assert methods to validate actual vs expected results in tests
+
+Essential for test automation verification
+
+Interview-friendly one-liner:
+
+Assert methods are TestNG methods like assertEquals, assertTrue, assertNull used to validate test conditions and mark tests as pass or fail.
+
+In TestNG, listeners are special interfaces that allow you to listen to events during the test execution and perform actions when those events occur.
+
+Think of them as hooks that let you tap into the test lifecycle — e.g., when a test starts, passes, fails, skips, etc.
+
+1️⃣ Why use TestNG listeners?
+
+Take screenshots on failure
+
+Generate custom reports
+
+Log test start/end events
+
+Retry failed tests
+
+Track execution flow for debugging or reporting
+
+Listeners are extremely useful in real-world automation projects.
+
+2️⃣ Common TestNG Listener Interfaces
+Listener	Description
+ITestListener	Tracks test method events: onTestStart, onTestSuccess, onTestFailure, onTestSkipped, etc.
+ISuiteListener	Tracks suite events: onStart(ISuite) and onFinish(ISuite)
+IInvokedMethodListener	Called before and after every method invocation
+IReporter	Generates custom reports at the end of a suite
+IAnnotationTransformer	Modifies annotations at runtime (e.g., @Test properties)
+IRetryAnalyzer	Allows retrying failed tests
+3️⃣ Example: ITestListener
+import org.testng.ITestListener;
+import org.testng.ITestResult;
+
+public class MyListener implements ITestListener {
+
+    @Override
+    public void onTestStart(ITestResult result) {
+        System.out.println("Test started: " + result.getName());
+    }
+
+    @Override
+    public void onTestSuccess(ITestResult result) {
+        System.out.println("Test passed: " + result.getName());
+    }
+
+    @Override
+    public void onTestFailure(ITestResult result) {
+        System.out.println("Test failed: " + result.getName());
+    }
+
+    @Override
+    public void onTestSkipped(ITestResult result) {
+        System.out.println("Test skipped: " + result.getName());
+    }
+}
+
+4️⃣ How to attach a listener
+Method 1: Using @Listeners annotation
+@Listeners(tests.MyListener.class)
+public class LoginTest {
+    @Test
+    public void loginTest() {
+        System.out.println("Login test running");
+    }
+}
+
+Method 2: Using testng.xml
+<suite name="Suite">
+  <listeners>
+    <listener class-name="tests.MyListener"/>
+  </listeners>
+  <test name="Test">
+    <classes>
+      <class name="tests.LoginTest"/>
+    </classes>
+  </test>
+</suite>
+
+
+In TestNG, you can retry failed tests automatically using the IRetryAnalyzer interface.
+
+This is very useful in flaky tests (like WebDriver tests that fail occasionally due to timing or network issues).
+
+1️⃣ Steps to retry failed tests
+Step 1: Implement IRetryAnalyzer
+import org.testng.IRetryAnalyzer;
+import org.testng.ITestResult;
+
+public class RetryFailedTests implements IRetryAnalyzer {
+
+    private int retryCount = 0;
+    private static final int maxRetryCount = 2; // number of retries
+
+    @Override
+    public boolean retry(ITestResult result) {
+        if (retryCount < maxRetryCount) {
+            retryCount++;
+            System.out.println("Retrying test " + result.getName() + " again - Attempt " + retryCount);
+            return true; // retry the test
+        }
+        return false; // give up
+    }
+}
+
+
+✅ Here:
+
+maxRetryCount = 2 → test will run a maximum of 3 times (1 original + 2 retries)
+
+retry() returns true → TestNG retries the test
+
+Step 2: Attach the retry analyzer to a test
+Option 1: Using @Test annotation
+@Test(retryAnalyzer = RetryFailedTests.class)
+public void loginTest() {
+    System.out.println("Executing login test");
+    Assert.fail(); // fail to test retry
+}
+
+Option 2: Using IAnnotationTransformer (global retry)
+
+If you want all failed tests to retry, implement IAnnotationTransformer:
+
+import org.testng.IAnnotationTransformer;
+import org.testng.annotations.ITestAnnotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+
+public class RetryListener implements IAnnotationTransformer {
+
+    @Override
+    public void transform(ITestAnnotation annotation, Class testClass, Constructor testConstructor, Method testMethod) {
+        annotation.setRetryAnalyzer(RetryFailedTests.class);
+    }
+}
+
+
+Then add this listener in testng.xml:
+
+<listeners>
+    <listener class-name="tests.RetryListener"/>
+</listeners>
+
+
+In TestNG, you can skip a test in several ways. Skipping a test means it does not run and is marked as SKIPPED in the report.
+
+Here’s a detailed guide:
+
+1️⃣ Using enabled=false in @Test
+
+Simple way to disable a test temporarily.
+
+@Test(enabled = false)
+public void skippedTest() {
+    System.out.println("This will not run");
+}
+
+
+✅ Test is skipped and not executed at all.
+
+2️⃣ Using throw new SkipException
+
+Dynamic skipping during test execution
+
+Requires import: org.testng.SkipException
+
+@Test
+public void skipTestDynamically() {
+    boolean condition = true;
+    if (condition) {
+        throw new SkipException("Skipping this test as condition is true");
+    }
+    System.out.println("This will not execute if skipped");
+}
+
+
+✅ Test appears as SKIPPED in the report.
+📌 Useful for conditional skipping, e.g., browser not supported, feature flag off, or dependency failed.
+
+3️⃣ Using dependsOnMethods or dependsOnGroups
+
+If a dependent test fails, the tests depending on it are automatically skipped.
+
+@Test
+public void login() {
+    Assert.fail("Login failed");
+}
+
+@Test(dependsOnMethods = "login")
+public void dashboard() {
+    System.out.println("This is skipped automatically");
+}
+
+
+✅ dashboard() is skipped because login() failed.
+
+4️⃣ Using enabled in testng.xml
+<suite name="Suite">
+  <test name="RegressionTests">
+    <classes>
+      <class name="tests.LoginTest">
+        <methods>
+          <exclude name="skippedTest"/>
+        </methods>
+      </class>
+    </classes>
+  </test>
+</suite>
+
+
+✅ Skips test without modifying code.
+
+
+testng.xml is the configuration file for TestNG, which allows you to define how your tests should run—including which tests to run, in what order, with what parameters, and in parallel. It’s an essential part of TestNG for flexible and structured test execution.
+
+Think of it as the control center for your TestNG test suite.
+
+1️⃣ Why testng.xml is used
+
+Organize tests into suites and tests
+
+Run specific classes, packages, or methods
+
+Set parameters for tests
+
+Configure groups (include/exclude)
+
+Enable parallel execution and control thread count
+
+Attach listeners
+
+Control execution order
+
+
+Ah! You’re asking about the “How do you handle X in Selenium Java” type of interview questions—these are extremely common. In Selenium interviews, they often phrase questions like:
+
+“How do you handle alerts?”
+“How do you handle dropdowns?”
+“How do you handle multiple windows?”
+
+Here’s a structured, comprehensive list with examples:
+
+1️⃣ Handling Alerts / Pop-ups
+
+Selenium has Alert interface for JavaScript pop-ups.
+
+// Switch to alert
+Alert alert = driver.switchTo().alert();
+
+// Accept alert
+alert.accept();
+
+// Dismiss alert
+alert.dismiss();
+
+// Get text from alert
+String text = alert.getText();
+
+// Send text to prompt alert
+alert.sendKeys("Hello");
+
+
+Tip for interview: Mention the difference between JavaScript alerts and browser dialogs (file upload, OS popups need AutoIt/Robot).
+
+2️⃣ Handling Frames / IFrames
+
+Use switchTo().frame():
+
+// Switch by index
+driver.switchTo().frame(0);
+
+// Switch by name or ID
+driver.switchTo().frame("frameName");
+
+// Switch by WebElement
+WebElement frameElement = driver.findElement(By.tagName("iframe"));
+driver.switchTo().frame(frameElement);
+
+// Switch back to main content
+driver.switchTo().defaultContent();
+
+
+Tip: Always switch back to default content before interacting with elements outside the frame.
+
+3️⃣ Handling Windows / Tabs
+
+Use getWindowHandles():
+
+String mainWindow = driver.getWindowHandle();
+Set<String> allWindows = driver.getWindowHandles();
+
+for (String window : allWindows) {
+    if (!window.equals(mainWindow)) {
+        driver.switchTo().window(window);
+        driver.close(); // Optional
+    }
+}
+
+// Switch back to main window
+driver.switchTo().window(mainWindow);
+
+
+Tip: Interviewers may ask difference between getWindowHandle() and getWindowHandles()—be ready.
+
+4️⃣ Handling Dropdowns
+
+If it’s a <select> tag, use Select class:
+
+Select dropdown = new Select(driver.findElement(By.id("dropdownId")));
+
+// By visible text
+dropdown.selectByVisibleText("Option 1");
+
+// By index
+dropdown.selectByIndex(2);
+
+// By value
+dropdown.selectByValue("option2");
+
+// Get all options
+List<WebElement> options = dropdown.getOptions();
+
+
+For non-<select> dropdowns, use click() + find elements + loop + click().
+
+5️⃣ Handling Checkboxes / Radio Buttons
+WebElement checkbox = driver.findElement(By.id("chk"));
+if (!checkbox.isSelected()) {
+    checkbox.click();
+}
+
+
+Tip: Always check isSelected() before clicking to avoid deselecting.
+
+6️⃣ Handling Mouse Actions
+
+Use Actions class:
+
+Actions actions = new Actions(driver);
+
+// Hover
+actions.moveToElement(element).perform();
+
+// Right click
+actions.contextClick(element).perform();
+
+// Double click
+actions.doubleClick(element).perform();
+
+// Drag and drop
+actions.dragAndDrop(source, target).perform();
+
+7️⃣ Handling Keyboard Events
+
+Use Actions or Robot class:
+
+Actions actions = new Actions(driver);
+actions.sendKeys(Keys.ENTER).perform();
+
+// Using Robot
+Robot robot = new Robot();
+robot.keyPress(KeyEvent.VK_ENTER);
+robot.keyRelease(KeyEvent.VK_ENTER);
+
+8️⃣ Handling Dynamic Elements
+
+Use dynamic XPaths with contains() or starts-with()
+
+driver.findElement(By.xpath("//button[contains(text(),'Submit')]")).click();
+
+
+Use waits (explicit wait for dynamic elements):
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("dynamicId")));
+
+9️⃣ Handling File Uploads
+
+If <input type="file"> is available:
+
+driver.findElement(By.id("fileUpload")).sendKeys("C:\\path\\file.txt");
+
+
+If OS-level popup:
+
+Use Robot class or AutoIt (Java code alone can’t interact with OS popups).
+
+10️⃣ Handling Stale Element / Synchronization
+
+StaleElementReferenceException: element went stale, usually due to DOM refresh.
+
+WebElement element = driver.findElement(By.id("elementId"));
+element.click(); // may fail
+// fix: refetch element after refresh
+element = driver.findElement(By.id("elementId"));
+element.click();
+
+
+Explicit wait:
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+wait.until(ExpectedConditions.elementToBeClickable(By.id("button")));
+
+
+Use Parameters in testng.xml
+
+You can define the browser in testng.xml and pass it to your test method.
+
+testng.xml Example
+<suite name="CrossBrowserSuite">
+  <test name="ChromeTest">
+    <parameter name="browser" value="chrome"/>
+    <classes>
+      <class name="tests.LoginTest"/>
+    </classes>
+  </test>
+
+  <test name="FirefoxTest">
+    <parameter name="browser" value="firefox"/>
+    <classes>
+      <class name="tests.LoginTest"/>
+    </classes>
+  </test>
+</suite>
+
+Test Class Example
+import org.testng.annotations.Parameters;
+import org.testng.annotations.BeforeMethod;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+
+public class LoginTest {
+
+    WebDriver driver;
+
+    @Parameters("browser")
+    @BeforeMethod
+    public void setup(String browser) {
+        if (browser.equalsIgnoreCase("chrome")) {
+            driver = new ChromeDriver();
+        } else if (browser.equalsIgnoreCase("firefox")) {
+            driver = new FirefoxDriver();
+        }
+        driver.manage().window().maximize();
+        driver.get("https://example.com");
+    }
+}
+
+
+✅ Now the same tests run on different browsers.
+
+2️⃣ Use @DataProvider for multiple browsers
+@DataProvider(name = "browsers")
+public Object[][] getBrowsers() {
+    return new Object[][] { {"chrome"}, {"firefox"}, {"edge"} };
+}
+
+@Test(dataProvider = "browsers")
+public void loginTest(String browser) {
+    WebDriver driver;
+    if (browser.equals("chrome")) driver = new ChromeDriver();
+    else if (browser.equals("firefox")) driver = new FirefoxDriver();
+    else driver = new EdgeDriver();
+
+    driver.get("https://example.com");
+    driver.quit();
+}
+
+
+✅ This runs tests multiple times, once per browser.
+
+3️⃣ Parallel Execution for Faster Cross-Browser Testing
+
+In testng.xml:
+
+<suite name="CrossBrowserSuite" parallel="tests" thread-count="3">
+
+
+Each browser runs in its own thread
+
+Significantly reduces execution time
+
+4️⃣ Use WebDriverManager for Easy Driver Setup
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+if(browser.equals("chrome")) WebDriverManager.chromedriver().setup();
+if(browser.equals("firefox")) WebDriverManager.firefoxdriver().setup();
+
+
+✅ Avoids manually downloading drivers.
+
+
+How do you handle dynamic tables in Selenium?
+
+
+
+1️⃣ Understanding the Hierarchy
+
+Suppose HTML structure:
+
+<iframe id="outerFrame">
+  <!-- Outer frame content -->
+  <iframe id="innerFrame">
+    <!-- Inner frame content -->
+    <button id="clickMe">Click Me</button>
+  </iframe>
+</iframe>
+
+
+outerFrame → parent iFrame
+
+innerFrame → nested iFrame
+
+To interact with clickMe button, you must switch to outerFrame first, then innerFrame.
+
+2️⃣ Switching to Nested iFrames
+// Switch to outer frame
+driver.switchTo().frame("outerFrame");
+
+// Switch to inner frame
+driver.switchTo().frame("innerFrame");
+
+// Now interact with element inside innerFrame
+driver.findElement(By.id("clickMe")).click();
+
+
+✅ You cannot directly switch to innerFrame without first switching to outerFrame.
+
+3️⃣ Switching Back to Main Page
+
+After interacting with nested iFrames, switch back to default content:
+
+driver.switchTo().defaultContent(); // back to main page
+
+
+Alternative: driver.switchTo().parentFrame() → goes one level up (inner → outer)
+
+driver.switchTo().parentFrame(); // from innerFrame to outerFrame
+
+4️⃣ Switching Using WebElement
+
+You can also locate frames as WebElements:
+
+WebElement outer = driver.findElement(By.id("outerFrame"));
+WebElement inner = driver.findElement(By.id("innerFrame"));
+
+driver.switchTo().frame(outer);
+driver.switchTo().frame(inner);
+
+driver.findElement(By.id("clickMe")).click();
+
+
+✅ Useful if the frame doesn’t have a name or id.
+
+5️⃣ Handling Multiple Levels
+
+For multiple nested frames, repeat switchTo().frame() sequentially
+
+Keep track of frame hierarchy
+
+Always switch back to defaultContent after finishing
+
+driver.switchTo().defaultContent(); // reset to main page
+
+
+APTCHA in automation testing (like Selenium) is tricky because CAPTCHAs are designed to prevent bots, so fully automating them in real environments is usually not possible or recommended. However, there are standard approaches to deal with CAPTCHAs in testing.
+
+Here’s a structured guide:
+
+1️⃣ Manual Handling (Most Common in Real Tests)
+
+When a CAPTCHA appears, automation pauses, and the tester enters the CAPTCHA manually.
+
+Use Thread.sleep() or a prompt to allow manual input:
+
+System.out.println("Please enter CAPTCHA manually");
+Thread.sleep(10000); // wait 10 seconds for manual input
+
+
+✅ Simple but requires human interaction.
+
+2️⃣ Bypass CAPTCHA in Test Environments
+
+Most applications provide a test mode or environment where CAPTCHA is disabled.
+
+Recommended approach for automation testing:
+
+// Test environment URL where CAPTCHA is disabled
+driver.get("https://test.example.com/login");
+
+
+✅ Ideal for CI/CD automation pipelines.
+
+3️⃣ Using Test Credentials or Tokens
+
+Some systems provide pre-generated tokens to bypass CAPTCHA in automation.
+
+Example: API call to get a temporary access token, skipping login CAPTCHA.
+
+4️⃣ Using CAPTCHA Solving Services (Not Recommended for Real Tests)
+
+There are third-party services (e.g., 2Captcha, Anti-Captcha) that solve CAPTCHA programmatically.
+
+Usually requires payment and introduces security risks.
+
+Rarely used in professional testing environments.
+
+
+Identify Pagination Elements
+
+Most web pages have Next/Previous buttons or page number links.
+
+Example HTML:
+
+<div class="pagination">
+  <a href="#" class="page">1</a>
+  <a href="#" class="page">2</a>
+  <a href="#" class="page">3</a>
+  <a href="#" class="next">Next</a>
+</div>
+
+2️⃣ Loop Through Pages Using “Next” Button
+boolean hasNext = true;
+
+while (hasNext) {
+    // Process data on the current page
+    List<WebElement> rows = driver.findElements(By.xpath("//table[@id='userTable']//tr"));
+    for (WebElement row : rows) {
+        System.out.println(row.getText());
+    }
+
+    // Check if "Next" button is enabled
+    WebElement nextBtn = driver.findElement(By.cssSelector(".pagination .next"));
+    if (nextBtn.getAttribute("class").contains("disabled")) {
+        hasNext = false; // last page
+    } else {
+        nextBtn.click(); // go to next page
+        Thread.sleep(1000); // wait for page to load
+    }
+}
+
+
+✅ Iterates through all pages and collects table data dynamically.
+
+3️⃣ Loop Through Pages Using Page Numbers
+
+Sometimes pages have numbered links:
+
+List<WebElement> pages = driver.findElements(By.cssSelector(".pagination .page"));
+
+for (WebElement page : pages) {
+    page.click();
+    Thread.sleep(1000); // wait for table to load
+
+    // Extract data from current page
+    List<WebElement> rows = driver.findElements(By.xpath("//table[@id='userTable']//tr"));
+    for (WebElement row : rows) {
+        System.out.println(row.getText());
+    }
+}
+
+
+✅ Works when the number of pages is known.
+
+4️⃣ Handling Dynamic Pagination
+
+Some websites load new pages via AJAX. In that case:
+
+Use WebDriverWait for table rows to be visible before extracting data.
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//table[@id='userTable']//tr")));
+
+
+Use loops until the “Next” button is disabled.
+
+
+What is JavaScript Executor?
+
+Selenium WebDriver sometimes cannot interact with certain web elements (like hidden elements, elements not in view, or custom UI controls).
+
+JavaScriptExecutor allows you to execute JavaScript code directly in the browser.
+
+It’s an interface in Selenium that lets you run JS commands.
+
+✅ Very useful for:
+
+Clicking hidden or non-clickable elements
+
+Scrolling the page
+
+Fetching values from the page
+
+Changing element attributes or styles
+
+2️⃣ Syntax
+
+In Java:
+
+JavascriptExecutor js = (JavascriptExecutor) driver;
+js.executeScript("javascript code here");
+
+
+executeScript() → Executes JavaScript code
+
+driver → Your WebDriver instance
+
+You can also pass arguments to JS:
+
+js.executeScript("arguments[0].click();", element);
+
+
+arguments[0] → refers to the element you pass as a parameter.
+
+3️⃣ Common Use Cases
+A. Click an Element
+
+Sometimes element.click() doesn’t work.
+
+WebElement button = driver.findElement(By.id("submit"));
+JavascriptExecutor js = (JavascriptExecutor) driver;
+js.executeScript("arguments[0].click();", button);
+
+B. Send Keys / Set Value
+WebElement input = driver.findElement(By.id("username"));
+js.executeScript("arguments[0].value='testuser';", input);
+
+C. Scroll the Page
+
+Scroll to bottom of page:
+
+js.executeScript("window.scrollTo(0, document.body.scrollHeight);");
+
+
+Scroll to a specific element:
+
+WebElement element = driver.findElement(By.id("footer"));
+js.executeScript("arguments[0].scrollIntoView(true);", element);
+
+D. Get Page Title
+String title = (String) js.executeScript("return document.title;");
+System.out.println(title);
+
+E. Highlight an Element (for debugging)
+WebElement element = driver.findElement(By.id("submit"));
+js.executeScript("arguments[0].style.border='3px solid red'", element);
+
+4️⃣ Passing Multiple Arguments
+WebElement elem1 = driver.findElement(By.id("username"));
+WebElement elem2 = driver.findElement(By.id("password"));
+
+js.executeScript(
+    "arguments[0].value='user1'; arguments[1].value='pass123';", elem1, elem2
+);
+
+5️⃣ Notes / Best Practices
+
+Use JS Executor only when standard Selenium actions fail.
+
+Avoid overusing — it bypasses WebDriver’s normal waits, so handle synchronization carefully.
+
+Always cast driver to JavascriptExecutor:
+
+JavascriptExecutor js = (JavascriptExecutor) driver;
+
+
+Works for Java, Python, C#, syntax changes slightly but concept is same.
+
+Example Full Flow: Click + Scroll + Get Value
+WebDriver driver = new ChromeDriver();
+driver.get("https://example.com");
+
+WebElement button = driver.findElement(By.id("submit"));
+JavascriptExecutor js = (JavascriptExecutor) driver;
+
+// Scroll to button
+js.executeScript("arguments[0].scrollIntoView(true);", button);
+
+// Click the button
+js.executeScript("arguments[0].click();", button);
+
+// Get page title
+String title = (String) js.executeScript("return document.title;");
+System.out.println(title);
