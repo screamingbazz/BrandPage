@@ -1,0 +1,1173 @@
+postman
+What is a Collection in Postman?
+
+A Collection in Postman is basically a group of API requests that are organized together.
+
+Think of it like a folder that contains multiple requests, so you can manage, run, and share them easily.
+
+Global Variables
+
+What they are:
+
+Variables accessible anywhere in Postman (all requests, all collections).
+
+Good for values used in multiple projects, like baseUrl.
+
+How to create them:
+
+Open Postman.
+
+Go to the Environments dropdown (top-right) → click Globals.
+
+Click Add.
+
+Enter Variable and Initial Value.
+
+Example:
+
+Variable	Value
+baseUrl	https://api.example.com
+
+How to use in requests:
+
+GET {{baseUrl}}/users
+
+
+✅ Can be used in URL, headers, or body anywhere.
+
+2️⃣ Environment Variables
+
+What they are:
+
+Variables that exist only for a specific environment (Dev, QA, Prod).
+
+Switch environments using the dropdown to change variable values dynamically.
+
+How to create them:
+
+Click the Environments dropdown (top-right) → + Add Environment.
+
+Give it a name, e.g., Dev, QA, Prod.
+
+Click Add Variable, enter name and initial value.
+
+Activate the environment by selecting it in the top-right dropdown.
+
+Example variables:
+
+Variable	Value
+baseUrl	https://dev.example.com
+
+token	abcdef12345
+
+Usage in request:
+
+GET {{baseUrl}}/login
+Authorization: Bearer {{token}}
+
+
+✅ Great for switching between environments without changing your requests.
+
+3️⃣ Collection Variables
+
+What they are:
+
+Variables that belong to a specific collection.
+
+Only accessible to requests inside that collection.
+
+How to create them:
+
+Open Postman → select your Collection.
+
+Go to the Variables tab.
+
+Click Add Variable, enter name and value.
+
+Example:
+
+Variable	Value
+apiKey	12345
+
+Usage in requests inside the collection:
+
+GET {{baseUrl}}/users?api_key={{apiKey}}
+
+4️⃣ Local Variables
+
+What they are:
+
+Variables that exist only for the current request or script execution.
+
+Disappear after the request is done.
+
+How to create them (Pre-request Script):
+
+Open the request → Pre-request Script tab.
+
+Add code like:
+
+// Create a local variable
+pm.variables.set("timestamp", new Date().toISOString());
+
+
+Usage in request body or URL:
+
+{
+  "createdAt": "{{timestamp}}"
+}
+
+
+✅ Useful for temporary values like timestamps or random IDs.
+
+5️⃣ Data Variables (for Data-driven Testing)
+
+What they are:
+
+Variables from a CSV or JSON file used in the Collection Runner.
+
+Each row represents a data set, like multiple usernames or passwords.
+
+How to create/use them:
+
+Prepare a CSV or JSON file:
+
+CSV Example:
+
+username,password
+user1,pass1
+user2,pass2
+
+
+Go to Collection Runner → Select your collection → Choose the data file.
+
+Use variables in your request body or URL:
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+
+✅ Great for testing the same request with multiple inputs (like TestNG DataProvider).
+
+6️⃣ Using Pre-request Scripts for Dynamic Variables
+
+What they are:
+
+Variables created or modified before a request runs.
+
+Can be Local, Environment, or Global.
+
+Where to click:
+
+Open your request → Pre-request Script tab.
+
+Example:
+
+// Local variable
+pm.variables.set("timestamp", new Date().toISOString());
+
+// Environment variable
+pm.environment.set("authToken", "123456abcdef");
+
+// Global variable
+pm.globals.set("sessionId", "XYZ123");
+
+
+Use anywhere in request: {{timestamp}}, {{authToken}}, {{sessionId}}.
+
+7️⃣ Using Test Scripts (Post-request)
+
+What they are:
+
+Variables created or updated after a request completes.
+
+Useful for chaining requests, e.g., login → get token → use token.
+
+Where to click:
+
+Open your request → Tests tab.
+
+Example:
+
+// Save value from response
+let response = pm.response.json();
+pm.environment.set("userId", response.id);
+
+// Save timestamp globally
+pm.globals.set("lastLogin", new Date().toISOString());
+
+
+Usage in next requests:
+
+GET {{baseUrl}}/users/{{userId}}
+
+
+Example: Login API with CSV Data
+1️⃣ Create Your Collection
+
+Open Postman → Collections → + New Collection → Name it: LoginAPI.
+
+Inside the collection, create a request:
+
+Request Name: Login User
+
+Method: POST
+
+URL: {{baseUrl}}/login
+
+Body (raw JSON):
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+
+✅ Notice {{username}} and {{password}} are variables that will be replaced.
+
+2️⃣ Create Environment
+
+Click Environments → + Add Environment → Name it Dev.
+
+Add Variable:
+
+Variable	Initial Value
+baseUrl	https://example.com/api
+
+Activate environment Dev from the top-right dropdown.
+
+3️⃣ Prepare CSV File
+
+Create loginData.csv:
+
+username,password
+user1,pass1
+user2,pass2
+user3,pass3
+
+
+Each row is a test iteration.
+
+Column names (username, password) must match the variables in the request body.
+
+4️⃣ Open Collection Runner
+
+Go to your collection LoginAPI.
+
+Hover → Click Run → Opens Collection Runner.
+
+5️⃣ Configure Collection Runner
+
+Collection: LoginAPI (pre-selected)
+
+Environment: Dev
+
+Data File: Click Select File → Choose loginData.csv
+
+Iterations: Auto-detect from CSV (3 in this case)
+
+Click Run LoginAPI
+
+6️⃣ How Postman Executes
+
+Postman will run 3 iterations, replacing the variables:
+
+Iteration	username	password
+1	user1	pass1
+2	user2	pass2
+3	user3	pass3
+
+For Iteration 1, request body becomes:
+
+{
+  "username": "user1",
+  "password": "pass1"
+}
+
+
+For Iteration 2, request body becomes:
+
+{
+  "username": "user2",
+  "password": "pass2"
+}
+
+
+: Open Your Request
+
+Open Postman → select your request.
+
+Go to the Authorization tab.
+
+Step 2: Select Authorization Type
+
+Type dropdown has options like:
+
+Bearer Token (most common)
+
+API Key
+
+Basic Auth
+
+OAuth 2.0
+
+etc.
+
+Step 3: Enter the Token
+Example: Bearer Token
+
+Select Bearer Token.
+
+Paste your token in the Token field.
+
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6...
+
+
+Postman automatically adds this to your request headers:
+
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6...
+
+
+✅ Send the request → the server will validate your token.
+
+Step 4 (Optional): Use Variables for Token
+
+Instead of pasting manually, use a variable:
+
+Create an Environment Variable or Collection Variable:
+
+Variable	Value
+authToken	eyJhbGciOiJIUzI1NiIsInR5cCI6…
+
+In Authorization → Bearer Token → enter:
+
+{{authToken}}
+
+
+Now you can update the token in one place (Environment/Collection) instead of each request.
+
+2️⃣ Using Headers Directly (Alternative)
+
+Go to the Headers tab of your request.
+
+Add a new header:
+
+Key	Value
+Authorization	Bearer {{authToken}}
+
+Works the same as the Authorization tab.
+
+Useful if the API expects a custom format.
+
+3️⃣ Dynamic Token in Pre-request Script
+
+Sometimes your token expires or is generated at runtime. You can generate or fetch the token in Pre-request Script:
+
+// Example: setting a token dynamically
+pm.environment.set("authToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6...");
+
+
+Then in Authorization → Bearer Token → use:
+
+{{authToken}}
+
+
+✅ Postman will replace {{authToken}} with the current value before sending the request.
+
+4️⃣ Using API Key (if applicable)
+
+Some APIs use an API Key instead of Bearer token:
+
+Go to Authorization → Type: API Key
+
+Enter Key name and Value
+
+Select Add to Header or Query Params
+
+Example Header generated:
+
+x-api-key: 12345ABCDE
+
+
+What is form-data in the body?
+
+form-data is one of the ways to send data in the body of an HTTP request (POST, PUT, PATCH).
+
+It’s used when you want to send key-value pairs, often for file uploads or forms, similar to submitting an HTML form.
+
+Each key can be text or file.
+
+2️⃣ Where to find it in Postman
+
+Open your request → choose POST method.
+
+Go to the Body tab.
+
+Select form-data.
+
+You’ll see a table to enter key, value, and type.
+
+3️⃣ How to use form-data
+Example 1: Text Data Only
+
+Suppose you are sending a login form:
+
+Key	Value	Type
+username	user1	Text
+password	pass123	Text
+
+Postman sends it as multipart/form-data.
+
+Equivalent curl:
+
+curl -X POST https://example.com/login \
+  -F "username=user1" \
+  -F "password=pass123"
+
+Example 2: Upload a File
+
+Add a new key in form-data table.
+
+Choose Type → File.
+
+Click Select Files → Choose a file from your computer.
+
+Key	Value	Type
+username	user1	Text
+file	resume.pdf	File
+
+✅ Useful for APIs that require file uploads, like profile pictures or documents.
+
+4️⃣ Dynamic Variables in form-data
+
+You can also use Postman variables:
+
+Key	Value	Type
+username	{{username}}	Text
+password	{{password}}	Text
+file	{{filePath}}	File
+
+Make sure {{username}}, {{password}}, {{filePath}} are defined in Environment/Collection/Data variables.
+
+5️⃣ Difference Between form-data and x-www-form-urlencoded
+Feature	form-data	x-www-form-urlencoded
+Encoding	multipart/form-data	URL-encoded
+File Upload	✅ Supported	❌ Not supported
+Use Case	Forms with files or complex data	Simple form data
+Body Representation	Each key has its own boundary	key1=value1&key2=value2
+
+💡 Pro Tip:
+
+Use form-data for file uploads.
+
+Use x-www-form-urlencoded for simple key-value forms.
+
+For JSON APIs, use raw → JSON instead.
+
+
+Ah! Sending a file in an API request is very common for things like uploading a profile picture, document, or CSV. Let me explain step by step with Postman and examples. 📁
+
+1️⃣ Use form-data in Postman (Most common)
+
+Open Postman → select your POST request (or PUT/PATCH if updating).
+
+Go to the Body tab → select form-data.
+
+In the table:
+
+Key	Value	Type
+file	Choose File...	File
+username	user1	Text
+
+Click Type → File for the file key.
+
+Click Select Files → choose a file from your computer.
+
+✅ Postman will send the request as multipart/form-data, which is what most APIs expect for file uploads.
+
+Example:
+
+Suppose API endpoint:
+
+POST https://example.com/upload
+
+
+form-data:
+
+Key	Value	Type
+file	resume.pdf	File
+userId	12345	Text
+
+Server will receive the file and the additional fields together.
+
+2️⃣ Use binary in Postman (Alternative)
+
+If the API only accepts a single raw file (like image or PDF):
+
+Body → select binary.
+
+Click Select File → choose your file.
+
+✅ Only one file can be sent, no extra fields.
+
+3️⃣ Dynamic File in Scripts (Optional)
+
+Sometimes you want to use variables for file path:
+
+pm.variables.set("filePath", "/path/to/file/resume.pdf");
+
+
+Currently, Postman does not support dynamic file selection in GUI, but you can use Newman CLI + scripting for automation.
+
+
+Step 1: Create Your Request
+
+Example: POST https://api.example.com/login
+
+Body:
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+
+Notice the {{username}} and {{password}}—these are variables that will change per user.
+
+Step 2: Prepare a Data File
+
+You can use CSV or JSON.
+
+CSV example (users.csv):
+
+username,password
+john@example.com,pass123
+jane@example.com,pass456
+bob@example.com,pass789
+
+
+JSON example (users.json):
+
+[
+  {"username": "john@example.com", "password": "pass123"},
+  {"username": "jane@example.com", "password": "pass456"},
+  {"username": "bob@example.com", "password": "pass789"}
+]
+
+Step 3: Use Collection Runner
+
+Save your request in a collection.
+
+Click Collections → Select your collection → Run.
+
+In Collection Runner:
+
+Select your data file (CSV or JSON).
+
+Check iterations (Postman will automatically iterate through each row).
+
+Click Start Run.
+
+Step 4: Access Data Variables in Tests
+
+In the Tests tab, you can access the current row’s variables:
+
+pm.test("Login successful", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.message).to.eql("Login successful");
+});
+
+// Log the current user for debugging
+console.log("Testing user: " + pm.iterationData.get("username"));
+
+
+pm.iterationData.get("username") fetches the value from your CSV/JSON for that iteration.
+
+Step 5: View Results
+
+Postman will show results per iteration.
+
+You can export results as JSON/CSV if needed.
+
+Send Login Request
+
+Example: POST https://api.example.com/login
+
+Body:
+
+{
+  "username": "john@example.com",
+  "password": "pass123"
+}
+
+Step 2: Extract Token from Response
+
+Go to the Tests tab of the login request.
+
+Add JavaScript to save the token as a variable:
+
+// Parse the JSON response
+var jsonData = pm.response.json();
+
+// Save token to environment variable
+pm.environment.set("authToken", jsonData.token);
+
+
+Notes:
+
+jsonData.token depends on your API response. Example login response:
+
+{
+  "token": "abc123xyz",
+  "user": {
+    "id": 1,
+    "name": "John Doe"
+  }
+}
+
+
+Here, jsonData.token points to "abc123xyz".
+
+Step 3: Use Token in Next Request
+
+Create your next request (e.g., GET https://api.example.com/user/profile).
+
+Go to the Headers tab.
+
+Add Authorization header:
+
+Key: Authorization
+Value: Bearer {{authToken}}
+
+
+Postman will replace {{authToken}} with the token extracted in Step 2.
+
+Step 4: Run Requests in Sequence
+
+You can manually run login first, then the next request.
+
+Or better, use a Collection and click “Run” → Postman will automatically pass environment variables between requests.
+
+Validate HTTP Status Code
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+
+✅ Where it goes: Tests tab
+
+Reason: You can’t check the status before the response exists.
+
+Other status checks
+pm.test("Status code is 201", () => pm.response.to.have.status(201));
+pm.test("Status code is 4xx", () => pm.response.to.be.within(400, 499));
+
+
+✅ Tests tab
+
+2. Validate Response Body
+var jsonData = pm.response.json();
+
+pm.test("User name is John Doe", function () {
+    pm.expect(jsonData.name).to.eql("John Doe");
+});
+
+pm.test("Response has id", function () {
+    pm.expect(jsonData).to.have.property("id");
+});
+
+// For arrays
+pm.test("Response has 3 users", function () {
+    pm.expect(jsonData.users.length).to.eql(3);
+});
+
+
+✅ Tests tab
+
+Reason: Response body only exists after the request completes.
+
+3. Validate Response Headers
+pm.test("Content-Type is JSON", function () {
+    pm.response.to.have.header("Content-Type", "application/json; charset=utf-8");
+});
+
+pm.test("Server is nginx", function () {
+    pm.expect(pm.response.headers.get("Server")).to.eql("nginx");
+});
+
+
+✅ Tests tab
+
+4. Validate Response Time
+pm.test("Response time is less than 500ms", function () {
+    pm.expect(pm.response.responseTime).to.be.below(500);
+});
+
+
+✅ Tests tab
+
+Reason: You can only measure response time after the request finishes.
+
+5. Validate Using JSON Schema
+var schema = {
+    "type": "object",
+    "required": ["id", "name", "email"],
+    "properties": {
+        "id": { "type": "number" },
+        "name": { "type": "string" },
+        "email": { "type": "string" }
+    }
+};
+
+pm.test("Response matches JSON schema", function () {
+    pm.response.to.have.jsonSchema(schema);
+});
+
+
+✅ Tests tab
+
+
+
+What is Rate Limiting?
+
+Rate limiting is a technique used by APIs to control how many requests a client can make in a given time frame.
+
+Purpose: Prevent abuse, protect server resources, and ensure fair usage.
+
+Example: An API might allow 100 requests per minute per user. If you exceed that, the server will reject requests temporarily.
+
+2. How Rate Limiting Works
+
+Most APIs enforce limits in one of these ways:
+
+Type	Description
+Fixed Window	Limit requests per fixed time window (e.g., 100 requests per minute).
+Sliding Window	Similar to fixed, but the window moves continuously.
+Token Bucket	Client gets tokens, each request consumes a token; tokens refill over time.
+Leaky Bucket	Requests flow out at a fixed rate; extra requests “overflow” and are rejected.
+3. How the API Communicates Limits
+
+APIs usually return HTTP headers to indicate your current usage:
+
+Header	Meaning
+X-RateLimit-Limit	Maximum requests allowed in the time window
+X-RateLimit-Remaining	Requests left in the current window
+X-RateLimit-Reset	Time (usually UNIX timestamp) when the limit resets
+
+Example:
+
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 10
+X-RateLimit-Reset: 1676140800
+
+
+You have 10 requests left; limit resets at that timestamp.
+
+4. What Happens When You Exceed the Limit
+
+API usually responds with HTTP 429 Too Many Requests.
+
+Response may include info about when you can retry.
+
+5. Handling Rate Limits in Postman
+
+Check headers in your response to see your usage.
+
+Pause between requests if testing scripts with multiple iterations.
+
+Example in Pre-request Script:
+
+// Wait 1 second between requests
+setTimeout(() => {}, 1000);
+
+
+Handle 429 responses by logging or retrying after delay:
+
+if (pm.response.code === 429) {
+    console.log("Rate limit exceeded. Retry after some time.");
+}
+Reason: The schema validation runs against the response JSON, so it must be after the request.
+
+Authentication (AuthN)
+
+Purpose: Verify who you are.
+
+Question it answers: “Are you a valid user/client?”
+
+How it works in APIs:
+
+Username + password
+
+API keys
+
+Tokens (JWT, OAuth access tokens)
+
+Certificates
+
+Example:
+
+You log in with POST /login with username/password.
+
+API responds with a token (like JWT) if credentials are valid.
+
+In Postman: Authentication is usually done via Authorization tab or sending tokens in headers/body.
+
+Authentication in Postman
+
+Go to Authorization tab in your request.
+
+Select type:
+
+API Key → Add in header or query params
+
+Bearer Token → Add token in Authorization: Bearer <token>
+
+Basic Auth → Username + Password automatically encoded
+
+Example:
+
+Authorization: Bearer abc123xyz
+
+2. Authorization (AuthZ)
+
+Purpose: Verify what you are allowed to do.
+
+Question it answers: “Can this user/client access this resource or perform this action?”
+
+How it works in APIs:
+
+Role-based access (admin, user, guest)
+
+Permission scopes in OAuth
+
+Resource ownership checks
+
+Example:
+
+Token may allow you to GET /users/123 but not DELETE /users/123 unless you have admin rights.
+
+Authentication happens first; then the server checks authorization to allow specific actions.
+
+Authorization in Postman
+
+Usually done automatically by sending the correct token in headers.
+
+The server responds with:
+
+200 OK if authorized
+
+403 Forbidden if not authorized
+
+401 Unauthorized if not authenticated
+
+3. Typical Flow in an API
+
+Login (Authentication) → You get a token.
+
+Access protected endpoint (Authorization) → Token is checked for permissions.
+
+Example in Postman:
+
+POST /login → Body: { "username": "john", "password": "123" } → Response: { "token": "abc123" }
+
+Save token as environment variable:
+
+pm.environment.set("authToken", pm.response.json().token);
+
+
+GET /users/123 → Headers: Authorization: Bearer {{authToken}}
+
+Server checks token (authentication) and permission (authorization) → Returns data or error.
+
+Step 1: Understand Your API Requirements
+
+Before you open Postman, you need to know:
+
+Authentication method (how the API checks your identity):
+
+API Key
+
+Username & Password (Basic Auth)
+
+Bearer Token (like JWT)
+
+OAuth 2.0
+
+Authorization rules (what endpoints you are allowed to access):
+
+Some endpoints are public
+
+Some endpoints need a token with certain permissions
+
+Endpoint list:
+
+Login endpoint (POST /login)
+
+Protected endpoints (GET /users, POST /orders, etc.)
+
+Usually, the API provider gives documentation or a Swagger page.
+
+Step 2: Open Postman
+
+Launch Postman (desktop or web).
+
+Click New → Request to create a new API request.
+
+Give it a name like Login and save it to a Collection (recommended to keep all requests together).
+
+Step 3: Set Up Authentication
+Scenario A: Bearer Token (most common)
+
+Go to your Login API endpoint (example: POST https://api.example.com/login)
+
+Click the Body tab → select raw → JSON
+
+Enter your credentials:
+
+{
+  "username": "yourusername",
+  "password": "yourpassword"
+}
+
+
+Click Send. You should get a response like:
+
+{
+  "token": "abc123xyz"
+}
+
+
+Go to Tests tab → save the token as an environment variable:
+
+var jsonData = pm.response.json();
+pm.environment.set("authToken", jsonData.token);
+
+Scenario B: API Key
+
+Go to Authorization tab in your request.
+
+Choose API Key.
+
+Enter the key name (provided by API) and value.
+
+Choose Header or Query Params depending on API documentation.
+
+Send request.
+
+Scenario C: Basic Auth
+
+Go to Authorization tab.
+
+Choose Basic Auth.
+
+Enter username and password.
+
+Postman will automatically encode it into the header.
+
+Step 4: Use Token for Authorization
+
+Once you have the token from login:
+
+Create a new request for a protected endpoint (example: GET /users/123).
+
+Click Headers tab → add:
+
+Key: Authorization
+Value: Bearer {{authToken}}
+
+
+{{authToken}} is the environment variable you saved from login. Postman replaces it automatically.
+
+Click Send.
+
+If the token is valid → you get 200 OK and data.
+
+If token is missing or expired → you get 401 Unauthorized or 403 Forbidden.
+
+Step 5: Validate Authorization
+
+Some endpoints are restricted to certain roles.
+
+Try accessing a protected endpoint your user shouldn’t have access to.
+
+Expected response: 403 Forbidden.
+
+This ensures Authorization is enforced.
+
+Step 6: Automate Multiple Requests
+
+Save Login and all protected endpoints in a Collection.
+
+Use Collection Runner:
+
+Run login first
+
+Extract token automatically
+
+Use token in subsequent requests
+
+This allows you to test full workflow automatically.
+
+Step 7: Optional – Using Pre-request Scripts
+
+If your token expires often, you can automatically request a new token before each protected request using Pre-request Script:
+
+pm.sendRequest({
+    url: "https://api.example.com/login",
+    method: "POST",
+    header: {"Content-Type": "application/json"},
+    body: {
+        mode: "raw",
+        raw: JSON.stringify({username: "yourusername", password: "yourpassword"})
+    }
+}, function (err, res) {
+    pm.environment.set("authToken", res.json().token);
+});
+
+
+1. Authentication vs Authorization: Conceptual Difference
+Concept	Question it answers	When it happens	Example in our workflow
+Authentication (AuthN)	“Who are you?”	First – before accessing protected resources	Sending username/password to /login to get a token
+Authorization (AuthZ)	“What are you allowed to do?”	After authentication – when accessing endpoints	Using token to access /users/123 or /admin endpoints; server checks your permissions
+
+Key idea: Authentication proves your identity, Authorization proves your permissions.
+
+2. How I Implemented Authentication in Postman
+
+Step: Send a request to the API login endpoint.
+
+Method: POST
+
+Body: JSON with username and password.
+
+Result: Server responds with a token if credentials are correct.
+
+Postman Implementation:
+
+In Tests tab, I saved the token as an environment variable:
+
+var jsonData = pm.response.json();
+pm.environment.set("authToken", jsonData.token);
+
+
+Purpose: Now we have proof of identity (authentication) to use in future requests.
+
+✅ This is Authentication because we are verifying who the user is.
+
+3. How I Implemented Authorization in Postman
+
+Step: Access a protected endpoint (e.g., GET /users/123).
+
+Headers: Include the token from authentication:
+
+Authorization: Bearer {{authToken}}
+
+
+Server checks:
+
+Is the token valid? → Authentication check
+
+Does this user have permission to access this endpoint? → Authorization check
+
+Result:
+
+200 OK → Authorized
+
+403 Forbidden → Authenticated, but not authorized
+
+401 Unauthorized → Not authenticated (invalid/missing token)
+
+✅ This is Authorization because we are checking what the user is allowed to do with their identity.
+
+4. How Postman Differentiates Them
+
+Authentication happens in the Login request → Before accessing any protected resource.
+
+Captures credentials, returns token.
+
+Tests in Postman check status code 200 and presence of token.
+
+Authorization happens in all subsequent requests → Token is sent in headers.
+
+Server decides whether this user can access the resource.
+
+Tests in Postman check status codes (200, 401, 403) and response body.
+
+5. Visualizing the Flow
+
+Login (Authenticate) → Receive token
+
+Use token (Authorize) → Access endpoint
+
+Server checks:
+
+Token valid? → Authentication
+
+Has permission? → Authorization
+
+You can think of it as:
+
+Authentication = show your ID card
+
+Authorization = check if your ID card lets you enter the room
+
+
+1. Start by Clarifying Terms
+
+You can start by defining the terms briefly:
+
+“Authentication is the process of verifying the identity of a user or client, usually by providing credentials like username/password or an API key. Authorization is the process of checking what actions or resources that user is allowed to access, usually by using a token provided after authentication.”
+
+2. Explain How to Get Authentication / Authorization Token
+
+You can explain it like this step by step:
+
+Identify the login or token endpoint
+
+Most APIs have an endpoint like /login or /auth/token.
+
+This is where you send your credentials (username/password, client id/secret, or API key).
+
+Send credentials to the API
+
+Use a POST request with the credentials in the request body (usually JSON):
+
+{
+  "username": "myusername",
+  "password": "mypassword"
+}
+
+
+Some APIs may require authentication in headers (like Basic Auth) or API key in the header/query parameters.
+
+Receive the authentication token
+
+If credentials are valid, the API returns a token (usually a JWT or bearer token).
+
+{
+  "token": "abc123xyz"
+}
+
+
+This token proves your identity (Authentication) and may also include roles/scopes for access control (Authorization).
+
+Use the token for subsequent requests
+
+Include the token in the Authorization header of all protected API requests:
+
+Authorization: Bearer abc123xyz
+
+
+The server validates the token before allowing access to endpoints.
+
+Handle expiration
+
+Some tokens expire; you may need to refresh the token using a refresh token endpoint or re-login.
+
+3. Example Explanation You Can Say in an Interview
+
+“First, I identify the API’s authentication endpoint, usually /login or /auth/token. I send the user credentials or API key using a POST request. The API responds with an authentication token, often a JWT or bearer token. I then store this token (for example, in Postman environment variables) and include it in the Authorization header of all subsequent API requests to access protected endpoints. This token proves my identity and also contains authorization info, such as what endpoints or actions I’m allowed to perform. If the token expires, I can refresh it or log in again.”
+
