@@ -1,0 +1,298 @@
+                                                                                                             REST ASSURED
+What is RestAssured?
+
+RestAssured is a Java library used to automate REST API testing.
+
+It simplifies HTTP calls like GET, POST, PUT, DELETE and validates responses.
+
+How do you send a GET request?
+Option 1: Using baseURI (MOST COMMON)
+
+Before making the request, you set the base URL like this:
+
+import static io.restassured.RestAssured.*;
+
+baseURI = "https://reqres.in/api";
+
+Response response =
+given()
+.when()
+    .get("/users/1");
+
+System.out.println(response.asString());
+
+🔹 Final URL formed internally:
+https://reqres.in/api/users/1
+
+
+So:
+
+baseURI → https://reqres.in/api
+
+.get("/users/1") → endpoint
+
+Option 2: Passing Full URL in GET
+
+You can also write the full URL directly:
+
+Response response =
+given()
+.when()
+    .get("https://reqres.in/api/users/1");
+
+System.out.println(response.asString());
+
+
+No baseURI needed here.
+
+Option 3: Using baseURI + basePath
+
+Cleaner for large projects:
+
+baseURI = "https://reqres.in";
+basePath = "/api";
+
+Response response =
+given()
+.when()
+    .get("/users/1");
+
+
+Final URL:
+
+https://reqres.in/api/users/1
+How do you send a POST request with JSON body?
+Map<String, String> payload = new HashMap<>();
+payload.put("username", "admin");
+payload.put("password", "pass1");
+
+given()
+    .contentType(ContentType.JSON)
+    .body(payload)
+.when()
+    .post("/login")
+.then()
+    .statusCode(200);
+
+How do you pass Authorization token in RestAssured?
+given()
+    .header("Authorization", "Bearer " + token)
+.when()
+    .get("/profile")
+.then()
+    .statusCode(200);
+
+
+OR
+
+given()
+    .auth().oauth2(token)
+.when()
+    .get("/profile");
+
+https://petstore.swagger.io/v2/user send a post request with payload { "id": 0, "username": "string", "firstName": "string", "lastName": "string", "email": "string", "password": "string", "phone": "string", "userStatus": 0 } in this format with patah parameter query paarm and header and response verify that
+
+
+POJO for Request Body (Best Practice)
+public class UserPayload {
+    private int id;
+    private String username;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String password;
+    private String phone;
+    private int userStatus;
+
+    // getters & setters
+}
+
+2️⃣ Test Method with Path Param, Query Param & Header
+@Test
+public void createUserTest() {
+
+    // Base URI
+    RestAssured.baseURI = "https://petstore.swagger.io";
+
+    // Request Payload
+    UserPayload payload = new UserPayload();
+    payload.setId(0);
+    payload.setUsername("string");
+    payload.setFirstName("string");
+    payload.setLastName("string");
+    payload.setEmail("string");
+    payload.setPassword("string");
+    payload.setPhone("string");
+    payload.setUserStatus(0);
+
+    Response response =
+        given()
+            // Header
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+
+            // Path Parameter
+            .pathParam("version", "v2")
+
+            // Query Parameter (example)
+            .queryParam("source", "api-test")
+
+            // Body
+            .body(payload)
+
+        .when()
+            .post("/{version}/user")
+
+        .then()
+            // Response Verification
+            .statusCode(200)
+            .contentType(ContentType.JSON)
+            .body("code", equalTo(200))
+            .body("type", equalTo("unknown"))
+            .body("message", notNullValue())
+            .extract()
+            .response();
+
+    // Extract value
+    String message = response.jsonPath().getString("message");
+    System.out.println("User ID returned: " + message);
+}
+
+GET User by Username
+1️⃣ Sample endpoint
+GET https://petstore.swagger.io/v2/user/{username}
+
+2️⃣ Test Method
+@Test
+public void getUserTest() {
+
+    // Base URI
+    RestAssured.baseURI = "https://petstore.swagger.io";
+
+    String username = "string"; // The username you created with POST
+
+    Response response =
+        given()
+            .contentType(ContentType.JSON)  // Tell server we expect JSON
+            .pathParam("username", username)
+        .when()
+            .get("/v2/user/{username}")   // GET request with path param
+        .then()
+            .statusCode(200)             // Verify status code
+            .contentType(ContentType.JSON)
+            // Verify some fields from response
+            .body("username", equalTo(username))
+            .body("firstName", equalTo("string"))
+            .body("email", equalTo("string"))
+            .extract()
+            .response();
+
+    // Extract fields if needed
+    String firstName = response.jsonPath().getString("firstName");
+    String email = response.jsonPath().getString("email");
+
+    System.out.println("First Name: " + firstName);
+    System.out.println("Email: " + email);
+}
+
+
+POJO Class for User
+public class User {
+
+    private long id;
+    private String username;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String password;
+    private String phone;
+    private int userStatus;
+
+    // Default constructor (needed for deserialization)
+    public User() {}
+
+    // Constructor for convenience
+    public User(long id, String username, String firstName, String lastName,
+                String email, String password, String phone, int userStatus) {
+        this.id = id;
+        this.username = username;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+        this.phone = phone;
+        this.userStatus = userStatus;
+    }
+
+    // Getters and Setters
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public int getUserStatus() { return userStatus; }
+    public void setUserStatus(int userStatus) { this.userStatus = userStatus; }
+
+    @Override
+    public String toString() {
+        return "User{" +
+               "id=" + id +
+               ", username='" + username + '\'' +
+               ", firstName='" + firstName + '\'' +
+               ", lastName='" + lastName + '\'' +
+               ", email='" + email + '\'' +
+               ", password='" + password + '\'' +
+               ", phone='" + phone + '\'' +
+               ", userStatus=" + userStatus +
+               '}';
+    }
+}
+
+2️⃣ Serialization (Java → JSON)
+User user = new User(1, "john123", "John", "Doe",
+                     "john@test.com", "pass123", "1234567890", 1);
+
+given()
+    .contentType(ContentType.JSON)
+    .body(user)   // Rest Assured converts POJO to JSON automatically
+.when()
+    .post("/v2/user")
+.then()
+    .statusCode(200);
+
+
+✅ Here, Rest Assured serializes the User object into JSON.
+
+3️⃣ Deserialization (JSON → Java)
+Response response =
+    given()
+        .contentType(ContentType.JSON)
+    .when()
+        .get("/v2/user/john123")
+    .then()
+        .statusCode(200)
+        .extract().response();
+
+// Convert JSON response to User object
+User userResponse = response.as(User.class);
+
+System.out.println("Username: " + userResponse.getUsername());
+System.out.println("Email: " + userResponse.getEmail());
+
+
