@@ -1,0 +1,1074 @@
+                                                 API TESTING
+What is idempotency? Which HTTP methods are idempotent?
+Idempotency means that making the same request multiple times produces the same result on the server as making it once.Repeating the request does not cause additional side effects after the first successful execution.Idempotency refers to server state, not response codes.
+DELETE /users/10
+First call → user 10 is deleted
+Second call → user is already deleted
+Result → no additional change
+First DELETE → 200 OK
+Second DELETE → 404 Not Found
+Still idempotent because the server state did not change after the first call.
+Which HTTP Methods Are Idempotent?
+GET ✅ Yes (Only retrieves data, does not change state) — PUT ✅ Yes (Replaces resource with same content each time) — DELETE ✅ Yes (Deleting same resource repeatedly has same effect) — HEAD ✅ Yes (Same as GET but without body) — OPTIONS ✅ Yes (Retrieves supported methods) — TRACE ✅ Yes (Diagnostic method) — POST ❌ No (Usually creates new resources each time) — PATCH ❌ Usually No (Partially updates — may change state each time)
+An Idempotency Key is a unique identifier sent by a client when making an HTTP request (usually POST) to ensure that the same operation is not performed multiple times, even if the request is retried due to network issues or timeouts.
+Key Points:
+Purpose: Prevents duplicate operations (e.g., double charges in payment APIs).
+How it works:
+Client generates a unique key for a request.
+Server stores the result of the request associated with that key.
+If the same key is received again, the server returns the original result instead of performing the action again.
+Difference Between PUT and PATCH
+PUT replaces the entire resource with the request body.
+PATCH updates only the fields provided.
+What is an API Response Status Code?
+Status codes are 3-digit numbers that tell you what happened with your request.
+They are part of the HTTP standard.
+1xx
+Informational
+Request received, continuing process
+2xx – Success
+200 OK → Standard success response. Data returned if applicable.
+201 Created → New resource successfully created
+202 Accepted → Request accepted but not yet processed.
+204 No Content → Request successful, but no content to return (common for DELETE).
+3xx – Redirection
+301 Moved Permanently
+Meaning: The resource you requested has permanently moved to a new URL.
+Example: You go to example.com/old-page → server tells your browser, “Use example.com/new-page from now on.”
+Browser behavior: Usually, browsers automatically redirect you and update bookmarks. Search engines also update the link.
+302 Found
+Meaning: The resource has temporarily moved to a different URL.
+Example: You go to example.com/sale → server says, “For now, use example.com/temporary-page, but the original URL will still be valid later.”
+Browser behavior: Redirect happens, but search engines don’t update the link because it’s temporary.
+304 Not Modified
+Meaning: The resource hasn’t changed since the last time you requested it.
+Example: Your browser already has example.com/style.css cached → it asks the server, “Has this file changed?” Server says, “Nope, use your cached copy.”
+Browser behavior: Saves time and bandwidth by using the cached version instead of downloading it again.
+4xx – Client Error
+These codes tell you that the server understood your request but can’t process it due to some issue with what you sent.
+400 Bad Request
+Meaning: The request is invalid or malformed.
+Example: You send JSON with a syntax error, or a form field is missing.
+Browser behavior: Shows an error; the client must fix the request before retrying.
+401 Unauthorized
+Meaning: Authentication required or credentials failed.
+Example: Trying to access example.com/private without logging in.
+Browser behavior: May prompt for username/password or token.
+403 Forbidden
+Meaning: You are authenticated but don’t have permission to access this resource.
+Example: You log in as a regular user but try to access an admin page.
+Browser behavior: Access denied even with valid login.
+404 Not Found
+Meaning: The requested resource does not exist.
+Example: Visiting example.com/nonexistent-page.
+Browser behavior: Shows a “Page not found” error.
+409 Conflict
+Meaning: The request conflicts with current state of the resource.
+Example: Two people trying to update the same database entry at the same time, or creating a duplicate record.
+Browser behavior: Usually the client needs to resolve the conflict and retry.
+422 Unprocessable Entity
+Meaning: Request is well-formed (syntax is correct) but semantically invalid.
+Example: Sending a form with a negative age ("age": -5) when only positive numbers are allowed.
+Browser behavior: Server refuses the request and often sends back error details explaining what’s invalid.
+5xx – Server Error
+These codes tell the client: “Your request looks fine, but the server can’t complete it right now.”
+500 Internal Server Error
+Meaning: General server failure—something went wrong, but the server doesn’t want to be more specific.
+Example: A bug in the server code or an unhandled exception.
+Browser behavior: Shows an error; nothing the client did caused it.
+502 Bad Gateway
+Meaning: Server is acting as a gateway or proxy and got an invalid response from the upstream server.
+Example: Your web server tries to get data from another API server, but that server returns garbage or fails.
+Browser behavior: Shows an error; client can try again later.
+503 Service Unavailable
+Meaning: Server is temporarily unavailable, often due to overload or maintenance.
+Example: Website under heavy traffic or undergoing updates.
+Browser behavior: Retry later; server might send a Retry-After header.
+504 Gateway Timeout
+Meaning: Server is acting as a gateway or proxy and didn’t get a response in time from the upstream server.
+Example: Your web server waits too long for a database query or external API.
+Browser behavior: Retry later; problem is on the upstream server.
+What is Statelessness in REST?
+In a stateless system, the server does NOT store any client session information between requests.
+Each request from the client must contain all the information needed for the server to understand and process it.
+What This Means
+No server-side session memory
+No stored user state between calls
+Every request is independent
+The server treats every request as brand new.
+What Are HTTP Headers?
+HTTP headers are key-value pairs sent between a client (like a browser) and a server in an HTTP request or response. They carry metadata about the request or the response, rather than the main content itself. Think of them as “extra information” about the message.
+Header-Name: Header-Value
+Request Headers
+Sent by the client to the server to give more information about the request or the client itself.
+Host
+This header tells the server which domain or server you want to communicate with.
+In HTTP/1.1, it is mandatory.
+Example: If you request api.example.com, the header would be:
+Host: api.example.com
+Why it matters: Many servers host multiple websites, so this tells the server exactly which site your request is for.
+2. User-Agent
+This header identifies the client software making the request—like a browser, mobile app, or custom script.
+User-Agent: MyApp/1.0
+Why it matters: Servers can log this for analytics, debugging, or even serve slightly different content for different clients.
+3. Accept
+The Accept header tells the server what type of content you can handle.
+Accept: application/json
+Why it matters: If the server can provide multiple formats (like HTML, XML, JSON), it will choose the one the client prefers.
+4. Authorization
+This header sends credentials or tokens so the server knows who you are.
+Authorization: Bearer abc123token
+Why it matters: Protected endpoints require this header; otherwise, the server may return 401 Unauthorized.
+5. Cookie
+This header sends cookies previously set by the server, which often contain session info or preferences.
+Cookie: sessionId=xyz789
+Why it matters: It allows the server to recognize returning clients or maintain a session without storing state on the server (stateless REST still needs the client to send the cookie).
+6. Accept-Encoding
+This header tells the server which compression methods the client supports, such as gzip or deflate
+Accept-Encoding: gzip, deflate
+Why it matters: Using compression reduces the size of the response, saving bandwidth and improving speed.
+7. Content-Type
+When the client sends data in the request body (like JSON or form data), this header specifies its format.
+Content-Type: application/json
+Why it matters: The server needs this to correctly parse the body. If it’s missing or incorrect, the server might return 415 Unsupported Media Type.
+Content-Length: 56
+1. Content-Type
+This header tells the client what type of data is in the response body.
+Content-Type: application/json
+Why it matters: The client uses this to know how to parse or display the response. For example, JSON, HTML, XML, or plain text.
+2. Content-Length
+This header specifies the size of the response body in bytes.
+Content-Length: 256
+Why it matters: Helps the client know how much data to expect. Useful for progress bars or buffering data.
+3. Set-Cookie
+This header tells the client to store a cookie for future requests.
+Set-Cookie: sessionId=xyz789; HttpOnly; Path=/
+Why it matters: Enables the server to maintain sessions or track users. In REST APIs, cookies are less common because tokens are often used instead.
+4. Cache-Control
+This header gives instructions about how the client should cache the response.
+Cache-Control: no-cache, no-store
+Why it matters: Ensures clients don’t use stale data or that certain responses can be safely cached for performance.
+5. Date
+This header provides the date and time when the response was sent.
+Example:
+Date: Fri, 13 Feb 2026 10:00:00 GMT
+Why it matters: Useful for caching, logging, or verifying freshness of the response.
+6. Expires
+This header tells the client when the response should be considered stale.
+Expires: Fri, 13 Feb 2026 12:00:00 GMT
+Why it matters: Works with caching to improve performance and reduce unnecessary requests.
+7. Location
+This header is used during redirection to tell the client where the requested resource has moved.
+Location: https://example.com/new-page
+Why it matters: Combined with status codes like 301 Moved Permanently or 302 Found, it tells the client where to go next.
+8. Server
+This header identifies the software used by the server.
+Server: Apache/2.4.52 (Ubuntu)
+Why it matters: Mainly informational, can be used for debugging, analytics, or monitoring server versions.
+9. ETag
+This header provides a unique identifier for the version of the resource.
+ETag: "abc123etag"
+Why it matters: Helps clients implement conditional requests (If-None-Match) for caching. If the resource hasn’t changed, the server can respond with 304 Not Modified instead of sending the full data again.
+x-api-key
+Used when API requires API key authentication.
+x-api-key: 123456
+5️⃣ Location (Response Header)
+Returned when a resource is created (201).
+Location: /users/101
+6️⃣ Cache-Control
+Controls caching behavior.
+Cache-Control: no-cache
+Authorization: <type> <credentials>
+Authorization: Bearer abc123xyzToken
+REST is about resources. Every piece of data or functionality is treated as a resource that can be created, read, updated, or deleted (CRUD). Each resource is identified by a URI (Uniform Resource Identifier), usually a URL.
+Key Principles of REST
+Statelessness
+Each request from client to server contains all the information needed to process it.
+The server does not store client session.
+Example: If a client sends a token in the Authorization header, the server doesn’t need to remember any previous requests.
+Client-Server Architecture
+The client handles the user interface and user experience.
+The server manages the data and business logic.
+Separation allows each to evolve independently.
+Uniform Interface
+REST uses standard HTTP methods to operate on resources:
+GET → retrieve data
+
+POST → create new data
+PUT → update existing data
+DELETE → remove data
+Resources are represented in JSON, XML, or other formats.
+Cacheability
+Responses can be cached to improve performance.
+Servers indicate caching rules using headers like Cache-Control or ETag.
+Layered System
+REST allows intermediaries like proxies, gateways, or load balancers between client and server.
+Clients don’t need to know if the server is behind other layers.
+Code on Demand (Optional)
+
+In HTTP, methods (like GET, POST, PUT) define what action the client wants to perform on a resource. They are classified as safe or unsafe depending on whether they change the state of the resource on the server. Let’s break it down clearly:
+1. Safe HTTP Methods
+Definition:
+A method is safe if it does not modify any resources on the server. It is intended only to retrieve data.
+Key Points:
+Safe methods are read-only.
+They should not have side effects (no changes to database or files).
+Clients and intermediaries (like caches or proxies) can safely repeat them.
+Examples:
+GET
+Retrieves data from the server.
+Example: GET /users/123 → fetch user details.
+HEAD
+Same as GET, but only retrieves headers, not the body.
+OPTIONS
+Asks the server which HTTP methods are allowed for a resource.
+Note: Safe methods can still log requests or increment counters, but they don’t change the resource’s state.
+2. Unsafe HTTP Methods
+Definition:
+A method is unsafe if it may modify resources on the server. They are intended for creating, updating, or deleting data.
+Key Points:
+Can change server state.
+Not safe to repeat automatically without caution (could create duplicates or delete data).
+Usually requires additional validation like authentication.
+Examples:
+POST
+Creates new resources or performs actions.
+Example: POST /users → create a new user.
+PUTUpdates or replaces a resource entirely.
+Example: PUT /users/123 → update user details.
+DELETE
+Removes a resource.
+Example: DELETE /users/123 → delete a user.
+PATCH
+Prtially updates a resource.
+Example: PATCH /users/123 → update just the user’s email.
+3. Why This Classification Matters
+Caching: Only safe methods are usually cached by default.
+Retries: Safe methods can be retried automatically if the request fails. Unsafe methods should be retried carefully.
+REST APIs: REST uses this principle to distinguish between read operations (safe) and write operations (unsafe).
+a resource is essentially any piece of data or functionality that can be identified, accessed, and manipulated over the network. Think of it as something the server “owns” or provides, which clients can interact with.
+
+1. Key Characteristics of a Resource
+Identifiable – Every resource has a unique URI (Uniform Resource Identifier).
+Example: /users/123 identifies the user with ID 123.
+Representation – A resource can be represented in different formats like JSON, XML, or HTML.
+Example: A user resource might be represented as:
+{
+  "id": 123,
+  "name": "Alice",
+  "email": "alice@example.com"
+}
+Stateful Data – The resource has some state (data) that can be retrieved or modified.
+Example: A cart resource keeps track of items a user wants to purchase.
+Accessible via Standard Methods – Clients interact with resources using HTTP methods like GET, POST, PUT, DELETE.
+Architectural Style vs Protocol
+REST
+It’s an architectural style, not a strict protocol.
+Uses standard HTTP methods (GET, POST, PUT, DELETE) to interact with resources.
+SOAP
+It’s a protocol with strict standards.
+Uses XML-based messages and a rigid messaging structure.
+
+Message Format
+REST
+Can use multiple formats: JSON, XML, HTML, or plain text.
+JSON is most common because it’s lightweight and easy to parse.
+SOAP
+Uses XML only.
+Messages include a SOAP envelope with headers and body.
+Transport Protocol
+REST
+Primarily uses HTTP/HTTPS but can work with other protocols (like WebSocket).
+SOAP
+Can use HTTP, SMTP, TCP, or JMS.
+Requires a SOAP-compliant transport protocol.
+Statefulness
+REST
+Designed to be stateless: each request contains all the info the server needs.
+SOAP
+Can be stateful or stateless; supports sessions if needed.
+Complexity
+REST
+Lightweight, easier to implement, and easier for mobile and web apps.
+SOAP
+Heavier, more rigid, requires tooling for XML parsing and schema validation.
+Security
+REST
+Relies on HTTPS, tokens, or OAuth for security.
+No built-in security standards; security is implemented at the application layer.
+SOAP
+Built-in WS-Security standards (encryption, digital signatures).
+Better suited for enterprise applications requiring advanced security.
+Performance
+REST
+Faster and lighter because of JSON and no strict envelope overhead.
+SOAP
+Slower due to XML parsing and extra SOAP headers.
+Use Cases
+REST
+Web apps, mobile apps, public APIs, IoT devices.
+Examples: Twitter API, GitHub API, Google Maps API.
+SOAP
+Enterprise applications, financial services, banking, or where strict contracts and security are required.
+202 Accepted is used for asynchronous processing when the operation takes time (minutes or even hours). Instead of making the client wait, the server immediately acknowledges the request. Example: uploading a large video for processing, generating a report, or triggering a background job. It’s also used for queue-based operations where the request is queued for processing later, useful in microservices or message-queue systems. Additionally, it applies to deferred actions when the server cannot complete the action immediately due to external dependencies but guarantees it will try.
+202 Accepted does not guarantee success, only that the request was valid and accepted.
+
+Difference between Authentication and Authorization?
+Authentication is the process of verifying who you are, checking the identity of a user or client, typically using credentials like username and password, OTP, API tokens or JWTs, or biometric data such as fingerprints or Face ID. It answers the question, “Are you who you say you are?” For example, logging into Gmail with your email and password or sending credentials to a REST API’s /login endpoint to receive a token. If authentication succeeds, the system knows who the user is; if it fails, access is denied (401 Unauthorized). Authorization, on the other hand, is the process of checking what you are allowed to do, determining permissions for a user or client based on roles, policies, or permissions. It answers the question, “What resources or actions are you allowed to access?” For example, after logging into Gmail, only some users can access admin settings. In REST APIs, a user with the role “user” may GET /profile, while a user with the role “admin” can also DELETE /users/123. If authorization fails, access is denied (403 Forbidden), even if the user is authenticated.
+
+What is JWT?
+JWT (JSON Web Token) is a compact, URL-safe token format used for securely transmitting information between a client and server as a JSON object.
+Key points:
+It is self-contained: carries user identity and claims (permissions) inside the token itself.
+Used mainly for authentication and authorization in REST APIs.
+Composed of three parts: Header, Payload, and Signature.
+2. Structure of JWT
+A JWT looks like this:
+xxxxx.yyyyy.zzzzz
+Where each part is Base64URL encoded:
+Header
+Contains metadata about the token, like type and algorithm.
+Example:
+{
+"alg": "HS256",
+"typ": "JWT"
+}
+Payload
+Contains claims, i.e., information about the user or token.
+Example:
+{
+"sub": "1234567890",
+"name": "Alice",
+"role": "admin",
+"iat": 1676300000
+}
+Signature
+Ensures the token was not tampered with.
+Generated using a secret key or private/public key pair:
+HMACSHA256(base64UrlEncode(header) + "." + base64UrlEncode(payload), secret)
+3. How JWT Works
+Step 1: Login / Authentication
+Client sends credentials to the server (username/password).
+Server verifies the credentials.
+Step 2: Token Issuance
+Server creates a JWT containing user identity and claims.
+Token is signed with a secret key so it cannot be altered.
+Server sends JWT back to client.
+Example Response:
+{
+"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiQWxpY2UiLCJyb2xlIjoiYWRtaW4ifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+}
+Step 3: Using JWT for Requests
+Client sends the JWT in the Authorization header for protected endpoints:
+GET /api/users/123
+Authorization: Bearer <JWT_TOKEN_HERE>
+Server verifies the signature using the secret key.
+If valid, the server extracts claims from the payload and grants access.
+No session state is stored on the server → REST remains stateless.
+4. Benefits of JWT
+Stateless authentication: server does not store session info.
+Compact & URL-safe: can be sent in headers, cookies, or query params.
+Self-contained: carries identity and claims, so server can trust the token.
+Cross-platform: works for web, mobile, and APIs.
+5. Security Considerations
+Never store sensitive data in the payload unless encrypted.
+Use HTTPS to prevent token interception.
+Set expiration (exp claim) to limit token lifetime.
+Use strong secret keys or asymmetric signing (RS256) for verification.
+💡 Analogy:
+Think of JWT like a digital ID card:
+Header = type of ID & signature method
+Payload = your name, role, and permissions
+Signature = hologram or seal that proves it’s authentic
+
+What is OAuth 2.0?
+OAuth 2.0 is an authorization framework that allows a user to grant a third-party application limited access to their resources on another service without sharing their credentials (like username and password). It is not for authentication (though often used with OpenID Connect for that) and focuses on delegated access. It’s commonly used for APIs, mobile apps, and web apps. Example: “Login with Google” or “Allow this app to access your Facebook photos.”
+2. Key Concepts in OAuth 2.0
+Resource Owner: The user who owns the data. Example: Alice owns her Google Drive files.
+Client: The application requesting access. Example: A photo-editing app that wants access to Google Drive.
+Authorization Server: The server that issues access tokens after authenticating the user. Example: Google OAuth server.
+Resource Server: The server that hosts the user’s data and validates access tokens. Example: Google Drive API.
+Access Token: A temporary token that allows the client to access the resource, typically short-lived and limited in scope.
+3. OAuth 2.0 Flow (Simplified)
+Step 1: Client Requests Authorization: Client redirects the user to the authorization server asking for permission. Example URL: https://accounts.google.com/o/oauth2/auth?client_id=CLIENT_ID&scope=drive.read&response_type=code
+
+Step 2: User Grants Permission: User logs in and approves the app to access their resources.
+Step 3: Client Receives Authorization Code: After approval, the authorization server redirects back to the client with a code.
+Step 4: Client Exchanges Code for Access Token: Client sends the code to the authorization server along with client credentials. Server responds with an access token (and optionally a refresh token).
+Step 5: Client Accesses Resource: Client includes the access token in requests to the resource server: GET /drive/files Authorization: Bearer <ACCESS_TOKEN>. Resource server validates the token and returns the requested data.
+4. Key Features of OAuth 2.0
+Scoped access: Tokens can be limited to specific actions (read-only, write).
+Time-limited: Tokens expire for security.
+Refresh tokens: Long-lived tokens to get new access tokens without re-authenticating.
+Third-party access: Users don’t share passwords with the client app.
+5. Difference Between OAuth 2.0 and JWT
+JWT is a token format, often used inside OAuth 2.0 access tokens. OAuth 2.0 is a framework for securely granting access.
+💡 Analogy: Think of OAuth 2.0 like a hotel keycard system: You (user) own the room. Front desk (authorization server) issues a keycard (access token). Housekeeping (resource server) allows access only if the keycard is valid. Guest app (client) can use the keycard to enter the room without knowing your master key (password).
+
+Got it! I will keep each line as it is but just remove the extra empty lines and numbering/points. Here's the cleaned version:
+
+A Bearer token is a type of access token used in HTTP requests to authorize clients to access protected resources, commonly in REST APIs and OAuth 2.0. It’s called “bearer” because whoever “bears” (holds) the token can access the resource.
+Format: Usually a long string (often a JWT)
+Purpose: Grants access to protected resources without sending username/password.
+Usage: Sent in the Authorization header of an HTTP request.
+Stateless: The server validates the token each time; it doesn’t store session state.
+After authentication (login) or authorization (OAuth 2.0), the client receives a token from the server.
+Example:
+{
+"access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+"token_type": "Bearer",
+"expires_in": 3600
+}
+The client includes the token in the Authorization header:
+GET /api/users/123
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+The server checks the token’s validity, expiration, and permissions.
+If valid, it returns the requested resource.
+If invalid or expired, it returns 401 Unauthorized.
+Stateless: Server doesn’t need to store session info.
+Portable: Can be sent via HTTP headers, query strings, or cookies (though headers are safest).
+Flexible: Works with OAuth 2.0 and JWT.
+Scoped Access: Tokens can limit what actions the client can perform (e.g., read-only vs write).
+Keep it secret: Anyone with the token can access the resources.
+Use HTTPS: Prevents token interception.
+Short lifespan: Tokens usually expire quickly; refresh tokens are used to get new ones.
+Revoke if compromised: Invalidate tokens if necessary.
+💡 Analogy:
+A Bearer token is like a ticket to a concert:
+Whoever holds the ticket can enter the venue.
+You don’t need to show your ID or password each time—just the ticket.
+
+Basic Authentication (Basic Auth) is one of the simplest methods for HTTP authentication. It allows a client to send credentials (username and password) with each HTTP request to access a protected resource.
+Client Request:
+The client sends a request to a protected endpoint without credentials.
+Example:
+GET /api/users/123 HTTP/1.1
+Host: api.example.com
+Server Response (401 Unauthorized):
+The server responds with:
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Basic realm="Example"
+This tells the client that Basic Auth credentials are required.
+Client Sends Credentials:
+The client sends the username and password, encoded in Base64, in the Authorization header:
+Authorization: Basic QWxpY2U6cGFzc3dvcmQxMjM=
+Here, QWxpY2U6cGFzc3dvcmQxMjM= is Base64 encoding of Alice:password123.
+Server Validates:
+The server decodes the credentials, verifies them, and grants access if valid.
+If invalid, it returns 401 Unauthorized.
+Stateless: Credentials are sent with every request.
+Simple to implement: No token handling required.
+No encryption by itself: Credentials are Base64-encoded, not encrypted, so it must use HTTPS.
+Not ideal for production unless combined with HTTPS, because credentials are sent every time.
+Example Request with Basic Auth:
+GET /api/users/123 HTTP/1.1
+Host: api.example.com
+Authorization: Basic QWxpY2U6cGFzc3dvcmQxMjM=
+Accept: application/json
+
+Set up Postman request
+Open Postman and click New → HTTP Request.
+Set the method to POST.
+Paste the URL you have in your code:
+https://authorization-server.com/oauth/token
+
+Set headers
+Click Headers and add:
+Key Value
+Content-Type application/x-www-form-urlencoded
+This is required because your Java code sets .contentType("application/x-www-form-urlencoded").
+Set body
+Go to the Body tab.
+Select x-www-form-urlencoded.
+Add the following key-value pairs:
+("grant_type", "password") ("username", "testuser") ("password", "testpass") ("client_id", "your_client_id") ("client_secret", "your_client_secret")
+Send the request
+Click Send.
+Postman will return a JSON response like:
+{
+"access_token": "eyJhbGciOiJIUzI1NiIsInR...",
+"refresh_token": "def50200a4b2...",
+"expires_in": 3600,
+"token_type": "Bearer"
+}
+You can then copy access_token and refresh_token and use them in further API requests.
+Optional: Use Postman environment variables
+You can save the tokens in environment variables:
+Click Tests tab and add:
+pm.environment.set("accessToken", pm.response.json().access_token);
+pm.environment.set("refreshToken", pm.response.json().refresh_token);
+This lets you use {{accessToken}} in subsequent requests for the Authorization header.
+
+What is x-www-form-urlencoded?
+application/x-www-form-urlencoded is a content type used in HTTP requests to send data to the server, usually in a POST request.
+Think of it as sending key-value pairs in a URL-like format in the body of the request.
+How it works
+Instead of sending JSON like this:
+{
+"username": "testuser",
+"password": "testpass"
+}
+It sends the data as a URL-encoded string like this:
+username=testuser&password=testpass&grant_type=password&client_id=your_client_id&client_secret=your_client_secret
+Each key-value pair is joined with =.
+Pairs are separated by &.
+Special characters are URL-encoded (e.g., spaces become %20).
+This is the format your Java code is sending with .formParam().
+When it’s used
+OAuth2 token requests (like your example)
+HTML forms submitted with method="POST"
+Anytime the server expects simple form data instead of JSON.
+In Postman
+When you select Body → x-www-form-urlencoded, Postman automatically converts the key-value pairs into this format and sets the correct Content-Type header.
+
+Get Token via Login API (Common in JWT systems)
+Some APIs require you to first call a login endpoint.
+Example:
+POST /login
+Body:
+{
+"username": "admin",
+"password": "123456"
+}
+Response:
+{
+"access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+Copy that token →
+Go to Authorization → Bearer Token → Paste → Send request.
+
+JSON body
+How: POST request with username/password as JSON instead of form data.
+When: Modern APIs often prefer JSON over form data.
+Example:
+POST /login
+Content-Type: application/json
+{
+"username": "testuser",
+"password": "testpass"
+}
+Postman → Body → raw → JSON → enter username/password.
+
+Why Token Refresh is Needed
+Access tokens are usually short-lived (e.g., 15 minutes to 1 hour) for security reasons.
+If a token expires, the client cannot access protected resources until it obtains a new token.
+Refresh tokens are long-lived and allow the client to request a new access token without asking the user to log in again.
+Components
+Access Token – Short-lived, used to access APIs.
+Refresh Token – Long-lived, stored securely on the client, used to get new access tokens.
+Token Refresh Flow
+Step 1: Access Token Expires
+Client sends a request to an API with an expired token:
+GET /api/user/profile
+Authorization: Bearer <EXPIRED_ACCESS_TOKEN>
+Server responds with 401 Unauthorized and a message indicating the token has expired.
+Step 2: Use Refresh Token to Get New Access Token
+Client sends the refresh token to the authorization server:
+POST /oauth/token
+Content-Type: application/x-www-form-urlencoded
+grant_type=refresh_token&
+refresh_token=<REFRESH_TOKEN>&
+client_id=<CLIENT_ID>&
+client_secret=<CLIENT_SECRET>
+grant_type=refresh_token tells the server this request is to refresh the token.
+Step 3: Server Issues New Tokens
+If the refresh token is valid, the server responds with a new access token (and optionally a new refresh token):
+{
+"access_token": "new_access_token_abc123",
+"expires_in": 3600,
+"refresh_token": "new_refresh_token_xyz456",
+"token_type": "Bearer"
+}
+Client can now use the new access token to access protected resources.
+
+1️⃣ URI (Path Parameter)
+A URI path parameter is part of the URL itself.
+It usually identifies a specific resource.
+Example:
+GET https://api.example.com/users/123
+
+Here:
+/users/123
+123 is a path parameter
+It identifies which user
+So:
+/users/{id}
+id is part of the URI.
+🔹 When to use Path Parameters
+When identifying a specific resource
+When the value is required
+When it changes the resource itself
+Examples:
+/orders/456
+/products/999
+/customers/12
+🔎 2️⃣ Query Parameters
+Query parameters come after ? in the URL.
+They are used for:
+Filtering
+Sorting
+Pagination
+Optional data
+Example:
+GET https://api.example.com/users?role=admin&active=true
+
+Here:
+role=admin
+active=true
+These are query parameters.
+They modify the result but don’t identify a specific resource.
+
+What is Caching?
+Caching is the process of storing copies of data in a temporary storage (cache) so that future requests can be served faster without fetching or recomputing the data again.
+Goal: Improve performance, reduce latency, and lower server load.
+Works by keeping frequently accessed data closer to the client or application.
+Key idea: “Store once, use many times.”
+Types of Caching
+Browser / Client-Side Caching
+The client (browser, mobile app) stores a copy of data locally.
+Can include:
+HTML pages, images, CSS, JS files
+API responses (JSON)
+Controlled via HTTP headers like:
+Cache-Control
+Expires
+ETag
+Example: A web page loads images from cache instead of downloading them again.
+Server-Side Caching
+The server stores computed results or database query results to avoid recomputation.
+Types:
+In-memory cache – e.g., Redis, Memcached
+Database query caching – store results of frequent queries
+Page caching – store full HTML pages for static content
+Example: An API endpoint that returns trending articles can cache the response for 10 minutes.
+Reverse Proxy / CDN Caching
+Reverse proxies (like Nginx, Varnish) or CDNs (Content Delivery Networks) cache data closer to the user.
+Reduces latency and server load.
+Example: Images, videos, or static assets served from Cloudflare CDN instead of your server.
+Application-Level Caching
+The application itself caches data in memory to speed up repeated operations.
+Example:
+Storing user profile data in memory to avoid repeated DB calls during the same session.
+How Caching Works in APIs
+Client caching: Client can store API responses if Cache-Control allows it.
+Server caching: Server caches response in memory or disk for a short time.
+Proxy/CDN caching: Caches API responses to serve future requests faster.
+Example with HTTP Headers:
+Cache-Control: max-age=300 // cache response for 5 minutes
+ETag: "abc123" // helps detect if resource changed
+Benefits of Caching
+Faster response times – data served from cache is quicker than recomputing or fetching from DB.
+Reduced server load – fewer DB queries and processing.
+Lower bandwidth usage – repeated downloads are avoided.
+Better user experience – pages load faster, apps feel snappier.
+Where Caching Can Be Implemented
+Layer Example / Tool Purpose
+Client / Browser Browser cache, localStorage, service worker Fast page loads, offline support
+Server / Application Redis, Memcached Reduce DB queries, compute-heavy operations
+Database Query cache, materialized views Speed up repeated database reads
+CDN / Reverse Proxy Cloudflare, Akamai, Nginx, Varnish Deliver static content faster to global users
+💡 Analogy:
+Think of caching like a kitchen pantry:
+Frequently used ingredients (data) are kept nearby (cache) instead of fetching from the grocery store (database/server) every time.
+What is ETag?
+ETag (Entity Tag) is an HTTP header used for caching and conditional requests.
+It is a unique identifier assigned by the server to a specific version of a resource (like a file, JSON response, or web page).
+Helps the client know if the resource has changed since the last time it was fetched.
+Reduces unnecessary data transfer and improves performance.
+How ETag Works
+Step 1: Server Sends Resource with ETag
+When the client requests a resource:
+GET /api/users/123
+The server responds with:
+HTTP/1.1 200 OK
+ETag: "abc123"
+Content-Type: application/json
+{
+"id": 123,
+"name": "Alice"
+}
+"abc123" is a hash or version identifier of this resource.
+Step 2: Client Caches ETag
+The client stores the resource and its ETag in cache.
+Step 3: Client Makes Conditional Request
+Next time the client requests the same resource, it can send the ETag back:
+GET /api/users/123
+If-None-Match: "abc123"
+If-None-Match tells the server: “Send me the resource only if it has changed from this ETag.”
+Step 4: Server Checks ETag
+If resource hasn’t changed → server responds with 304 Not Modified (no body).
+If resource has changed → server responds with 200 OK and the new resource + new ETag.
+This avoids sending the full response when nothing has changed.
+Benefits of ETag
+Reduces bandwidth usage – only sends data when necessary.
+Speeds up responses – client can use cached data if resource hasn’t changed.
+Versioning – each ETag represents a specific version of a resource.
+Types of ETags
+Strong ETag – changes whenever the resource changes, byte-for-byte.
+Weak ETag – indicates semantically equivalent content even if minor changes occur.
+Prefixed with W/
+Example: ETag: W/"abc123"
+💡 Analogy
+Think of ETag like a product barcode:
+If the product (resource) hasn’t changed, the barcode stays the same → no need to resend info.
+If the product changes, the barcode changes → client knows to update its copy.
+✅ Summary
+ETag = a version identifier for a resource
+Purpose = enable efficient caching and conditional requests
+Works with If-None-Match to return 304 Not Modified when resource hasn’t changed
+
+
+What is Rate Limiting?
+Rate limiting is a technique used to control the number of requests a client can make to a server in a given period of time.
+It prevents overloading the server, abuse, or DDoS attacks.
+Ensures fair use among multiple clients.
+How Rate Limiting Works
+Each client is allowed N requests per time window.
+If the client exceeds the limit, the server responds with HTTP 429 Too Many Requests.
+Example:
+Limit: 100 requests per hour per API key.
+Client makes 101 requests → receives 429 status code.
+Typical Headers Used
+Servers often include headers to help clients understand their limits:
+X-RateLimit-Limit: 100 // Max requests allowed
+X-RateLimit-Remaining: 25 // Requests left in current window
+X-RateLimit-Reset: 3600 // Time in seconds until limit resets
+These headers let clients throttle themselves to avoid being blocked.
+Types of Rate Limiting
+Fixed Window
+Count requests in a fixed time window (e.g., per hour).
+Simple but can cause bursts at the window boundary.
+Sliding Window
+More precise: counts requests over a rolling time window.
+Smooths bursts better than fixed window.
+Token Bucket
+Tokens are generated at a fixed rate.
+Each request consumes a token; if none left → request denied.
+Allows burst traffic up to a limit, then throttles.
+Leaky Bucket
+Requests flow at a fixed rate; excess requests are queued or dropped.
+Why Rate Limiting is Important
+Protects Server Resources – Prevents crashes due to too many requests.
+Prevents Abuse – Stops brute force attacks, spam, or scraping.
+Fair Usage – Ensures all clients get reasonable access.
+Improves Reliability – Reduces load spikes, keeping API responsive.
+Example in Practice
+GitHub API: 5000 requests per hour per user
+Twitter API: 900 requests per 15 minutes per endpoint
+When the limit is exceeded, you get:
+HTTP/1.1 429 Too Many Requests
+Retry-After: 120
+Retry-After tells you how long to wait before retrying.
+Analogy
+Think of rate limiting like a water tap:
+The tap allows a fixed amount of water (requests) per minute.
+If you try to pour too fast, it stops you (429 error) until it refills.
+✅ Summary
+Rate limiting = control how many requests a client can make.
+HTTP 429 = request blocked due to exceeding limit.
+Implemented using fixed window, sliding window, token bucket, or leaky bucket algorithms.
+Helps with security, fairness, and performance of APIs.
+
+Understand the API
+Before testing, gather:
+API documentation (endpoints, methods, parameters, headers, expected responses)
+Authentication method (API key, Basic Auth, Bearer token, OAuth2)
+Request/response formats (JSON, XML, form-data)
+Types of API Testing
+Functional Testing
+Tests whether the API does what it’s supposed to.
+Check:
+Correct response for valid requests
+Proper error codes for invalid inputs (400, 401, 404, etc.)
+Data correctness
+Example: Send a GET request to /users/123 and verify the returned user details.
+Load / Performance Testing
+Tests API performance under high traffic.
+Check:
+Response time
+Throughput
+Behavior under spikes
+Tools: JMeter, Locust, k6
+Security Testing
+Ensures API is protected from attacks.
+Test:
+Authentication & authorization (access control)
+SQL injection, XSS, CSRF
+Rate limiting and throttling
+Negative Testing
+Send invalid inputs or unauthorized requests to check error handling.
+Example:
+Missing parameters
+Invalid JSON payload
+Expired tokens
+Integration Testing
+Test how your API interacts with databases, other APIs, or external services.
+Ensures the full workflow works end-to-end.
+
+Validating a response schema is a common task in API automation to ensure the API response structure matches the expected format (fields, types, nested objects). Here’s how you can do it:
+Using JSON Schema Validation
+JSON Schema is a standard way to define the expected structure of a JSON response.
+Steps
+Define the schema in a JSON file.
+Use automation tools (like RestAssured in Java) to validate the response against the schema.
+Example JSON Schema (user_schema.json)
+{
+"$schema": "http://json-schema.org/draft-07/schema#
+",
+"title": "User",
+"type": "object",
+"properties": {
+"id": { "type": "integer" },
+"name": { "type": "string" },
+"email": { "type": "string", "format": "email" }
+},
+"required": ["id", "name", "email"]
+}
+Example in Java + RestAssured
+import static io.restassured.RestAssured.;
+import static io.restassured.module.jsv.JsonSchemaValidator.;
+import org.testng.annotations.Test;
+public class APITest {
+@Test
+public void validateUserSchema() {
+given()
+.header("Authorization", "Bearer " + accessToken)
+.when()
+.get("https://api.example.com/users/1
+")
+.then()
+.assertThat()
+.statusCode(200)
+.body(matchesJsonSchemaInClasspath("user_schema.json"));
+}
+}
+This ensures:
+All required fields exist
+Field types are correct
+Nested objects match the schema
+Manual Field Validation (Optional)
+If you don’t use JSON Schema, you can manually check fields:
+Response response = given()
+.header("Authorization", "Bearer " + accessToken)
+.when()
+.get("/users/1");
+int id = response.jsonPath().getInt("id");
+String name = response.jsonPath().getString("name");
+String email = response.jsonPath().getString("email");
+assertNotNull(id);
+assertTrue(name.length() > 0);
+assertTrue(email.contains("@"));
+Works for small responses
+But less scalable for large or nested responses
+
+Python Example using jsonschema:
+
+from jsonschema import validate, ValidationError
+
+schema = { ... }  # JSON Schema as above
+response = {
+    "id": 123,
+    "name": "Alice",
+    "email": "alice@example.com",
+    "roles": ["user", "admin"]
+}
+
+try:
+    validate(instance=response, schema=schema)
+    print("Response is valid")
+except ValidationError as e:
+    print("Invalid response:", e)
+
+How to Implement Negative Tests
+Example 1 — Invalid Token (401 Unauthorized)
+given()
+.header("Authorization", "Bearer invalid_token")
+.when()
+.get("/users/1")
+.then()
+.statusCode(401)
+.body("error", equalTo("Invalid token"));
+Example 2 — Missing Required Field (400 Bad Request)
+String payload = "{ "name": "" }"; // missing email
+given()
+.header("Content-Type", "application/json")
+.body(payload)
+.when()
+.post("/users")
+.then()
+.statusCode(400)
+.body("message", containsString("email is required"));
+Example 3 — Access Forbidden (403)
+given()
+.header("Authorization", "Bearer normal_user_token")
+.when()
+.delete("/admin/users/10")
+.then()
+.statusCode(403)
+.body("error", equalTo("Access denied"));
+Example 4 — Resource Not Found (404)
+given()
+.header("Authorization", "Bearer " + token)
+.when()
+.get("/users/9999")
+.then()
+.statusCode(404)
+.body("error", equalTo("User not found"));
+Best Practices for Negative Testing
+Define all failure scenarios upfront — authentication, validation, rate limits, business rules.
+Use parameterization — run tests with multiple invalid inputs.
+Assert on status codes, error messages, and response schema.
+Combine with automation — include negative tests in CI/CD to catch regressions.
+Log and report clearly — include request, payload, and response for debugging.
+Interview Answer
+Negative testing validates that the API handles invalid or unexpected input gracefully. I test scenarios like invalid tokens (401), forbidden access (403), missing fields (400), invalid HTTP methods, and non-existent resources (404). I assert status codes, error messages, and response schema to ensure proper error handling.
+
+How do you test rate limits?
+Testing API rate limits is all about deliberately sending requests to see how many requests the API allows in a given time and how it responds when the limit is exceeded. Here’s a structured way to do it:
+Understand the Rate Limit Policy
+Check the API documentation for:
+Requests per second/minute/hour
+Any differences for authenticated vs unauthenticated users
+Response codes for hitting the limit (usually 429 Too Many Requests)
+Some APIs also include rate-limit headers, like:
+X-RateLimit-Limit → maximum allowed
+X-RateLimit-Remaining → remaining requests
+X-RateLimit-Reset → time when the limit resets
+Manual Testing
+Use Postman or cURL:
+Send multiple requests in a loop quickly.
+Observe when the API returns 429.
+Check response headers to confirm limit info.
+Example with cURL:
+for i in {1..20}; do
+curl -i -H "Authorization: Bearer <token>" https://api.example.com/data
+
+done
+When you exceed the limit, the response will likely be 429.
+Automated Testing Using Python
+Use Python to simulate multiple requests quickly:
+import requests
+url = "https://api.example.com/data
+"
+headers = {"Authorization": "Bearer <token>"}
+for i in range(50):
+response = requests.get(url, headers=headers)
+print(f"{i+1}: {response.status_code} - Remaining: {response.headers.get('X-RateLimit-Remaining')}")
+Watch for 429 and check X-RateLimit-Remaining or other headers.
+Load / Stress Testing
+Tools like Locust (Python) or JMeter can simulate hundreds of requests per second.
+Useful for testing how the API handles bursts and verifying rate-limiting rules.
+
+
+Use the Collection Runner
+To simulate multiple requests:
+Save your request in a collection.
+Go to Collections → Select your collection → Run.
+In the Collection Runner:
+Set Iterations → number of requests you want to send.
+Optionally, select Delay (ms) → time between requests (set small to test limits).
+Check Save responses if you want to inspect them.
+Click Run.
+Postman will execute the requests in sequence.
+Watch the Status Code column:
+200 → successful request
+429 → rate limit exceeded
+Inspect Headers for Rate Limit Info
+Many APIs include headers like:
+X-RateLimit-Limit → max requests allowed
+X-RateLimit-Remaining → requests left
+X-RateLimit-Reset → time until reset
+You can click on any request in the runner to view the response headers.
+Optional: Use Postman Scripts
+You can write a Pre-request Script or Tests script to log the remaining limit:
+// In Tests tab
+let remaining = pm.response.headers.get("X-RateLimit-Remaining");
+console.log("Remaining requests:", remaining);
+This prints the remaining quota in the Postman console.
+
+Testing file upload APIs is a bit different from normal API testing because you’re dealing with binary data, file sizes, and sometimes special headers. Here’s a structured way to do it:
+Understand the API Requirements
+Check the API documentation for:
+Accepted HTTP method (usually POST or PUT)
+Required headers, e.g., Content-Type: multipart/form-data
+Max file size allowed
+Accepted file types (images, PDFs, CSV, etc.)
+Authentication requirements (API key, Bearer token, etc.)
+Using Postman
+Postman makes file upload testing simple:
+Create a new POST request to the upload endpoint.
+Go to the Body tab → select form-data.
+Add a key with type File:
+Key name should match the API parameter (e.g., file).
+Choose a file from your computer to upload.
+Add any other required form fields (like userId, description, etc.).
+Add headers if required (Postman usually sets Content-Type: multipart/form-data automatically).
+Click Send.
+Check the response:
+Success → 200 or 201 response code
+Error → 400 (bad request), 413 (file too large), or 415 (unsupported media type)
+import requests
+url = "https://api.example.com/upload
+"
+files = {'file': open('test_file.jpg', 'rb')}
+data = {'userId': '123'}
+headers = {'Authorization': 'Bearer <token>'}
+response = requests.post(url, files=files, data=data, headers=headers)
+print(response.status_code, response.text)
+
+How do you test file upload APIs?
+Testing file upload APIs is a common task in API automation, and it involves verifying that the API correctly handles files of different types, sizes, and formats. Here’s a structured approach:
+Understand the API Requirements
+Before testing, check:
+Accepted file types (e.g., .jpg, .pdf, .csv)
+Maximum file size
+Required headers (e.g., Content-Type: multipart/form-data)
+Response structure (status code, message, file ID, URL)
+Prepare Test Files
+Valid files → allowed type and size
+Invalid files → wrong type, too large, empty file
+Boundary cases → file at maximum allowed size
+Keep a resources/files/ folder in your automation project.
+Use Multipart/Form-Data Request
+Most file upload APIs use multipart/form-data.
+Example in Java + RestAssured:
+File file = new File("src/test/resources/files/sample.pdf");
+given()
+.header("Authorization", "Bearer " + token)
+.multiPart("file", file) // 'file' is the form field name
+.formParam("description", "Test file upload")
+.when()
+.post("/upload")
+.then()
+.statusCode(201)
+.body("fileName", equalTo("sample.pdf"))
+.body("status", equalTo("uploaded"));
+multiPart("file", file) → attaches the file
+.formParam() → optional metadata like description
+Negative Scenarios
+Unsupported file type → expect 415 Unsupported Media Type
+File file = new File("src/test/resources/files/sample.exe");
+given()
+.multiPart("file", file)
+.when()
+.post("/upload")
+.then()
+.statusCode(415);
+File too large → expect 413 Payload Too Large
+No file provided → expect 400 Bad Request
+Unauthorized upload → expect 401/403
+Validate Response
+Check status code → 201 or 200
+Verify response body → file name, file size, URL
+Optionally, download file and compare checksum with uploaded file
+String fileUrl = response.jsonPath().getString("fileUrl");
+byte[] downloadedFile = given().get(fileUrl).asByteArray();
+// Compare with original file bytes
+Automation Best Practices
+Store test files in resources folder → easy to manage
+Data-driven testing → test multiple file types and sizes
+Clean up after test → delete uploaded files if needed
+Use dynamic tokens if authentication is required
+Combine with CI/CD → ensure upload works in every build
+Quick Interview Answer
+To test file upload APIs, I send requests with valid and invalid files using multipart/form-data. I validate status codes, response body, and metadata. I also test negative scenarios like unsupported file types, large files, missing files, and unauthorized access to ensure the API handles errors correctly.
