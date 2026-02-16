@@ -1,0 +1,114 @@
+How To Handle DropDowns?
+dropdown = page.locator("#fruits")
+Get All <option> Elements
+options = dropdown.locator("option")
+print("Total options:", options.count())
+options.count() → number of <option> elements.
+Use .nth(index) to access each option.
+for i in range(options.count()):
+    print(options.nth(i).inner_text())
+
+3️⃣ Select an Option
+There are three main ways:
+✅ a) By value
+dropdown.select_option("banana")  # selects <option value="banana">
+✅ b) By label (text)
+dropdown.select_option(label="Mango")  # selects option with visible text
+✅ c) By index
+dropdown.select_option(index=3)  # selects the 4th option (0-based)
+🔹 4️⃣ Selecting Multiple Options (if <select multiple>)
+<select id="fruits" multiple>
+    <option value="apple">Apple</option>
+    <option value="banana">Banana</option>
+    <option value="mango">Mango</option>
+    <option value="orange">Orange</option>
+</select>
+dropdown.select_option(["apple", "orange"])  # selects multiple options
+Works only if the <select> has the multiple attribute.
+
+title = page.title()
+print("Page Title:", title)
+url = page.url
+print("Current URL:", url)
+text = page.locator("a#home-link").inner_text()
+print("Anchor Text:", text)
+text_content = page.locator("a#home-link").text_content()
+print("Text content:", text_content)
+href = page.locator("a#home-link").get_attribute("href")
+print("Link URL:", href)
+Get Value of Input or Select Elements
+# Input value
+value = page.locator("#username").input_value()
+print("Username input value:", value)
+
+# Select selected option
+selected_value = page.locator("#country").input_value()
+print("Selected option value:", selected_value)
+count = page.locator("ul li").count()
+print("Total list items:", count)
+class_name = page.locator("#header").get_attribute("class")
+print("Class name:", class_name)
+is_checked = page.locator("#agree").is_checked()
+print("Checkbox checked:", is_checked)
+is_visible = page.locator("#login").is_visible()
+is_enabled = page.locator("#login").is_enabled()
+print("Login visible:", is_visible)
+print("Login enabled:", is_enabled)
+is_visible = page.locator("#login").is_visible()
+is_enabled = page.locator("#login").is_enabled()
+print("Login visible:", is_visible)
+print("Login enabled:", is_enabled)
+Types of Waits in Playwright
+Implicit Wait
+Playwright does not have traditional implicit waits like Selenium.
+Instead, it automatically waits for elements to be ready before interacting using locators.
+Example: clicking an element waits until it’s visible and enabled:
+page.click("#login")  # auto-waits until the button is ready
+. Explicit Wait
+You explicitly wait for a specific condition before continuing.
+Wait for Selector
+page.wait_for_selector("#username")  # waits until element is in DOM and visible
+
+
+Optional timeout:
+
+page.wait_for_selector("#username", timeout=10000)  # wait up to 10 seconds
+
+b) Wait for Element State
+# Wait until element is visible
+page.locator("#submit").wait_for(state="visible")
+# Wait until element is hidden
+page.locator("#spinner").wait_for(state="hidden")
+# Other states: "attached", "detached", "visible", "hidden", "enabled", "disabled"
+3. Wait for URL / Navigation
+Wait until a page navigates to a specific URL:
+page.goto("https://example.com/login")
+page.wait_for_url("https://example.com/dashboard")  # waits until redirected
+
+Can use regex:
+import re
+page.wait_for_url(re.compile(r"/dashboard$"))
+4. Wait for Load / Network
+# Wait until network idle (all requests done)
+page.wait_for_load_state("networkidle")
+# Other load states:
+# "load" -> waits for window.onload
+# "domcontentloaded" -> waits for DOMContentLoaded
+Example:
+page.goto("https://example.com", wait_until="networkidle")
+5. Wait for Function / Custom Condition
+You can wait for any JS condition:
+page.wait_for_function("() => window.myApp && window.myApp.isReady")
+Useful for dynamic apps or custom flags.
+6. Sleep / Timeout (Not Recommended Usually)
+import time
+time.sleep(2)  # pauses for 2 seconds
+Only use for debugging.
+Prefer wait_for_selector or expect, as Playwright smartly waits.
+7. Using Expect (Auto-Waiting)
+Playwright expect assertions automatically wait:
+from playwright.sync_api import expect
+expect(page.locator("#welcome")).to_be_visible()  # waits up to default 5s
+expect(page.locator("#logout")).to_be_enabled(timeout=10000)  # custom 10s wait
+No need to manually add explicit waits most of the time.
+
