@@ -1,0 +1,989 @@
+                                                          PYTHON
+A decorator is a function that takes another function as input, adds some functionality, and returns a new function.
+Think of it like wrapping a gift: the gift is the original function, and the wrapping is extra behavior you want to add.
+Basic Decorator Example
+def decorator(func):
+    def wrapper():
+        print("Something is happening before the function runs.")
+        func()
+        print("Something is happening after the function runs.")
+    return wrapper
+
+def say_hello():
+    print("Hello!")
+
+# Decorating manually
+decorated_function = decorator(say_hello)
+decorated_function()
+
+Output:
+Something is happening before the function runs.
+Hello!
+Something is happening after the function runs.
+
+decorator takes say_hello as input.
+wrapper adds extra behavior before and after calling say_hello.
+The decorated function is returned.
+6. Using the @ syntax
+Python provides a shorthand using @:
+@decorator
+def say_hello():
+    print("Hello!")
+say_hello()
+This is equivalent to
+say_hello = decorator(say_hello)
+Output is the same.
+What is a Fixture in Pytest?
+A fixture is just a function that prepares something your test needs—like data, a database connection, a file, or even a browser session.
+The key idea: you write the setup once, and any test can “use” it by just asking for it.
+How to Create a Fixture
+You use the @pytest.fixture decorator:
+import pytest
+@pytest.fixture
+def sample_data():
+    print("Setting up sample data...")
+    data = {"name": "Alice", "age": 30}
+    return data
+Here:
+@pytest.fixture tells Pytest: “Hey, this is a fixture, not a regular function.”
+The function can return anything your test might need.
+3. How a Test Uses a Fixture
+Fixtures are used by naming them as parameters in your test function:
+def test_name(sample_data):
+    print("Running test_name")
+    assert sample_data["name"] == "Alice"
+def test_age(sample_data):
+    print("Running test_age")
+    assert sample_data["age"] > 20
+What happens internally:
+Pytest sees sample_data in the test parameters.
+It looks for a fixture called sample_data.
+It runs the fixture function before the test.
+The returned value is passed to the test.
+The test runs using that value.
+Output if you run this:
+Setting up sample data...
+Running test_name
+Setting up sample data...
+Running test_age
+Notice: the fixture runs before every test, because the default scope is function.
+4. Fixture Scopes
+Fixtures have different lifetimes or scopes, which control how often the fixture is created.
+Scope	Meaning	When to use
+function	Run before each test function	Most common, isolates tests
+class	Run once per test class	When all tests in a class can share the setup
+module	Run once per Python file	When tests in a module share the same setup
+session	Run once for the entire test session	Expensive setup (e.g., a database)
+Example: Function Scope (default)
+@pytest.fixture
+def data():
+    print("Creating data")
+    return [1, 2, 3]
+def test_one(data):
+    assert 1 in data
+def test_two(data):
+    assert 3 in data
+Output:
+Creating data
+Creating data
+Notice: it runs twice because each test gets a fresh fixture.
+Example: Module Scope
+@pytest.fixture(scope="module")
+def data():
+    print("Creating data")
+    return [1, 2, 3]
+def test_one(data):
+    assert 1 in data
+def test_two(data):
+    assert 3 in data
+Output:
+Creating data
+Notice: it runs only once for all tests in the module.
+Example: Class Scope
+@pytest.fixture(scope="class")
+def data():
+    print("Creating data")
+    return [1, 2, 3]
+class TestNumbers:
+    def test_one(self, data):
+        assert 1 in data
+
+    def test_two(self, data):
+        assert 3 in data
+Output:
+Creating data
+Only one instance is created for all tests inside TestNumbers.
+Example: Session Scope
+@pytest.fixture(scope="session")
+def db_connection():
+    print("Connecting to database")
+    return "DB_CONNECTION"
+
+def test_one(db_connection):
+    assert db_connection == "DB_CONNECTION"
+
+def test_two(db_connection):
+    assert db_connection == "DB_CONNECTION"
+Output:
+Connecting to database
+Fixture is created once for the entire test run, even across multiple modules.
+5. Teardown with Fixtures
+If your fixture needs to clean up resources, you can use yield:
+@pytest.fixture
+def resource():
+    print("Setup resource")
+    yield "my_resource"
+    print("Teardown resource")
+Everything before yield runs before the test.
+Everything after yield runs after the test finishes.
+
+What is Data-Driven Testing?
+Running the same test multiple times with different sets of input data.
+Method 1: Using @pytest.mark.parametrize
+Simple Login Test
+import pytest
+@pytest.mark.parametrize("username,password", [
+    ("valid_user", "valid_pass"),
+    ("invalid_user", "valid_pass"),
+    ("", "valid_pass"),
+    ("valid_user", ""),
+])
+def test_login(page, username, password):
+    page.goto("https://example.com/login")
+    page.fill("#username", username)
+    page.fill("#password", password)
+    page.click("#login")
+    assert page.locator("body").is_visible()
+Method 2: Data-Driven from List of Dictionaries
+test_data = [
+    {"username": "valid_user", "password": "valid_pass"},
+    {"username": "invalid_user", "password": "valid_pass"},
+    {"username": "", "password": "valid_pass"},
+]
+@pytest.mark.parametrize("data", test_data)
+def test_login(page, data):
+    page.goto("https://example.com/login")
+    page.fill("#username", data["username"])
+    page.fill("#password", data["password"])
+    page.click("#login")
+    assert page.locator("body").is_visible()
+from openpyxl import load_workbook
+
+def read_excel(file_path, sheet_name):
+    workbook = load_workbook(file_path)
+    sheet = workbook[sheet_name]
+
+    data = []
+    headers = []
+
+    # Get headers from first row
+    for cell in sheet[1]:
+        headers.append(cell.value)
+
+    # Get row data
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        row_data = dict(zip(headers, row))
+        data.append(row_data)
+
+    return data
+This function returns:
+
+[
+  {'username': 'valid_user', 'password': 'valid_pass', 'expected': 'success'},
+  {'username': 'invalid_user', 'password': 'valid_pass', 'expected': 'error'},
+]
+🔹 Step 4: Use It in Your Test (pytest + Playwright)
+import pytest
+from utils.excel_reader import read_excel
+
+test_data = read_excel("test_data.xlsx", "LoginData")
+
+@pytest.mark.parametrize("data", test_data)
+def test_login(page, data):
+    page.goto("https://example.com/login")
+
+    page.fill("#username", str(data["username"]) if data["username"] else "")
+    page.fill("#password", str(data["password"]) if data["password"] else "")
+    page.click("#login")
+
+    if data["expected"] == "success":
+        assert page.locator("#dashboard").is_visible()
+    else:
+        assert page.locator(".error-message").is_visible()
+
+I use openpyxl to read Excel data into a list of dictionaries, then use pytest's parametrize to execute the same test with multiple datasets. I usually separate Excel utilities into a reusable module and combine it with Page Object Model for maintainability.
+What is Cross Browser Testing?
+Method 1: Using Playwright Built-in Browser Parametrization
+pytest --browser chromium
+pytest --browser firefox
+pytest --browser webkit
+Method 2: Run All Browsers in One Command
+import pytest
+from playwright.sync_api import sync_playwright
+@pytest.fixture(params=["chromium", "firefox", "webkit"])
+def browser_name(request):
+    return request.param
+@pytest.fixture
+def page(browser_name):
+    with sync_playwright() as p:
+        browser = getattr(p, browser_name).launch(headless=False)
+        context = browser.new_context()
+        page = context.new_page()
+        yield page
+        browser.close()
+Test File
+def test_homepage(page):
+    page.goto("https://example.com")
+    assert page.title() != ""
+
+What is Parallel Testing?
+Parallel testing means:
+Step 1: Install pytest-xdist
+pip install pytest-xdist
+
+✅ Step 2: Run Tests in Parallel
+Basic command:
+pytest -n 4
+This means:
+Run tests using 4 CPU workers.
+Or automatically detect CPUs:
+pytest -n auto
+
+Now your Playwright tests run in parallel.
+🔥 Example
+Suppose you have:
+test_login.py
+test_cart.py
+test_checkout.py
+test_profile.py
+Run:
+pytest -n auto
+All tests execute simultaneously in separate workers.
+
+Using @pytest.mark to Group Tests
+
+You can assign markers to tests like:
+
+import pytest
+
+@pytest.mark.smoke
+def test_login():
+    assert True
+
+@pytest.mark.regression
+def test_add_to_cart():
+    assert True
+
+@pytest.mark.smoke
+@pytest.mark.regression
+def test_checkout():
+    assert True
+
+Here we have:
+smoke group
+regression group
+A test can belong to multiple groups.
+🔹 2️⃣ Run Tests by Marker (Group)
+Run only smoke tests:
+pytest -m smoke
+Run only regression tests:
+pytest -m regression
+
+Run tests that belong to smoke AND regression:
+
+pytest -m "smoke and regression"
+
+Run tests that belong to smoke OR regression:
+pytest -m "smoke or regression"
+
+Run tests that are not smoke:
+pytest -m "not smoke"
+
+🔹 3️⃣ Register Markers (Optional but Recommended)
+Pytest may warn if you use custom markers.
+Add them in pytest.ini:
+# pytest.ini
+[pytest]
+markers =
+    smoke: Quick tests to check main functionality
+    regression: Full regression tests
+    critical: Critical path tests
+🔹 4️⃣ Example Test File (test_xyz.py)
+import pytest
+@pytest.mark.smoke
+def test_login_valid():
+    assert True
+@pytest.mark.smoke
+def test_login_invalid():
+    assert True
+@pytest.mark.regression
+def test_add_to_cart():
+    assert True
+@pytest.mark.regression
+def test_checkout():
+    assert True
+@pytest.mark.smoke
+@pytest.mark.regression
+def test_profile_update():
+    assert True
+
+What is an Assertion?
+An assertion is a statement that verifies if a condition is true.
+In automation, assertions are used to validate expected results vs actual results.
+assert actual == expected, "Optional failure message"
+actual → actual result from test
+
+expected → expected result
+
+Optional message → shown if test fails
+
+Example:
+
+def test_title(page):
+    page.goto("https://example.com")
+    assert page.title() == "Example Domain", "Title does not match"
+Equality and Inequality
+
+Check if two values are equal:
+
+x = 10
+assert x == 10  # passes
+
+
+Check if two values are NOT equal:
+
+y = 5
+assert y != 10  # passes
+
+
+Use case: Validate expected output vs actual result.
+
+🔹 2️⃣ Greater and Less Comparisons
+
+Greater than:
+
+score = 85
+assert score > 50
+Less than:
+age = 20
+assert age < 30
+
+Greater or equal / Less or equal:
+marks = 70
+assert marks >= 50
+assert marks <= 100
+Use case: Checking thresholds, limits, ranges.
+🔹 3️⃣ Boolean Assertions
+True condition:
+is_logged_in = True
+assert is_logged_i
+False condition:
+error_displayed = False
+assert not error_displayed
+Use case: Validate flags, states, conditions.
+🔹 4️⃣ Membership Checks
+Item in collection:
+roles = ["Admin", "User", "Guest"]
+assert "Admin" in roles
+Item not in collection
+assert "SuperUser" not in roles
+Use case: Verify lists, dropdowns, or text collections.
+🔹 5️⃣ None Checks
+Is None:
+obj = None
+assert obj is None
+Is Not None:
+user = {"name": "John"}
+assert user is not None
+Use case: Ensure object exists or is empty when expected.
+🔹 6️⃣ Regex Checks (String Pattern Matching)
+import re
+email = "user@example.com"
+assert re.match(r"\w+@\w+\.\w+", email)
+Use case: Validate emails, phone numbers, IDs, or patterns.
+
+Soft Assertions
+
+Definition:
+
+Soft assertions allow the test to continue even if the assertion fails.
+They collect all failures and report them at the end of the test.
+
+Python does not have built-in soft assertions, but you can implement them using:
+
+pytest + pytest-check
+
+Custom try/except logic
+
+✅ Option 1: Using pytest-check (Recommended)
+
+Install:
+
+pip install pytest-check
+
+
+Example:
+
+import pytest_check as check
+from playwright.sync_api import expect
+
+def test_login_soft_assert(page):
+    page.goto("https://example.com/login")
+    page.fill("#username", "admin")
+    page.fill("#password", "wrongpass")
+    page.click("#login")
+
+    # Soft assertions
+    check.is_true(page.locator("#welcome").is_visible())
+    check.is_true(page.locator("#logout").is_enabled())
+    check.equal(page.url, "https://example.com/dashboard")
+
+
+Even if the first check.is_true fails, the test continues to check logout and URL.
+
+At the end, pytest reports all failures in the test.
+
+What is expect in Playwright?
+
+expect is Playwright’s built-in assertion library for verifying the state of web elements.
+
+It is wait-aware: automatically waits for the expected condition before failing.
+
+Used for UI element verification, like visibility, text, count, enabled/disabled state, etc.
+
+Works with both synchronous (sync_api) and asynchronous (async_api) Playwright.
+
+Unlike Python’s assert, expect handles dynamic web pages gracefully, without the need for manual time.sleep().
+
+🔹 2️⃣ How expect Works
+
+You create a locator for an element:
+
+locator = page.locator("#login-button")
+
+
+You call an expect method on that locator:
+
+from playwright.sync_api import expect
+
+expect(locator).to_be_visible()
+
+
+Playwright automatically waits for a default timeout (usually 5 seconds) for the condition to become true.
+
+If the condition is met → test passes.
+
+If the timeout is exceeded → test fails with a descriptive message.
+
+This solves flaky test issues caused by elements loading dynamically.
+
+🔹 3️⃣ Examples of expect Usage
+✅ Check visibility
+expect(page.locator("#welcome")).to_be_visible()
+
+✅ Check hidden element
+expect(page.locator("#spinner")).to_be_hidden()
+
+✅ Check text
+expect(page.locator("h1")).to_have_text("Welcome Admin")
+
+✅ Check number of elements
+expect(page.locator("ul li")).to_have_count(5)
+
+✅ Check enabled/disabled
+expect(page.locator("#submit")).to_be_enabled()
+expect(page.locator("#cancel")).to_be_disabled()
+
+✅ Check checkbox/radio selection
+expect(page.locator("#agree")).to_be_checked()
+expect(page.locator("#newsletter")).to_be_unchecked()
+
+✅ Check input value
+expect(page.locator("#username")).to_have_value("admin")
+
+✅ Check class or attribute
+expect(page.locator("#status")).to_have_class("active")
+expect(page.locator("#status")).to_have_attribute("data-status", "active")
+
+What is an iframe?
+An <iframe> is basically a webpage inside another webpage.
+frame = page.frame_locator("xpath=//iframe[@id='payment-frame']")
+frame = page.frame_locator(".main-frame")
+
+Then interact:
+frame.locator("button").click()
+frame.locator("input").fill("Hello")
+
+outer = page.frame_locator("#outer-frame")
+inner = outer.frame_locator("#inner-frame")
+
+inner.locator("button").click()
+
+
+HOW TO HANDLE ALERTS?
+def handle_dialog(dialog):
+
+    if dialog.type == "alert":
+        print("Alert detected")
+        dialog.accept()
+
+    elif dialog.type == "confirm":
+        print("Confirm detected")
+        dialog.dismiss()
+
+    elif dialog.type == "prompt":
+        print("Prompt detected")
+        dialog.accept("Automation")
+
+page.on("dialog", handle_dialog)
+
+page.click("#triggerButton")
+In Playwright, we handle JavaScript alerts using the dialog event. We can either use page.on("dialog") to register a listener or use page.expect_dialog() which is the recommended approach to avoid race conditions. The Dialog object provides methods like accept() and dismiss() to handle alert, confirm, prompt, and beforeunload dialogs.”
+page.on("dialog", handler) – event-based handling
+
+page.expect_dialog() – recommended method for handling alerts triggered by a specific action
+
+The Dialog object provides:
+dialog.type
+dialog.message
+dialog.accept()
+dialog.dismiss()
+dialog.accept("text") for prompts.”
+I wrap the button click inside with page.expect_dialog() block, capture the dialog object, then use accept() or dismiss() based on the requirement.”
+checkbox handling?
+<input type="checkbox" id="subscribe" />
+page.locator("#subscribe").check()
+page.locator("#subscribe").uncheck()
+page.locator("#subscribe").click()
+checkbox = page.locator("#subscribe")
+assert checkbox.is_checked()
+Check multiple checkboxes
+<input type="checkbox" name="color" value="red">
+<input type="checkbox" name="color" value="green">
+<input type="checkbox" name="color" value="blue">
+for checkbox in page.locator("input[name='color']").all():
+    checkbox.check()
+how to handle date pickers
+def test_standard_datepicker(page):
+    page.goto("https://example.com")
+    # Fill date in yyyy-mm-dd format
+    page.fill("#dob", "2026-02-12")
+What is dynamic pagination?
+You have multiple pages of items (e.g., table rows, products, articles).
+The number of pages may change, so you cannot hardcode the page number.
+Often there’s a “Next” button or numbered page links.
+I locate the pagination control (Next button or page numbers).
+Use a loop to click Next until the button is disabled or disappears.
+On each page, I extract the required data or perform validations.
+I always wait for page elements to load before interacting to avoid flaky tests.
+Result: This ensures all pages are processed dynamically, regardless of how many pages exist.
+while True:
+    # Extract data from current page
+    items = page.locator(".product-name").all_text_contents()
+    print(items)
+
+    # Check if "Next" exists and enabled
+    if page.locator("button.next:enabled").count() == 0:
+        break
+
+    # Click Next and wait
+    page.locator("button.next").click()
+    page.wait_for_selector(".product-name")
+First, I loop through all visible page numbers.
+After reaching the last visible page (e.g., 10), I click the Next button in pagination to shift the page numbers.
+Continue the loop until there are no more pages.
+Always use waits to ensure new page content is loaded.
+Result: This allows automated tests or scraping to handle all 20 pages without hardcoding page numbers.
+
+How to handl;e dynamic webtavbles?
+Locate the table or tbody
+Find all rows dynamically
+Loop through each row
+Find all columns (cells) in that row
+Extract or validate data
+Handle pagination if table spans multiple pages
+while True:
+    rows = page.locator("table#user-table tbody tr").all()
+    for row in rows:
+        data = row.locator("td").all_text_contents()
+        print(data)
+    # Check if Next button exists
+    next_btn = page.locator("button.next:enabled")
+    if next_btn.count() == 0:
+        break
+    next_btn.click()
+    page.wait_for_selector("table#user-table tbody tr")
+
+“To handle dynamic tables, I first locate the table body and fetch all rows dynamically. Then I loop through each row and fetch all cells. If the table has pagination, I loop through all visible rows, then click the Next button to load additional rows. I also handle dynamic content by waiting for the table rows to appear before interacting. This ensures my automation works even if the number of rows, columns, or pages changes.”
+
+how to handle date pickers?
+Handling Standard HTML Date Input
+<input type="date" id="dob">
+page.fill("#dob", "2026-02-12")
+You can also press Enter after filling:
+page.press("#dob", "Enter")
+Handling Custom JS Date Picker
+Click the Input to Open the Calendar
+page.click("#dob") 
+Many calendars show only one month at a time, so you may need to click "next" or "prev" buttons until you reach the month you want.
+# Example selectors for next/prev buttons (update according to your HTML)
+next_button = ".calendar-next"
+prev_button = ".calendar-prev"
+# Click next until February 2026
+while True:
+    month_text = page.inner_text(".calendar-header")  # e.g., "January 2026"
+    if month_text == "February 2026":
+        break
+    page.click(next_button)
+Notes:
+.calendar-header should point to the element showing the current month/year
+.calendar-next / .calendar-prev should point to the next/previous buttons
+Use page.inner_text() or page.text_content() to read visible month/year
+🔹 Step 3: Select the Day
+Once the correct month/year is visible, click the day cell:
+# Select day 12
+page.click("//td[text()='12']")  # XPath example
+Or, if your calendar has data attributes:
+page.click("//td[@data-day='12'][@data-month='1'][@data-year='2026']")
+Note: Some calendars count months from 0 (January = 0) — check HTML attributes.
+ Step 4: Optional – Close the Calendar
+Some calendars close automatically when you select a date. Others require clicking outside or OK button:
+page.click("body")  # click outside
+# OR
+page. Click(".calendar-ok")  # click OK button
+🔹 Step 5: Wrap in a Reusable Function
+def select_date(page, input_selector, year, month, day):
+    # 1️⃣ Open calendar
+    page.click(input_selector)
+   
+    # 2️⃣ Navigate to correct month/year
+    next_btn = ".calendar-next"
+    header = ".calendar-header"
+   
+    while True:
+        current_month_year = page.inner_text(header)
+        if current_month_year == f"{month} {year}":  # adjust format
+            break
+        page.click(next_btn)
+   
+    # 3️⃣ Click the day
+    page.click(f"//td[text()='{day}']")
+Usage:
+select_date(page, "#dob", 2026, "February", 12)
+
+How multiple tabs work in Playwright
+When a website opens a link in a new tab, Playwright can detect it.
+Each tab is called a Page object in Playwright.
+You can switch between tabs, perform actions, and close them.
+In Playwright, each tab is a Page object. I store a reference to the original page before opening a new tab. When a new tab opens, I either use expect_popup() or check the new page in context.pages. I can switch to a tab using bring_to_front() and perform actions. After completing work in the new tab, I bring the original page back to the front to continue actions. This ensures seamless navigation between multiple tabs.”
+# Step 1: Open the main page
+page.goto("https://example.com")
+# Save the reference to the original tab
+original_tab = page
+# Step 2: Click a link that opens a new tab and wait for it
+with page.expect_popup() as popup_info:
+    page.locator("a#open-new-tab").click()
+new_tab = popup_info.value
+# Step 3: Work in the new tab
+new_tab.goto("https://example.com/login")
+new_tab.locator("#username").fill("admin")
+new_tab.locator("#password").fill("1234")
+new_tab.locator("#login").click()
+# Step 4: Switch back to the original tab
+original_tab.bring_to_front()
+# Step 5: Continue actions in the original tab
+original_tab.locator("#main-button").click()
+# Get all open tabs
+all_tabs = page.context.pages
+# Switch to the second tab
+all_tabs[1].bring_to_front()
+# Switch back to the first tab
+all_tabs[0].bring_to_front()
+
+
+JavaScript 
+page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
+
+page.mouse.dblclick(150, 250)
+page.mouse.wheel(0, 200)  # Scroll down 200px
+page.mouse.wheel(0, -100)  # Scroll up 100px
+page.locator("#button").click()  # Left click by default
+page.locator("#button").click(click_count=2)  # Double click
+page.locator("#button").click(button="right")
+page.locator("#button").dblclick()
+page.locator("#username").press("Tab")  # Move to next field
+page.locator("#password").press("Enter")
+page.locator("#text-area").click()
+
+# Press Ctrl + A to select all
+page.keyboard.down("Control")
+page.keyboard.press("A")
+page.keyboard.up("Control")
+
+# Copy (Ctrl + C)
+page.keyboard.down("Control")
+page.keyboard.press("C")
+page.keyboard.up("Control")
+
+# Paste (Ctrl + V)
+page.keyboard.down("Control")
+page.keyboard.press("V")
+page.keyboard.up("Control")
+
+how to handle and elemnt which is not clickable
+
+page.locator("#myButton").scroll_into_view_if_needed()
+page.click("#myButton")
+
+page.wait_for_selector("#myButton", state="visible")  # visible on page
+page.wait_for_selector("#myButton", state="attached")  # in DOM
+page.click("#myButton")
+
+button = page.locator("#myButton")
+if button.is_enabled():
+    button.click()
+else:
+    print("Button is disabled")
+
+page.hover("#menu")       # hover parent menu
+page.click("#submenu")    # click child
+“I first check if the element is visible and enabled. If it’s off-screen, I scroll it into view. If it’s covered by another element, I wait for the overlay to disappear. For stubborn elements, I can force the click using page.click(force=True) or trigger a click via JavaScript using page.evaluate(). Also, sometimes hovering over the parent element is needed before clicking child elements.”
+
+
+  // Scroll the element into view
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("arguments[0].scrollIntoView(true);", element);
+
+“Flaky tests are tests that pass sometimes and fail other times without code changes. They usually happen due to timing issues, dynamic content, network delays, or unstable selectors. To handle them, I use proper waits, avoid hardcoded delays, ensure stable selectors, isolate tests, handle animations, and if needed, retry failed tests. In Playwright, I rely on locators’ built-in auto-waiting, wait_for_selector, and sometimes force=True clicks to reduce flakiness.”
+Use proper waits
+
+Don’t use time.sleep() unless necessary.
+Prefer Playwright’s auto-waiting locators:
+page.locator("#submit").click()  # auto-waits for visibility & readiness
+page.locator("#result").wait_for(state="visible")  # explicit wait
+
+Options for wait_for_selector:
+page.wait_for_selector("#element", state="attached|visible|hidden|detached")
+
+2️⃣ Avoid hardcoded delays
+Example of bad practice: time.sleep(5)
+Use dynamic waits:
+page.wait_for_selector("#content-loaded")  # wait until content is ready
+3️⃣ Retry failed steps or tests
+Pytest + Playwright supports rerun flaky tests:
+pytest --reruns 2
+Retries only when necessary, avoids false negatives.
+4️⃣ Ensure test isolation
+Each test should start from a clean state.
+Avoid depending on previous test’s data.
+def test_login(page):
+    page.goto("https://example.com/login")
+    # independent of other tests
+5️⃣ Handle dynamic content carefully
+If elements are loaded dynamically, use locators and wait_for
+page.locator(".product").nth(0).click()  # safely access first element
+Avoid hardcoding indices that may change.
+6️⃣ Stable selectors
+Prefer IDs, data-test attributes over dynamic XPaths or classes.
+page.locator("[data-test=submit-button]").click()
+Avoid relying on text or classes that may change.
+7️⃣ Handle animations
+Some elements may animate or move. Use:
+page.locator("#button").click(force=True)  # click even if moving
+8️⃣ Run in headless vs headed
+Sometimes UI differences cause flakiness. Test in same mode consistently.
+
+  elements = page.locator(".item")  
+    print("Number of elements found:", elements.count())
+    # Iterate through each element
+    for i in range(elements.count()):
+        text = elements.nth(i).inner_text()
+        print(f"Element {i} text: {text}")
+    browser.close()
+
+
+Ah! Now you’re asking about synchronization problems in automation—a very common root cause of flaky tests. Let’s go step by step so you can both identify and handle them in Playwright + Python.
+
+🔹 1️⃣ What are synchronization problems?
+
+Synchronization problems happen when your automation script tries to interact with a web element before it is ready.
+Example: Clicking a button before it appears.
+Result: TimeoutError, Element not visible, or Element not interactable.
+🔹 2️⃣ How to check / detect synchronization problems
+1️⃣ Check for frequent failures
+If your tests pass sometimes and fail other times, it’s often a sync issue.
+2️⃣ Look at error messages
+Common Playwright errors:
+Error	Likely cause
+TimeoutError: waiting for selector "#submit"	Element not yet loaded or visible
+Element is not visible	Element exists but hidden or behind another element
+Element is detached from DOM	Element refreshed dynamically
+3️⃣ Debug using pauses or screenshots
+page.pause()  # Opens Playwright Inspector
+page.screenshot(path="debug.png")
+4️⃣ Print current elements
+print(page.locator("#submit").count())  # see if element exists
+🔹 3️⃣ Ways to handle synchronization problems
+Playwright is very powerful here because it has built-in waiting mechanisms.
+1️⃣ Use locator auto-waiting (High-Level)
+page.locator("#submit").click()  # auto-waits until visible & enabled
+2️⃣ Explicit waits
+# Wait until element is attached to DOM
+page.locator("#submit").wait_for(state="attached")
+# Wait until element is visible
+page.locator("#submit").wait_for(state="visible")
+States: attached, visible, hidden, detached
+3️⃣ Wait for network / page load
+# Wait for navigation
+page.goto("https://example.com", wait_until="networkidle")  
+# Wait for AJAX / API request
+page.wait_for_response("**/api/products")
+4️⃣ Wait for elements dynamically
+# Wait until the last item in a dynamic list loads
+page.wait_for_selector(".product-item:last-child")
+5️⃣ Retry actions if necessary
+page.locator("#submit").click(timeout=5000)  # wait max 5s
+You can also use pytest-rerunfailures for extra robustness.
+6️⃣ Avoid hard-coded sleeps
+❌ Bad practice: time.sleep(5)
+✅ Good practice: dynamic waits with locator.wait_for() or wait_for_selector()
+🔹 4️⃣ Example: Handling synchronization for a button
+page.goto("https://example.com")
+# Wait until button is visible
+page.locator("#submit").wait_for(state="visible")
+# Click safely
+page.locator("#submit").click()
+# Wait for confirmation
+page.locator("#success-message").wait_for(state="visible")
+🔹 5️⃣ Interview Explanation
+If asked: “How do you check and handle synchronization problems?”
+You can say:
+“Synchronization problems occur when the automation script tries to interact with elements before they are ready, causing errors like Timeout or ElementNotVisible. To detect them, I look for intermittent failures, error messages, and use debug tools like page.pause() or screenshots. To handle them, I rely on Playwright’s locator auto-waiting, explicit waits (wait_for(state="visible")), waiting for network responses or page load, and avoiding hardcoded sleeps. This ensures the script interacts with elements only when they are ready.”
+
+Ah! Stale Element Reference is another common problem in automation, especially in dynamic web pages. Let’s go from scratch, explain why it happens, and how to handle it in Playwright + Python.
+
+🔹 1️⃣ What is a Stale Element Reference?
+A stale element reference occurs when your script tries to interact with a web element that was previously located, but the DOM has changed, so that reference is no longer valid.
+Example: The element was refreshed, replaced, or removed.
+Common in dynamic pages, AJAX updates, single-page applications (SPA).
+Error you might see (Selenium term, Playwright equivalent):
+Error: Element is not attached to the DOM
+Error: Element handle is disposed
+🔹 2️⃣ Why it happens
+Page content reloads or updates dynamically.
+Element is re-rendered due to JavaScript/AJAX.
+You stored an element handle and tried to use it later.
+Example:
+button = page.locator("#submit")  # stored reference
+page.reload()  # DOM refreshes
+button.click()  # Stale element reference error
+🔹 3️⃣ How to Handle Stale Elements in Playwright
+1️⃣ Always use fresh locators
+Instead of storing the element handle, locate it right before interacting:
+# Bad (can be stale)
+button = page.locator("#submit")
+page.reload()
+button.click()  # may fail
+# Good
+page.reload()
+page.locator("#submit").click()  # fresh locator
+✅ Playwright locators are auto-refreshing, so you usually don’t need to store them.
+2️⃣ Use retry loops for dynamic content
+for _ in range(3):  # retry 3 times
+    try:
+        page.locator("#submit").click()
+        break
+    except Exception as e:
+        print("Retrying due to stale element")
+        page.wait_for_timeout(1000)
+3️⃣ Wait for the element to be attached / visible
+page.locator("#submit").wait_for(state="attached")  # ensure element is in DOM
+page.locator("#submit").click()
+attached: element exists in DOM
+visible: element exists and is visible
+Helps avoid trying to interact with stale/disposed elements.
+4️⃣ Handle dynamic tables / grids
+For dynamic rows or tables:
+rows = page.locator("table#user-table tbody tr")
+for i in range(rows.count()):
+    row = rows.nth(i)  # fresh reference
+    row.locator("td button").click()  # click inside ro
+Don’t store row outside loop; always get a fresh reference.
+“A stale element reference happens when the element you located previously is no longer attached to the DOM, often due to page reloads or dynamic updates. In Playwright, I handle this by always using fresh locators at the time of interaction, waiting for the element to be attached or visible using wait_for(state='attached') or wait_for(state='visible'), and, if needed, wrapping interactions in a retry loop for dynamic content. Storing element handles for later use is avoided because they can become stale.”
+In Playwright automation, common challenges include iframe handling, dynamic content, checkboxes, pagination, multiple tabs, mouse and keyboard actions, infinite scrolling, flaky tests, synchronization issues, stale elements, and parallel test execution. To handle iframes, switch using frame_locator() and interact with elements inside the frame. For dynamic tables, checkboxes, or pagination, always use fresh locators, loops, and explicit waits (wait_for_selector, wait_for) to ensure elements are ready. Mouse actions such as left click, right click, double click, hover, drag-and-drop, and wheel scrolling can be performed using page.mouse or locator-based methods. Keyboard actions include typing, pressing keys, and shortcuts via locator.type(), locator.press(), or page.keyboard. Infinite scrolling is handled by looping scroll actions until new content stops loading, often combined with wait_for_selector. Flaky tests and synchronization issues arise due to timing, network delays, or dynamic DOM updates, and can be mitigated using proper waits, auto-waiting locators, retries, avoiding hard-coded sleeps, and stable selectors. Stale element references occur when the DOM changes after locating an element, and are handled by always using fresh locators or retrying actions. Parallel testing improves speed but can cause shared state issues, browser collisions, file/resource conflicts, and timing problems, which are mitigated by using isolated browser contexts, unique test data, separate resources, dynamic ports, and controlled concurrency. Overall, proper waits, fresh locators, retries, and test isolation are the key strategies to make Playwright automation stable and reliable.
+
+
+API GET Request
+import requests
+def test_get_user():
+   # 🔹 Path parameter
+    user_id = 10
+    base_url = f"https://api.example.com/users/{user_id}"
+    # 🔹 Query parameters
+    query_params = {
+        "active": "true",
+        "role": "admin"
+    }
+    # 🔹 Headers
+    headers = {
+        "Authorization": "Bearer your_access_token_here",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "Python-API-Test"
+    }
+    # 🔹 Sending GET request
+    response = requests.get(
+        url=base_url,
+        params=query_params,
+        headers=headers
+    )
+    # ==========================
+    # 🔹 Response Validation
+    # ==========================
+    # Validate Status Code
+    assert response.status_code == 200, \
+        f"Expected 200 but got {response.status_code}"
+    # Validate Status Line
+    assert response.reason == "OK", \
+        f"Expected OK but got {response.reason}"
+    # Validate Response Time
+    assert response.elapsed.total_seconds() < 5, \
+        "Response took too long"
+    # Validate Response Headers
+    assert response.headers["Content-Type"] == "application/json"
+    # Validate JSON Body
+    response_json = response.json()
+    assert response_json["id"] == user_id
+    assert response_json["active"] is True
+    print("Test Passed ✅")
+
+BASE_URL = "https://petstore.swagger.io/v2/user"
+headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+}
+def create_user(user_data):
+    response = requests.post(
+        url=BASE_URL,
+        json=user_data,
+        headers=headers
+    )
+    # 🔹 Validate status code
+    assert response.status_code == 200, \
+        f"Expected 200 but got {response.status_code}"
+    # 🔹 Validate status line
+    assert response.reason == "OK"
+    print(f"User {user_data['username']} created successfully ✅")
+# 🔹 Create 5 different users
+for i in range(1, 6):
+    user_payload = {
+        "id": i,
+        "username": f"user{i}",
+        "firstName": f"First{i}",
+        "lastName": f"Last{i}",
+        "email": f"user{i}@test.com",
+        "password": f"Pass{i}123",
+        "phone": f"99900000{i}",
+        "userStatus": 1
+    }
+    create_user(user_payload)
