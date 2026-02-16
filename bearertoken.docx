@@ -1,0 +1,117 @@
+1️⃣ Bearer Token Authentication
+
+The server issues a token after login.
+
+You send it in the Authorization header as:
+
+Authorization: Bearer <token>
+Simple, widely used for stateless APIs.
+Python Example (requests)
+import requests
+
+token = "eyJhbGciOi..."  # Example token
+url = "https://api.example.com/data"
+
+headers = {"Authorization": f"Bearer {token}"}
+response = requests.get(url, headers=headers)
+
+print(response.status_code)
+print(response.json())
+
+Token usually expires after some time.
+
+Commonly used with JWT tokens.
+
+2️⃣ JWT (JSON Web Token)
+
+JWT is a type of token that carries claims (user info, roles, expiry) encoded in Base64.
+
+Usually used with Bearer authentication.
+
+Token has three parts: Header.Payload.Signature
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+.
+eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ
+.
+SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+
+Python Example (requests)
+
+import requests
+
+jwt_token = "eyJhbGciOi..."  # JWT token
+url = "https://api.example.com/protected"
+
+headers = {"Authorization": f"Bearer {jwt_token}"}
+response = requests.get(url, headers=headers)
+print(response.status_code, response.json())
+
+
+✅ Notes:
+
+The server validates signature and expiry.
+
+JWT is self-contained — no session storage needed.
+
+3️⃣ OAuth 2.0
+
+Standard protocol for delegated access.
+
+The client obtains an access token from an authorization server.
+
+Used by Google, Facebook, GitHub APIs.
+
+Flow (Simplified)
+
+Get Authorization Code (user login/consent)
+
+Exchange code for Access Token
+
+Use token in Authorization: Bearer <token> header
+
+Python Example (requests)
+
+import requests
+access_token = "ya29.a0AfH6SMD..."  # Obtained via OAuth flow
+url = "https://www.googleapis.com/drive/v3/files"
+
+headers = {"Authorization": f"Bearer {access_token}"}
+response = requests.get(url, headers=headers)
+
+print(response.json())
+
+
+OAuth is mostly for third-party app access.
+
+Tokens expire; refresh tokens may be used.
+4️⃣ API Key Authentication
+Simplest authentication: client sends a secret key in request.
+Can be sent as:
+Query parameter: ?api_key=XYZ123
+Header: x-api-key: XYZ123
+Python Example (Header)
+import requests
+url = "https://api.example.com/data"
+headers = {"x-api-key": "XYZ123"}
+response = requests.get(url, headers=headers)
+print(response.json())
+Python Example (Query Param)
+import requests
+url = "https://api.example.com/data?api_key=XYZ123"
+response = requests.get(url)
+print(response.json())
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    context = browser.new_context(
+        http_credentials={
+            "username": "myuser",
+            "password": "mypassword"
+        }
+    )
+    page = context.new_page()
+    page.goto("https://example.com")
+    print(page.title())
+    browser.close()
