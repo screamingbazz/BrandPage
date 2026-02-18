@@ -1,0 +1,893 @@
+import { test, expect } from '@playwright/test';
+test('homepage has correct title', async ({ page }) => {
+  // Navigate to a page
+  await page.goto('https://example.com');
+  // Assertion: check the page title
+  await expect(page).toHaveTitle('Example Domain');
+});
+import { test, expect } from '@playwright/test';
+async function myTestFunction({ page }) {
+  await page.goto('https://example.com');
+  await expect(page).toHaveTitle('Example Domain');
+}
+test('homepage title test using named function', myTestFunction);
+import { chromium } from 'playwright';
+(async () => {
+  const browser = await chromium.launch({ headless: false });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto('https://example.com');
+  await browser.close();
+})();
+What is test.describe in Playwright?
+test.describe() is used to group related tests together.
+Think of it as a container (or folder inside a file) that organizes tests.
+Organize tests logically
+Apply hooks (beforeEach, afterEach, etc.) to only a specific group
+test.describe.only
+Runs only that describe block, ignoring all other tests in the file.
+test.describe.only('Login Tests', () => {
+  test('valid login', async ({ page }) => {
+    // runs
+  });
+  test('invalid login', async ({ page }) => {
+    // runs
+  });
+});
+test('Other test', async ({ page }) => {
+  // ❌ will NOT run
+});
+test.describe.parallel
+Runs tests inside the describe block in parallel instead of sequentially.
+test.describe.parallel('Parallel Tests', () => {
+  test('test 1', async ({ page }) => {
+    // runs at same time as test 2
+  });
+  test('test 2', async ({ page }) => {
+    // runs at same time as test 1
+  });
+});
+Normal behavior (default):
+Tests in a file run sequentially (one after another).
+With .parallel:
+Tests inside that block run at the same time (if workers are available).
+What are hooks?
+beforeAll
+test.beforeAll() is a hook that runs once before all tests in:
+The entire file (if defined at top level), OR
+A specific test.describe() block (if defined inside it)
+It runs only one time, no matter how many tests are inside.
+test.beforeAll(async () => {
+  console.log('Connecting to database...');
+});
+
+test('Test 1', async ({ page }) => {
+  await page.goto('https://example.com');
+});
+
+test('Test 2', async ({ page }) => {
+  await page.goto('https://example.com/about');
+});
+test.afterAll() is a hook that runs once after all tests in:
+The entire file (if defined at top level), OR
+A specific test.describe() block (if defined inside it)
+It runs only one time, at the very end.
+test.beforeAll(() => {
+  console.log('Before all');
+});
+test('Test 1', async () => {
+  console.log('Running Test 1');
+});
+test('Test 2', async () => {
+  console.log('Running Test 2');
+});
+test.afterAll(() => {
+  console.log('After all');
+});
+test.beforeEach() runs before every single test in:
+The whole file (if defined at top level), OR
+A specific test.describe() block (if defined inside it)
+It ensures each test starts from a clean, predictable state.
+test.beforeEach(async ({ page }) => {
+  console.log('Runs before each test');
+  await page.goto('https://example.com');
+});
+test('Test 1', async ({ page }) => {
+  await expect(page).toHaveTitle('Example Domain');
+});
+test('Test 2', async ({ page }) => {
+  await expect(page.locator('h1')).toHaveText('Example Domain');
+});
+test.afterEach() is a hook that runs after every single test in:
+The entire file (if defined at top level), OR
+A specific test.describe() block (if defined inside it)
+What Are Fixtures?
+A fixture in Playwright is a reusable setup (and optionally teardown) logic that provides something a test needs, like:
+import { test as base } from '@playwright/test';
+base is the default test object provided by Playwright.
+It has access to all the standard fixtures like { page }, { browser }, { context }, etc.
+base.extend() is a method to create your own extended test object that includes custom fixtures.
+Think of it as:
+“I want my tests to have some extra setup or reusable data, just like Playwright gives page or browser.”
+const test = base.extend({
+  fixtureName: async ({ existingFixtures }, use) => {
+    // 1️⃣ Setup code runs before test
+    await use(valueOrObject);  // 2️⃣ Pass it to the test
+    // 3️⃣ Teardown code runs after test
+  },
+});
+fixtureName
+
+The name your test will use to access this fixture.
+
+Example: myFixture, loggedInPage, dbConnection.
+
+async ({}, use)
+
+{} destructures existing fixtures.
+Example: { page, browser } if you need them in your setup.
+use is a callback — you call it to run the test, passing the fixture’s value.
+await use(value)
+Provides the fixture to the test.
+Everything before use → setup.
+Everything after use → teardown.
+A callback is a function that you pass as an argument to another function, and it is executed later, usually after some operation is done.
+const test = base.extend({
+  loggedInPage: async ({ page }, use) => {
+    // Setup: login
+    await page.goto('https://example.com/login');
+    await page.fill('#username', 'admin');
+    await page.fill('#password', '1234');
+    await page.click('button[type=submit]');
+
+    await use(page); // pass the page to the test
+
+    // Teardown: optional
+    console.log('After test cleanup');
+  },
+});
+test('Dashboard test', async ({ loggedInPage }) => {
+  // Already logged in
+  await expect(loggedInPage).toHaveTitle('Dashboard');
+});
+Cross Browser testing
+Playwright handles this via the projects configuration in playwright.config.ts. Each project can define a browser.
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  timeout: 30000,
+  use: {
+    headless: true, // run in headless mode
+    viewport: { width: 1280, height: 720 },
+    ignoreHTTPSErrors: true,
+  },
+  projects: [
+    {
+      name: 'Chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'Firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'WebKit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ],
+});
+Run Tests Across All Browsers
+npx playwright test
+Run Test in a Specific Browser
+npx playwright test --project=Firefox
+What is Parallel Testing?
+Run with default parallelism
+npx playwright test
+Playwright runs tests in parallel automatically.
+b) Control number of workers
+npx playwright test --workers=4
+Runs 4 tests at the same time.
+Works across browsers and test files.
+“Playwright supports parallel testing by running multiple tests in separate workers. Each worker is an isolated process with its own browser context, so tests do not interfere with each other.
+You can control the number of parallel workers using the --workers flag or in playwright.config.ts.
+This reduces execution time, especially for large test suites, and ensures each test starts from a clean state.
+For example, I can run tests in Chromium and Firefox in parallel across multiple workers, while using fixtures to manage setup like login or test data.
+The key is to make tests independent so they can safely run in parallel.”
+PARAMETRIZED TESTING?
+“In Playwright, parameterized testing is done by looping through a set of test data or using fixtures to supply input values.
+Each test instance runs separately with a different data set, allowing us to validate multiple scenarios efficiently.
+The test titles can be dynamic, and these tests can run in parallel for faster execution.
+For example, I can test login with multiple usernames/passwords using an array or a JSON file and reuse the same test logic for all of them.”
+Playwright supports parameterization via test.describe + loops or test.describe.parallel for parallel execution.
+Example 1: Using a Loop
+import { test, expect } from '@playwright/test';
+// Array of test data
+const credentials = [
+  { username: 'admin', password: '1234' },
+  { username: 'user1', password: 'abcd' },
+];
+for (const cred of credentials) {
+  test(`Login test for ${cred.username}`, async ({ page }) => {
+    await page.goto('https://example.com/login');
+    await page.fill('#username', cred.username);
+    await page.fill('#password', cred.password);
+    await page.click('button[type=submit]');
+    await expect(page).toHaveURL('https://example.com/dashboard');
+  });
+}
+Test runs once for each object in credentials.
+Test title can include variables (${cred.username}) for clarity in reports.
+Example 2: Using test.describe + test for Multiple Inputs
+test.describe('Login Tests', () => {
+  const users = ['admin', 'user1', 'user2'];
+  for (const user of users) {
+    test(`Login test for ${user}`, async ({ page }) => {
+      await page.goto('https://example.com/login');
+      await page.fill('#username', user);
+      await page.fill('#password', '1234');
+      await page.click('button[type=submit]');
+      await expect(page).toHaveURL('https://example.com/dashboard');
+    });
+  }
+});
+Groups similar tests under one describe block.
+Works well for reporting and organization.
+🔹 3️⃣ Example 3: Using Fixtures for Parameterization
+You can combine fixtures with parameterized input:
+import { test as base } from '@playwright/test';
+const test = base.extend({
+  credentials: [
+    { username: 'admin', password: '1234' },
+    { username: 'user1', password: 'abcd' },
+  ],
+});
+for (const cred of test.fixtures.credentials) {
+  test(`Login test for ${cred.username}`, async ({ page }) => {
+    await page.goto('https://example.com/login');
+    await page.fill('#username', cred.username);
+    await page.fill('#password', cred.password);
+    await page.click('button[type=submit]');
+  });
+}
+Advanced usage for reusable data fixtures.
+Using Excel Files
+For Excel, use the xlsx package.
+a) Install XLSX
+npm install xlsx
+import xlsx from 'xlsx';
+import { test, expect } from '@playwright/test';
+// Read Excel file
+const workbook = xlsx.readFile('loginData.xlsx');
+const sheet = workbook.Sheets['Sheet1'];
+const data = xlsx.utils.sheet_to_json(sheet); // Array of objects
+for (const row of data) {
+  const { username, password } = row as { username: string; password: string };
+  test(`Login test for ${username}`, async ({ page }) => {
+    await page.goto('https://example.com/login');
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.click('button[type=submit]');
+    await expect(page).toHaveURL('https://example.com/dashboard');
+  });
+}
+What Is a Locator?
+Element to appear
+Element to be visible
+Element to be actionable
+Stability before performing actions
+<input id="usernameInput" class="form-control input-lg" type="text" name="username" placeholder="Enter Username" data-testid="username-field" aria-label="Username Field" custom-attr="myCustomValue" /> 
+<!-- BUTTON --> 
+<button id="loginBtn" class="btn btn-primary" type="submit" data-testid="login-button" aria-label="Login Button">Login Now</button>
+By ID
+page.locator('#usernameInput')
+By Class
+page.locator('.form-control')
+page.locator('.input-lg')
+By Attribute (name)
+page.locator('[name="username"]')
+By Placeholder
+page.getByPlaceholder('Enter Username')
+page.locator('[placeholder="Enter Username"]')
+By Type
+page.locator('input[type="text"]')
+By ARIA Label
+page.getByLabel('Username Field')
+By XPath
+page.locator('//input[@id="usernameInput"]')
+By Text (Inner Text)
+page.getByText('Login Now')
+OR
+page.locator('text=Login Now')
+<ul>
+  <li>Apple</li>
+  <li>Banana</li>
+</ul>
+const banana = page.locator('li', { hasText: 'Banana' });
+await banana.click();
+<button>Login</button>
+page.getByRole('button', { name: 'Login' })
+<button aria-label="Sign In"></button>
+page.getByRole('button', { name: 'Sign In' })
+role = what the element is (button, textbox, heading)
+name = how the element is labeled or identified to the user
+assertions are used to verify conditions in your tests. If the assertion fails, the test fails; if it passes, the test continues. Playwright uses the @playwright/test built-in expect API.
+Hard Assertions (Default in Playwright)
+Definition: Hard assertions immediately fail the test if the condition is not met.
+Default behavior: Playwright’s expect is hard by default.
+ // This is a hard assert
+  await expect(page.locator('h1')).toHaveText('Welcome');
+  // If the above fails, this line will never run
+  await expect(page.locator('#login-button')).toBeVisible();
+Soft Assertions (Playwright 1.38+)
+Definition: Soft assertions record failures but don’t stop test execution.
+Use case: You want to check multiple conditions in one test and report all failures at the end.
+Playwright introduced expect.soft for this.
+  await expect.soft(page.locator('h1')).toHaveText('Welcome');
+  await expect.soft(page.locator('#login-button')).toBeVisible();
+  await expect.soft(page.locator('#footer')).toHaveText('Contact Us');
+ // assertEquals
+  expect(actualText).toBe('Hello');
+  // assertNotEquals
+  expect(actualNumber).not.toBe(10);
+  // assertTrue
+  expect(actualNumber > 0).toBe(true);
+  // assertFalse
+  expect(actualNumber < 0).toBe(false);
+  // assertNull
+  expect(actualValue).toBeNull();
+  // assertNotNull
+  expect(actualText).not.toBeNull();
+how to handle dropdowns?
+Native <select> dropdown
+<select id="countrySelect">
+  <option value="us">United States</option>
+  <option value="ca">Canada</option>
+  <option value="uk">United Kingdom</option>
+</select>
+await page.locator('#country').selectOption('US');
+Select by label (visible text)
+await page.locator('#country').selectOption({ label: 'United States' });
+Select by index
+await page.locator('#country').selectOption({ index: 2 });
+Multiple select
+await page.locator('#skills').selectOption(['js', 'ts']);
+Handling Custom Dropdown (div-based)
+Click dropdown
+Click option
+await page.locator('#dropdown').click();
+await page.locator('text=USA').click();
+Auto-Suggest / Searchable Dropdownawait page.getByRole('combobox').fill('Uni');
+await page.getByRole('option', { name: 'United States' }).click();
+If options load via API:
+await page.getByRole('combobox').fill('Uni');
+await page.waitForSelector('text=United States');
+await page.getByText('United States').click();
+await page.locator('#loader').waitFor({ state: 'hidden' }); // wait until hidden
+await page.locator('#login-button').waitFor({ state: 'visible' }); // wait until visible
+how to handle checkboxes?
+<input type="checkbox" id="subscribe" />
+await page.locator('#subscribe').check();
+Only checks the checkbox if it is not already checked.
+Auto-waits for the element to be visible and enabled.
+await page.locator('#subscribe').uncheck();
+const checkbox = page.locator('#subscribe');
+if (!(await checkbox.isChecked())) {
+  await checkbox.check();
+}
+how to handle radiobuttons?
+<input type="radio" name="gender" value="male" id="male" />
+<input type="radio" name="gender" value="female" id="female" />
+await page.locator('#male').check();   // selects "male"
+await page.locator('#female').check(); // selects "female"
+how to handle date pickers
+<input type="date" id="dob" />
+await page.locator('#dob').fill('2026-02-18'); // format: YYYY-MM-DD
+<input id="date" readonly />
+<div class="calendar">
+  <button class="day" data-day="18">18</button>
+  <button class="day" data-day="19">19</button>
+</div>
+Select a date step by step
+// Open the calendar popup
+await page.locator('#date').click();
+// Select a day
+await page.locator('button.day[data-day="18"]').click();
+// Assert the input updated
+await expect(page.locator('#date')).toHaveValue('2026-02-18');
+Usually, you click input → click calendar day → assert value.
+3️⃣ Selecting Month/Year in Custom Pickers
+If the picker has dropdowns for month/year, you can do:
+// Open datepicker
+await page.locator('#date').click();
+// Select year
+await page.locator('.year-selector').selectOption('2026');
+// Select month
+await page.locator('.month-selector').selectOption('February');
+// Select day
+await page.locator('button.day[data-day="18"]').click();
+how to handle alerts
+In Playwright, page.on is a method to listen for events emitted by the page. Think of it like attaching an event handler — whenever a specific event happens on the page, your callback function is executed.
+page.on(eventName, callback);
+eventName: string — the name of the event you want to listen for
+callback: function — what to do when the event occurs
+ page.on('dialog', async (dialog) => {
+    console.log(dialog.message()); // prints alert text
+    await dialog.accept();         // closes alert by clicking OK
+  });
+  // Trigger alert
+  await page.click('#alertButton');
+});
+dialog.message() → gets the alert text
+dialog.accept() → clicks OK
+dialog.dismiss() → clicks Cancel (useful for confirm/prompt)
+'dialog' event fires for alert(), confirm(), or prompt() dialogs.
+You must attach the listener before the action that triggers the dialog.
+Handling Prompt Dialogs
+page.on('dialog', async (dialog) => {
+  console.log(dialog.message()); // e.g., "Enter your name"
+  await dialog.accept('John Doe'); // provide input value
+  // or await dialog.dismiss();    // cancel prompt
+});
+await page.click('#promptButton');
+accept(value?: string) can pass a value for prompts.
+how to handle iframes?
+An iframe is represented as a <iframe> element in the main page.
+Playwright provides frameLocator or frame() to access the content inside the iframe.
+<iframe id="login-frame" src="login.html"></iframe>
+// Get a locator inside the iframe
+const iframe = page.frameLocator('#login-frame');
+// Fill username and password
+await iframe.locator('#username').fill('testuser');
+await iframe.locator('#password').fill('password');
+// Click login button inside iframe
+await iframe.locator('#login-button').click();
+const outer = page.frameLocator('#outer-frame');
+const inner = outer.frameLocator('#inner-frame');
+await inner.locator('#target-element').click();
+how to handle pagination
+Button-Based Pagination
+<button id="next-page">Next</button>
+<ul id="items">
+  <li>Item 1</li>
+  <li>Item 2</li>
+</ul>
+e: Loop through pages until “Next” is disabled
+import { test, expect } from '@playwright/test';
+test('handle button-based pagination', async ({ page }) => {
+  await page.goto('https://example.com/items');
+  let hasNext = true;
+  while (hasNext) {
+    // Read all items on current page
+    const items = await page.locator('#items li').allTextContents();
+    console.log('Items on page:', items);
+    // Check if "Next" button is enabled
+    const nextButton = page.locator('#next-page');
+    hasNext = await nextButton.isEnabled();
+
+    if (hasNext) {
+      await nextButton.click();
+      await page.waitForLoadState('networkidle'); // wait for content to load
+    }
+  }
+});
+
+Key points:
+Use isEnabled() or isVisible() to check if “Next” exists.
+Wait for page content to load after clicking.
+e: Loop through pages until “Next” is disabled
+import { test, expect } from '@playwright/test';
+test('handle button-based pagination', async ({ page }) => {
+  await page.goto('https://example.com/items');
+  let hasNext = true;
+  while (hasNext) {
+    // Read all items on current page
+    const items = await page.locator('#items li').allTextContents();
+    console.log('Items on page:', items);
+    // Check if "Next" button is enabled
+    const nextButton = page.locator('#next-page');
+    hasNext = await nextButton.isEnabled();
+    if (hasNext) {
+      await nextButton.click();
+      await page.waitForLoadState('networkidle'); // wait for content to load
+    }
+  }
+});
+
+Key points:
+Use isEnabled() or isVisible() to check if “Next” exists.
+Wait for page content to load after clicking.
+How to handle multiple windows
+Understanding Tabs and Windows
+New tab / window = new Page object
+Main concepts:
+page → the current tab
+context → browser context that can have multiple pages/tabs
+popup → event triggered when a new tab or window opens
+Open a page (page)
+Perform an action that opens a new tab (e.g., clicking a link with target="_blank")
+Listen for the new page via context.waitForEvent('page')
+Perform actions on the new tab
+Optionally close the tab
+3️⃣ Step-by-Step Example
+Suppose we have a page with a "Open New Tab" button
+import { test, expect } from '@playwright/test';
+test('handle multiple tabs', async ({ browser }) => {
+  // 1. Create a new browser context
+  const context = await browser.newContext();
+  // 2. Open the first page (tab)
+  const page = await context.newPage();
+  await page.goto('https://example.com');
+  // 3. Trigger action that opens new tab
+  const [newTab] = await Promise.all([
+    context.waitForEvent('page'), // Listen for new page
+    page.click('a[target="_blank"]'), // The action opening new tab
+  ]);
+  // 4. Perform actions in the new tab
+  await newTab.waitForLoadState(); // Wait for page to load
+  console.log(await newTab.title()); // Print title of new tab
+  await expect(newTab.locator('h1')).toHaveText('Example Domain');
+  // 5. Close new tab (optional)
+  await newTab.close();
+  // 6. Back to original tab
+  console.log(await page.title());
+});
+ Key Concepts in Handling Tabs
+🔹 context.waitForEvent('page')
+Waits for a new tab or popup to appear in the same browser context.
+🔹 Promise.all([...])
+Needed because opening a new tab is asynchronous.
+Ensures that waitForEvent('page') listens before the click happens.
+🔹 newTab.waitForLoadState()
+Ensures the new tab is fully loaded before interacting with it.
+🔹 You can have multiple tabs
+const tabs: Page[] = [];
+tabs.push(page); // first tab
+const [tab2] = await Promise.all([
+  context.waitForEvent('page'),
+  page.click('#open-tab')
+]);
+tabs.push(tab2);
+const [tab3] = await Promise.all([
+  context.waitForEvent('page'),
+  page.click('#open-another-tab')
+]);
+tabs.push(tab3);
+Switching Between Tabs
+Unlike Selenium, you don’t “switch” tabs, you just use the Page object you stored.
+await tabs[0].bringToFront(); // optional, focuses tab
+await tabs[1].click('button#submit'); // interact directly
+
+“How do you handle multiple tabs in Playwright?”
+You can answer:
+“I can use page.context().pages() to get all open tabs as an array of Page objects.
+Then I loop through each Page, check for elements using locator(), and interact directly.
+There’s no need to switch context like Selenium — every tab is already a Page object I can control.”
+const pages = page.context().pages();
+page.context() → gets the browser context of the current page.
+.pages() → returns an array of all open Page objects (tabs) in that context.
+So pages is now an array containing all open tabs, including the original tab.
+for (let i = 0; i < pages.length; i++) {
+  const p = pages[i];
+Standard for loop to iterate over each Page object.
+p is the current page/tab in the loop.
+A browser context is like a brand-new browser profile inside a browser instance.
+Think of it as a separate, isolated session:
+Cookies, localStorage, sessionStorage, cache, etc. are isolated per context.
+Multiple tabs (Page objects) inside the same context share cookies and storage.
+Different contexts do not share session data, like logging into different accounts at the same time.
+2️⃣ How It Fits in the Playwright Hierarchy
+Browser -> BrowserContext -> Page (tab)
+Browser → the actual browser instance (Chromium, Firefox, WebKit)
+BrowserContext → isolated environment inside the browser
+Page → a single tab inside that context
+Browser → your browser app (Chrome)
+Context → a browser profile (like incognito window)
+Page → a tab inside that profile
+const context = await browser.newContext(); // new profile
+const page = await context.newPage(); // new tab in that context
+await page.goto('https://example.com');
+const page1 = await context.newPage();
+await page1.goto('https://example.com');
+// Open second tab
+const page2 = await context.newPage();
+await page2.goto('https://example.org');
+// Bring second tab to front
+await page2.bringToFront();
+“bringToFront() is a method on the Page object that brings a tab to the front and makes it active.
+It is useful when multiple tabs are open and we want to ensure our actions, like clicks or typing, happen on the correct tab.”
+File Upload in Page Object Model
+const fileInput = page.locator('#file-upload');
+  await fileInput.setInputFiles('path/to/file.txt');
+
+  // Optional: submit the form
+  await page.locator('#submit-button').click();
+“In Playwright, setInputFiles() is the universal way to upload files.
+It works for single and multiple file inputs, hidden inputs, and even in-memory files.
+You don’t need to interact with OS dialogs; Playwright writes the files directly to the input element.
+Passing an empty array clears the input if needed.”
+“In Playwright, downloads are handled via the Download object.
+We use page.waitForEvent('download') to capture the download before triggering it, and then we can save it to a path using saveAs().
+This works in headless mode, supports multiple downloads, and allows us to verify file names and paths programmatically.”
+Key Concept
+In Playwright:
+Every download is represented as a Download object.
+You listen for the download event on a Page object.
+You can then save the file to a specific path, check its name, or read its content.
+Works in headless and headed mode.
+ Basic Example
+import { test, expect } from '@playwright/test';
+test('handle file download', async ({ page }) => {
+  await page.goto('https://example.com/download');
+  // Listen for the download
+  const [download] = await Promise.all([
+    page.waitForEvent('download'), // waits for download to start
+    page.locator('text=Download PDF').click(), // triggers download
+  ]);
+  // Save file to disk
+  const filePath = await download.path(); // temporary path
+  console.log('Downloaded file path:', filePath);
+  // Save to a specific location
+  await download.saveAs('./downloads/myFile.pdf');
+  // Check file name
+  console.log('Download file name:', download.suggestedFilename());
+});
+Explanation:
+page.waitForEvent('download') → waits for a download to start.
+Promise.all([...]) → ensures you start listening before the click, preventing race conditions.
+download.path() → gives temporary file path (can read it directly).
+download.saveAs('./downloads/myFile.pdf') → saves file where you want.
+download.suggestedFilename() → gives the file name suggested by the server.
+
+await page.selectOption(selector, valueOrValues);
+How to Handle Flaky Tests in Playwright
+Playwright provides built-in ways to make tests more stable:
+A. Use Auto-Waiting Locators
+await page.locator('#submit').click(); // waits until visible & enabled
+Avoid page.click() with selector strings only; locators retry automatically until timeout.
+Don’t use waitForTimeout() unnecessarily.
+B. Explicit Waits for Critical Elements
+Soetimes auto-wait is not enough:
+await page.locator('#loading').waitFor({ state: 'hidden' }); // wait for loader to disappear
+await page.locator('#submit').click();
+Use state: 'visible' | 'hidden' | 'attached' | 'detached'.
+C. Retry Flaky Tests
+Playwright Test Runner supports retries:
+import { test } from '@playwright/test';
+test('flaky test example', async ({ page }) => {
+  await page.goto('https://example.com');
+  await page.locator('#submit').click();
+}, { retries: 2 }); // retry 2 times if it fails
+Retries are helpful for tests affected by network slowness or timing issues.
+In playwright.config.ts:
+retries: 2, // retry all flaky tests automatically
+D. Avoid Hard-Coded Waits
+❌ Bad:
+await page.waitForTimeout(5000);
+Better
+await page.locator('#submit').waitFor({ state: 'visible' });
+Makes test deterministic instead of guessing timing.
+E. Isolate Tests / Reset State
+Ensure each test runs in a clean browser context:
+const context = await browser.newContext();
+const page = await context.newPage();
+Avoid dependencies between tests.
+F. Use Proper Test Data
+Create unique or isolated test data for each run.
+Avoid shared resources that can cause conflicts.
+G. Debug Flaky Tests with Video / Screenshots
+Playwright can record:
+const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
+Helps see why test fails intermittently.
+4️⃣ Interview-Friendly Answer
+“A flaky test is a test that passes sometimes and fails sometimes without changes in the application.
+Common causes are timing issues, network slowness, test data conflicts, or randomness in the application.
+In Playwright, we can handle flaky tests by using locators with auto-waiting, avoiding hard-coded waits, using waitFor for dynamic elements, isolating tests with new contexts, retrying flaky tests with retries, and recording videos/screenshots for debugging.
+The goal is to make tests deterministic and reliable.”
+
+Playwright does not have StaleElementReferenceException because locators are lazy and re-evaluate the DOM every time an action is performed.
+Unlike Selenium WebElements, Playwright Locators do not store a static reference to an element.
+However, if we use ElementHandle (page.$()), we may face similar issues, so it’s recommended to always use locator().
+What is a Synchronization Problem?
+A synchronization problem happens when:
+Your test tries to interact with something before the application is ready.
+Examples:
+Clicking a button before it becomes enabled
+Typing into a field before it is visible
+Verifying text before API response finishes
+Clicking while loader is still visible
+This leads to:
+Random failures
+Flaky tests
+Timeout errors
+2️⃣ Why Playwright Is Better Than Selenium Here
+Playwright has built-in auto-waiting.
+When you do:
+await page.getByRole('button', { name: 'Submit' }).click();
+Playwright automatically waits for:
+Element to exist in DOM
+Element to be visible
+Element to be stable
+Element to be enabled
+No animation blocking it
+So most synchronization issues are already handled.
+3️⃣ How to Properly Handle Synchronization in Playwright
+A. Use Locator Auto-Wait (Best Practice)
+await page.locator('#submit').click();
+No need for manual wait.
+Don’t do:
+await page.waitForTimeout(5000);
+Hard waits create flaky tests.
+B. Wait for Element State
+Sometimes you need explicit waiting.
+await page.locator('#loader').waitFor({ state: 'hidden' });
+await page.locator('#submit').click();
+Available states:
+visible
+hidden
+attached
+detached
+C. Wait for API / Network Response
+If button triggers API call:
+await Promise.all([
+  page.waitForResponse(response =>
+    response.url().includes('/api/login') && response.status() === 200
+  ),
+  page.getByRole('button', { name: 'Login' }).click()
+]);
+This prevents race conditions.
+D. Wait for Navigation
+await Promise.all([
+  page.waitForNavigation(),
+  page.getByText('Go to Dashboard').click()
+]);
+Or simpler (auto-wait handles many cases):
+await page.getByText('Go to Dashboard').click();
+await expect(page).toHaveURL(/dashboard/);
+E. Wait for Load State
+await page.waitForLoadState('networkidle');
+Options:
+load
+domcontentloaded
+networkidle
+Use only when really necessary.
+F. Proper Assertions (Very Powerful)
+Instead of manual wait:
+await expect(page.locator('#success')).toBeVisible();
+Assertions auto-retry until timeout.
+🔥 4️⃣ Common Synchronization Mistakes
+❌ Using waitForTimeout
+await page.waitForTimeout(3000);
+Bad because:
+Slows tests
+Still flaky if app slower than 3s
+Not reliable
+❌ Using force: true everywhere
+await page.locator('#submit').click({ force: true });
+This disables waiting logic.
+Can cause unstable tests.
+❌ Not Using Promise.all for Events
+Wrong:
+await page.click('#download');
+await page.waitForEvent('download'); // Might miss event
+Correct:
+const [download] = await Promise.all([
+  page.waitForEvent('download'),
+  page.click('#download'),
+]);
+5️⃣ Interview-Ready Answer
+If interviewer asks:
+“How do you handle synchronization problems in Playwright?”
+You can say:
+Synchronization problems happen when the test interacts with the application before it is ready.
+In Playwright, most synchronization is handled automatically through locator auto-waiting.
+For dynamic content, I use explicit waits like waitFor, waitForResponse, waitForNavigation, and assertion-based waits with expect().
+I avoid hard-coded waits like waitForTimeout() to prevent flaky tests.
+If needed, I also synchronize API calls using Promise.all() to avoid race conditions.
+How to Debug Failing Tests in Playwright?
+
+When a test fails, Playwright gives multiple powerful debugging options.
+
+1️⃣ --debug Mode
+Run test in debug mode:
+npx playwright test --debug
+What happens:
+Opens browser in headed mode
+Runs tests slowly
+Opens Playwright Inspector
+Allows step-by-step execution
+Shows locators and action logs
+You can:
+Pause execution
+Step over actions
+Inspect DOM
+Modify locators live
+ Best for local debugging.
+2️⃣ui Mode (Playwright UI Mode)
+Run:
+npx playwright test --ui
+What it provides:
+Visual test runner
+See all tests
+Re-run specific tests
+See traces, logs, screenshots
+Step through test timeline
+Very useful for:
+Running specific test files
+Viewing test history
+Debugging visually
+3️⃣ Trace Viewer (Very Powerful)
+Trace viewer is Playwright’s built-in debugging tool.
+Enable tracing in playwright.config.ts:
+use: {
+  trace: 'on-first-retry',
+}
+Or:
+use: {
+  trace: 'on',
+}
+After test failure, Playwright generates a trace file.
+To open it:
+npx playwright show-trace trace.zip
+How will you run tests in parallel?
+Answer:
+Playwright Test runs tests in parallel by default using multiple workers.
+You can configure the number of parallel workers in playwright.config.ts.
+Example:
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  workers: 4, // run 4 tests in parallel
+  testDir: './tests',
+});
+Or run from CLI:
+npx playwright test --workers=4
+✅ Key points to mention:
+Tests in different files run in parallel.
+Tests in the same file run sequentially by default.
+Parallelism speeds up execution in CI/CD pipelines.
+2️⃣ How will you retry tests which are failed?
+Answer:
+Playwright allows automatic retries for flaky tests.
+Configure retries in playwright.config.ts or via CLI.
+Example in config:
+export default defineConfig({
+  retries: 2, // retry failed test 2 times
+});
+CLI alternative:
+npx playwright test --retries=2
+Notes:
+Retry helps for flaky tests due to network issues, slow loading, etc.
+Combine with tracing or screenshots to debug failures.
+ How will you make reports?
+Answer:
+Playwright supports multiple reporters: list, html, json, junit, allure.
+Most common: HTML report for easy viewing.
+Example in config:
+export default defineConfig({
+  reporter: [
+    ['list'],           // console output
+    ['html'],           // interactive HTML report
+  ],
+});
+Run tests:
+npx playwright test
+Open HTML report:
+npx playwright show-report
+ Notes:
+HTML report shows pass/fail, screenshots, traces, videos.
+For CI/CD, can also use JUnit or JSON reports.
+How will you take screenshots?
+nswer:
+Playwright can capture screenshots automatically on failure or manually in the test.
+Automatic screenshots in config:
+export default defineConfig({
+  use: {
+    screenshot: 'only-on-failure', // automatically capture on failed tests
+  },
+});
+Manual screenshot in test:
+await page.screenshot({ path: 'screenshots/homepage.png', fullPage: true });
+Element screenshot:
+await page.locator('#login-button').screenshot({ path: 'screenshots/button.png' });
+ Notes:
+Combine with headful mode to see browser visually.
+Screenshots can be attached to HTML or Allure reports for debugging.
