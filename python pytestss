@@ -1,0 +1,401 @@
+How to handle new Tabs?
+@pytest.fixture(scope="session")
+def browser_context():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        yield context
+        browser.close()
+def test_handle_new_tab(browser_context):
+    page = browser_context.new_page()
+    page.goto("https://example.com")
+    # Step 1: Wait for new tab to open after clicking the button
+with page.expect_popup() as popup_info:  # Start listening for a new tab
+    page.click("#open-new-tab-button")  # This action triggers the popup
+new_tab = popup_info.value  # Get the new tab as a Page object
+new_tab.wait_for_load_state()  # Wait until it fully loads
+new_tab.fill("#username", "myUser")  # Do something in the new tab
+new_tab.click("#submit")
+new_tab.close()  # Close the new tab
+page.bring_to_front()  # Go back to original page
+The with statement in Python
+with is a context manager in Python.
+It’s used to wrap a block of code where you want setup and cleanup or to capture something.
+Example (general Python):
+with open("file.txt", "r") as f:
+    content = f.read()
+Here, with automatically opens the file and closes it at the end of the block.
+The as f part gives you a variable f to use inside the block.
+"In Playwright, handling new tabs or multiple tabs is straightforward because each tab is represented by a separate Page object. To handle a new tab that opens when clicking a button, I would use the expect_popup() method in Python (or waitForEvent('popup') in JavaScript) to capture the new tab immediately after triggering the action.
+Access All Open Tabs
+every tab (or page) belongs to a browser context. You can get all open tabs with:
+pages = browser_context.pages  # List of Page objects
+@pytest.fixture(scope="session")
+def browser_context():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        yield context
+        browser.close()
+def test_access_all_tabs(browser_context):
+    # Open the first page
+    page1 = browser_context.new_page()
+    page1.goto("https://example.com")
+    # Open a second page
+    page2 = browser_context.new_page()
+    page2.goto("https://example.org")
+    # Open a third page
+    page3 = browser_context.new_page()
+    page3.goto("https://example.net")
+    # Access all open tabs
+    all_tabs = browser_context.pages
+    print(f"Number of open tabs: {len(all_tabs)}")
+    for idx, tab in enumerate(all_tabs):
+        print(f"Tab {idx+1} URL: {tab.url}")
+    # Example: work in the second tab
+    second_tab = all_tabs[1]
+    second_tab.bring_to_front()
+    second_tab.click("#some-button")
+browser_context.pages returns a list of all open tabs in that browser context.
+Tabs are indexed in the order they were opened (first opened = index 0).
+You can use tab.bring_to_front() to focus on a specific tab before interacting.
+This works for popups or manually opened tabs.
+Upload using set_input_files()
+If the page has an <input type="file">, you don’t need to click the dialog.
+def test_file_upload(page):
+    page.goto("https://example.com/upload")
+    # Directly set the file
+    page.set_input_files("input[type='file']", "tests/files/sample.pdf")
+    page.click("button[type='submit']")
+def test_file_upload(page):
+    page.goto("https://example.com")
+    with page.expect_file_chooser() as fc_info:
+        page.click("text=Upload File")
+    file_chooser = fc_info.value
+    file_chooser.set_files("tests/files/sample.pdf")
+def test_file_download(page):
+    page.goto("https://example.com/download")
+    with page.expect_download() as download_info:
+        page.click("text=Download")
+        download = download_info.value
+    # Save to specific path
+    download.save_as("tests/downloads/report.pdf")
+    print("Downloaded file:", download.suggested_filename)
+
+page.click("#input-field")   # Focus on input
+page.keyboard.down("Shift")  # Hold Shift
+page.keyboard.press("ArrowLeft")  # Press Left arrow while holding Shift → selects one character left
+page.keyboard.up("Shift")    # Release Shift
+What is a Bounding Box?
+A bounding box is basically a rectangle that exactly surrounds an element on the page.
+x → horizontal position from the left of the page
+y → vertical position from the top of the page
+width → width of the element
+height → height of the element
+box = page.locator("#my-element").bounding_box()
+print(box)
+# Example output:
+# {'x': 100.5, 'y': 200.3, 'width': 150, 'height': 50}
+Why Do We Need Bounding Box?
+When using mouse actions like:
+mouse.move(x, y)
+mouse.click(x, y)
+mouse.down() / mouse.up()
+You need absolute coordinates on the page.
+Since elements can be anywhere on the page, the bounding box gives you the exact center or corner coordinates.
+Click in the Center of an Element
+element = page.locator("#button")
+box = element.bounding_box()
+# Move mouse to center
+x = box["x"] + box["width"] / 2
+y = box["y"] + box["height"] / 2
+page.mouse.click(x, y)
+source_box = page.locator("#source").bounding_box()
+target_box = page.locator("#target").bounding_box()
+page.mouse.move(source_box["x"] + source_box["width"]/2,              source_box["y"] + source_box["height"]/2)
+page.mouse.down()
+page.mouse.move(target_box["x"] + target_box["width"]/2,              target_box["y"] + target_box["height"]/2)
+page.mouse.up()
+source box → starting point
+target_box → ending point
+mouse.down() → hold mouse
+mouse.up() → release mouse
+    source = page.locator("#source")
+    target = page.locator("#target")
+    source.drag_to(target)
+def test_drag_drop_files(page):
+    page.goto("https://example.com/dragdrop")
+    file_path = "tests/files/sample.pdf"
+   # Select the drop target
+    drop_area = page.locator("#drop-area")
+   # Simulate drag and drop
+    drop_area.set_input_files(file_path)
+xplicitly mark a test as flaky
+import pytest
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
+def test_maybe_flaky(page):
+    page.goto("https://example.com")
+    assert page.title() == "Example Domain"
+reruns=3 → pytest will retry the test up to 3 times if it fails.
+reruns_delay=2 → wait 2 seconds between retries.
+Pytest does not automatically detect flakiness; you’re telling it: “this test might fail sometimes, so retry.”
+b) Using a global command-line retry
+You can retry all failing tests without marking them individually:
+pytest --reruns 3 --reruns-delay 2
+Pytest will treat any failing test as “potentially flaky” and retry automatically.
+Run All Tests
+pytest
+2. Run Specific File
+pytest test_login.py
+3. Run Specific Test Inside a File
+pytest test_login.py::test_valid_login
+4. Run Specific Class
+pytest test_login.py::TestLogin
+5. Run Tests Matching a Name Pattern
+pytest -k "login"
+Runs all tests containing "login" in the name.
+You can combine conditions:
+pytest -k "login and not invalid"
+6. Run Tests by Marker
+If you use markers:
+@pytest.mark.smoke
+def test_homepage():
+    pass
+Run:
+pytest -m smoke
+Run multiple markers:
+pytest -m "smoke or regression"
+7. Run in Verbose Mode
+pytest -v
+Very useful for debugging.
+8. Stop on First Failure
+pytest -x
+Or:
+pytest --maxfail=2
+9. Retry Failed Tests (Flaky Tests
+If using pytest-rerunfailures:
+pytest --reruns 3 --reruns-delay 2
+ 10. Run Tests in Parallel (Faster Execution
+Using pytest-xdist
+pip install pytest-xdist
+pytest -n auto
+Or specify workers:
+pytest -n 4
+ 11. Show Print Statements in Output
+pytest -s
+Very useful for Playwright debugging.
+ 12. Generate HTML Report
+With pytest-html:
+pip install pytest-html
+pytest --html=report.html
+Run All Tests
+mvn test
+This runs all TestNG tests configured in your pom.xml.
+2. Run Using Specific TestNG XML File
+If your pom.xml includes:
+<suiteXmlFiles>
+    <suiteXmlFile>testng.xml</suiteXmlFile>
+</suiteXmlFiles>
+Then simply run:
+mvn test
+To override and use a different XML:
+mvn test -Dsurefire.suiteXmlFiles=testng.xml
+3. Run a Specific Test Class
+mvn -Dtest=LoginTest test
+Run multiple classes:
+mvn -Dtest=LoginTest,HomeTest test
+4. Run Specific Test Method
+mvn -Dtest=LoginTest#validLogin test
+5. Run Tests by TestNG Group
+If your test has:
+@Test(groups = {"smoke"})
+public void loginTest() { }
+Run only smoke group:
+mvn test -Dgroups=smoke
+Run multiple groups:
+mvn test -Dgroups="smoke,regression"
+Exclude groups:
+mvn test -DexcludedGroups=regression
+6. Clean and Run Tests
+mvn clean test
+This removes previous build files before running tests.
+7. Run in Headless Mode (If Configured)
+If your framework supports headless via system property:
+mvn test -Dbrowser=chrome -Dheadless=true
+(Requires code support for reading system properties.)
+8. Skip Tests
+mvn install -DskipTests
+9. Run in Parallel (If Configured in testng.xml)
+Example in testng.xml:
+<suite name="Suite" parallel="methods" thread-count="4">
+Then:
+mvn test
+Parallel behavior is controlled by TestNG config, not Maven command.
+
+“In Python pytest with Playwright, I use the pytest_runtest_makereport hook to detect if a test passes or fails. On failure, I take a screenshot using page.screenshot() and save it in a dedicated folder with timestamps. I also capture screenshots on success if needed.
+
+For reporting, I use the pytest-html plugin, which generates an HTML report showing all test results. Screenshots can be linked in the report for better debugging. In CI/CD pipelines like Jenkins, the report and screenshots can be archived automatically, making test results transparent and easy to analyze.”
+pip install pytest-html
+Run tests with:
+pytest --html=report.html --self-contained-html
+What Are Pytest Hooks?
+Hooks are special functions pytest calls automatically at specific points in the test lifecycle.
+They let you customize pytest behavior without modifying the core framework.
+Examples of lifecycle events:
+Before test runs
+After test finishes
+When tests are collected
+On test failure
+Think of hooks as “extension points” for pytest.
+Types of Pytest Hooks
+Session hooks – before and after all tests (setup/cleanup resources)
+Collection hooks – after test discovery (filter/reorder tests)
+Test setup/call/teardown hooks – before, during, and after each test
+Reporting hooks – after test execution (capture pass/fail, screenshots)
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_makereport(item, call):
+    # Step 1: Code before pytest processes report
+    print(f"Preparing report for {item.name}")
+
+    # Step 2: Let pytest create the normal report
+    outcome = yield
+    rep = outcome.get_result()  # get the test result
+
+    # Step 3: Code after pytest processed report
+    page = item.funcargs.get("page")
+    if page and rep.when == "call":
+        os.makedirs("screenshots", exist_ok=True)
+        path = f"screenshots/{item.name}.png"
+        page.screenshot(path=path)
+        print(f"Screenshot saved to {path}")
+Flow Explanation:
+hookwrapper=True → we can run code before and after the test report is generated
+tryfirst=True → ensures our screenshot code runs before other hooks (like plugins)
+yield → lets pytest generate its normal test report; after that, we do post-processing (like screenshots)
+Step 1: Install the plugin
+pip install pytest-rerunfailures
+Step 2: Run tests with retry
+pytest --reruns 2 --reruns-delay 3
+Explanation:
+--reruns 2 → retry failed tests 2 times
+--reruns-delay 3 → wait 3 seconds between retries
+Works for any pytest test: Playwright, Selenium, API, etc.
+Step 3: Combine with reports (optional)
+pytest --reruns 2 --reruns-delay 3 --html=report.html
+Failed tests are retried
+HTML report will show final pass/fail
+ Retry Specific Tests Using @pytest.mark.flaky
+You can retry only specific tests instead of all:
+import pytest
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
+def test_login(page):
+    page.goto("https://example.com")
+    assert page.title() == "SomeTitle"  # may fail sometimes
+reruns=3 → retry 3 times
+reruns_delay=2 → wait 2 seconds between retries
+Retry Using Custom Hook (Advanced)
+You can retry failed tests using pytest_runtest_makereport hook:
+import pytest
+MAX_RETRIES = 2
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    rep = outcome.get_result()
+    if rep.failed:
+        retries = getattr(item, "retries", 0)
+        if retries < MAX_RETRIES:
+            print(f"Retrying {item.name}, attempt {retries+1}")
+            item.retries = retries + 1
+            rep.outcome = "rerun"
+
+I often use session hooks (pytest_sessionstart/finish) to initialize and cleanup resources, collection hooks (pytest_collection_modifyitems) to reorder or filter tests, setup/teardown hooks (pytest_runtest_setup/teardown) for per-test setup like opening a browser page or clearing cookies, and terminal hooks (pytest_terminal_summary) to generate custom summaries or notifications at the end of the test run. Together, these hooks allow me to build a complete, production-ready automation framework.”
+
+Session Hooks
+
+Hooks: pytest_sessionstart(session) and pytest_sessionfinish(session, exitstatus)
+
+Purpose: Setup and cleanup global resources like databases, API tokens, browser drivers.
+
+Example:
+
+def pytest_sessionstart(session):
+    print("Starting test session — initialize DB or global resources")
+
+def pytest_sessionfinish(session, exitstatus):
+    print("Test session finished — cleanup resources")
+
+
+Runs once per pytest run, before or after any test.
+
+2️⃣ Collection Hooks
+
+Hook: pytest_collection_modifyitems(session, config, items)
+
+Purpose: Modify or reorder tests after discovery. Can skip tests dynamically.
+
+Example:
+
+def pytest_collection_modifyitems(session, config, items):
+    print(f"Collected {len(items)} tests")
+    # Example: reverse the order
+    items.reverse()
+
+
+Useful in frameworks where you need priority-based test execution or dynamic filtering.
+
+3️⃣ Setup / Teardown Hooks
+
+Hooks:
+
+pytest_runtest_setup(item) → before each test
+
+pytest_runtest_teardown(item) → after each test
+
+Purpose: Test-level setup or cleanup like initializing Playwright pages, clearing cookies, or logging test start/end.
+
+Example:
+
+def pytest_runtest_setup(item):
+    print(f"Setup for {item.name}")
+
+def pytest_runtest_teardown(item):
+    print(f"Teardown for {item.name}")
+
+
+Runs for every test.
+
+4️⃣ Test Call Hook
+
+Hook: pytest_runtest_call(item)
+
+Purpose: Customize behavior during test execution. Rarely needed, but can wrap test calls for advanced retries or logging.
+
+5️⃣ Reporting Hook (pytest_runtest_makereport)
+
+Purpose: Capture test result after execution.
+
+Commonly used for:
+
+Taking screenshots on pass/fail
+
+Attaching logs or artifacts to reports (Allure or HTML)
+
+Implementing retries (as we discussed)
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    rep = outcome.get_result()
+    if rep.failed:
+        page = item.funcargs.get("page")
+        if page:
+            page.screenshot(path=f"screenshots/{item.name}.png")
+
+6️⃣ Terminal / Summary Hooks
+
+Hook: pytest_terminal_summary(terminalreporter, exitstatus, config)
+
+Purpose: Print custom summary or send notifications at the end of the session.
+Example: Email a report after all tests finish.
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    print("All tests completed. Check the logs and screenshots folder.")
