@@ -1,0 +1,226 @@
+What is an API?
+An API (Application Programming Interface) is:
+A contract that defines how two software components communicate using structured requests and responses.
+Endpoints (URLs or function names)
+Methods (operations allowed)
+Input format
+Output format
+Authentication rules
+Error codes
+It does not define implementation.
+It defines how to interact with a system.
+How APIs Work (Web API Example)
+Client Sends a Request
+A client (browser, mobile app, backend service) sends:
+HTTP Method (GET, POST, PUT, DELETE)
+URL (endpoint)
+Headers
+Optional body (JSON)
+Example request:
+POST /users HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Authorization: Bearer token123
+
+{
+  "name": "John",
+  "email": "john@email.com"
+}
+2️⃣ Server Processes the Request
+The API server:
+Validates authentication
+Validates input
+Executes business logic
+Reads/writes database
+Creates response
+3️⃣ Server Sends Response
+Example response:
+
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 101,
+  "name": "John",
+  "email": "john@email.com"
+}
+What APIs Work With
+APIs interact with:
+1. Databases
+MySQL
+PostgreSQL
+MongoDB
+API receives request → queries database → returns result.
+2. Authentication Systems
+JWT
+OAuth
+Session tokens
+Example: When logging in via Google, your app uses OAuth APIs.
+3. External Services
+Apps call APIs from:
+Stripe (payments)
+Twilio (SMS)
+OpenAI (AI models)
+4. Frontend Applications
+React
+Angular
+Mobile apps
+IoT devices
+Frontend → API → Backend → Database → API → Frontend
+A web service is a way for different applications, often on different machines or platforms, to communicate over the Internet using standard protocols. It’s basically a system that exposes functionality over the web so other systems can use it.
+A web service allows a program (client) to talk to another program (server) using the web (usually HTTP/HTTPS).
+The server exposes some functions or data.
+The client sends a request and receives a response in a structured format.
+What is a REST API?
+A REST API is a way for clients (like web or mobile apps) to communicate with servers over HTTP using standard methods and URLs (endpoints).
+It’s stateless: the server does not remember previous requests from the client.
+It operates on resources, which are any kind of data you can access or manipulate (e.g., users, orders, products).
+A REST API exposes resources over HTTP and uses standard HTTP methods to operate on those resources.
+REST Principles (Technical Constraints)
+A system is RESTful if it follows these rules:
+1️⃣ Client–Server Architecture
+Frontend and backend are separate.
+2️⃣ Stateless
+Each request must contain all required information.
+The server does NOT store client session state between requests.
+Example:
+Every request includes authentication token.
+3️⃣ Cacheable
+Responses should define whether they can be cached.
+4️⃣ Uniform Interface
+Standardized way to interact:
+Resources identified by URLs
+Use HTTP methods
+Use standard status codes
+Structured data (usually JSON)
+5️⃣ Layered System
+Client doesn’t know if it’s talking directly to the server or through:
+Load balancer
+API gateway
+Proxy
+CDN
+What is HTTP?
+HTTP stands for HyperText Transfer Protocol.
+It is an application-layer protocol used for communication between clients and servers on the web.
+It defines:
+How requests are sent
+How responses are structured
+How data is transferred
+HTTP is the foundation of the web.
+Where HTTP Sits in Networking
+HTTP works on top of:
+TCP (Transmission Control Protocol)
+IP (Internet Protocol)
+Layer model (simplified):
+Application Layer → HTTP
+Transport Layer   → TCP
+Internet Layer    → IP
+So HTTP does not move packets itself — it uses TCP to transport data reliably.
+How HTTP Works (Step-by-Step)
+1️⃣ Client Sends Request
+Example: Browser requests a webpage from Google
+Request:
+GET / HTTP/1.1
+Host: google.com
+User-Agent: Chrome
+2️⃣ Server Sends Response
+Response:
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 1256
+<html> ... </html>
+Structure of HTTP Request
+An HTTP request contains:
+1. Request Line
+GET /users HTTP/1.1
+Method (GET, POST, etc.)
+Path
+HTTP version
+2. Headers
+Metadata
+Content-Type: application/json
+Authorization: Bearer token123
+3. Optional Body
+Used in POST, PUT, PATCH
+
+{
+  "name": "John"
+}
+Structure of HTTP Response
+1. Status Line
+HTTP/1.1 200 OK
+2. Headers
+Content-Type: application/json
+3. Body
+Data returned from server
+An endpoint in a REST API is a specific URL (route) where a client can access a resource or perform an action on a server.
+Think of it as the exact address where an API service can be reached.
+An endpoint is a specific URL within an API where a client can send a request.
+An endpoint consists of:
+Base URL → https://api.example.com
+Path → /users
+HTTP Method → GET, POST, PUT, DELETE
+All three together define a unique endpoint.
+It tells:
+📍 Where the request goes (URL)
+⚙ What action to perform (HTTP method like GET, POST, etc.)
+GET https://api.example.com/users/1
+In REST (Representational State Transfer), a resource is any object, data, or concept that can be identified and accessed via a URL.
+In simple terms:
+A resource is what the API is about.
+ Simple Definition
+A resource is:
+A piece of data
+Identified by a URI (Uniform Resource Identifier)
+Manipulated using HTTP methods (GET, POST, PUT, DELETE)
+Resource = The actual data/concept (e.g., a user)
+Representation = How it is sent to the client (JSON, XML, etc.)
+A resource in REST is any identifiable data entity that can be accessed and manipulated through a URI using HTTP methods.
+URI (Uniform Resource Identifier)
+A URI is a string that identifies a resource.
+It can identify a resource by:
+Its location
+Its name
+Or both
+ URI is the broader concept.
+Example:
+https://example.com/users/1
+mailto:someone@example.com
+urn:isbn:9780141036144
+All of these are URIs.
+🔎 2️⃣ URL (Uniform Resource Locator)
+A URL is a type of URI that tells you:
+Where the resource is located
+How to access it (protocol)
+Example:
+https://example.com/users/1
+It includes:
+Protocol → https
+Domain → example.com
+Path → /users/1
+👉 A URL provides the location of a resource.
+URI – Uniform Resource Identifier
+A URI is a generic identifier for a resource.
+It tells you “what” the resource is, but not necessarily how to access it.
+Every URL is a URI, but not every URI is a URL.
+Example URIs:
+urn:isbn:0451450523 → Identifies a book by its ISBN (no location, just identity)
+https://example.com/books/123 → Also a URI (and a URL)
+2. URL – Uniform Resource Locator
+A URL is a type of URI that specifies the location and how to access the resource.
+It gives both identity + access method (scheme like HTTP/HTTPS, plus location).
+Example URLs:
+https://example.com/books/123 → Access over HTTPS
+ftp://ftp.example.com/file.txt → Access via FTP
+A URN (Uniform Resource Name) is a type of URI that names a resource uniquely but does not tell you where or how to access it. Think of it as a permanent, location-independent identifier.
+URN = “what something is”
+URL = “where and how to get it
+A URN is useful when you want a stable identifier that doesn’t change even if the resource moves.
+urn:<namespace>:<unique-identifier>
+urn: → literal prefix indicating it’s a URN
+namespace: → category or type of identifier (like ISBN for books)
+unique-identifier: → the actual resource ID
+Path Parameter
+Definition: A variable segment of the URI path that is part of the hierarchical structure of the resource.
+Purpose: Used to identify a specific resource within a collection.
+Path parameters are part of the URI path and uniquely identify a resource, while query parameters are key-value pairs appended to the URI to filter, sort, or modify the resource representation.”
