@@ -1,0 +1,171 @@
+import { test, expect } from '@playwright/test';
+import { SignupPage, UserData } from '../pages/signupPage';
+import { BASE_URL } from '../utils/config';
+import { readExcel } from '../utils/excelReader';
+
+const filePath = './data/signupData.xlsx';
+const sheetName = 'SignupData';
+
+let signupUsers: UserData[] = [];
+
+test.describe('Signup Tests', () => {
+  let signupUsers: UserData[] = [];
+
+  test.beforeAll(async () => {
+    signupUsers = await readExcel(filePath, sheetName);
+  });
+
+  for (let i = 0; i < 5; i++) {
+    test(`Signup test #${i + 1}`, async ({ page }) => {
+      const user = signupUsers[i];
+      const signup = new SignupPage(page);
+
+      await signup.completeSignup(BASE_URL, user);
+    });
+  }
+});
+
+
+
+
+import { test, expect }  from '@playwright/test';
+import { SignupPage, UserData } from '../pages/signupPage';
+import { BASE_URL } from '../utils/config';
+import { faker } from '@faker-js/faker';
+
+function generateRandomUser(): UserData {
+  return {
+    name: faker.person.fullName(),
+    email: faker.internet.email(),
+    title: faker.helpers.arrayElement(['Mr','Mrs']),
+    password: 'Test@1234',
+    day: faker.number.int({ min:1, max:28 }),
+    month: faker.number.int({ min:1, max:12 }),
+    year: faker.number.int({ min:1970, max:2000 }),
+    newsletter: faker.datatype.boolean({ probability: 0.7 }),
+    offers: faker.datatype.boolean({ probability: 0.5 }),
+    first_name: faker.person.firstName(),
+    last_name: faker.person.lastName(),
+    company: faker.company.name(),
+    address1: faker.location.streetAddress(),
+    address2: faker.location.secondaryAddress(),
+    country: 'United States',
+    state: faker.location.state(),
+    city: faker.location.city(),
+    zipcode: faker.location.zipCode(),
+    mobile: faker.string.numeric(10)
+  };
+}
+
+test.describe('Signup Flow', () => {
+  for (let i = 0; i < 2; i++) {
+    test(`Random Signup Test #${i+1}`, async ({ page }) => {
+      const signup = new SignupPage(page);
+      const userData = generateRandomUser();
+      const actualText = await signup.completeSignup(BASE_URL, userData);
+      const expectedText = 'Account Created!';
+      expect(actualText?.toUpperCase()).toBe(expectedText.toUpperCase());
+    });
+  }
+});
+
+
+
+
+import { test, expect } from '@playwright/test';
+import { SignupPage, UserData } from '../pages/signupPage';
+import { LoginPage } from '../pages/loginPage';
+import { BASE_URL } from '../utils/config';
+import { readExcel } from '../utils/excelReader';
+
+const filePath = './data/signupData.xlsx';
+const sheetName = 'SignupData';
+let users: UserData[] = [];
+test.describe('Signup + Login Data Driven Tests', () => {
+
+  let users: UserData[] = [];
+
+  // 🔹 Read Excel once before all tests
+  test.beforeAll(async () => {
+    users = await readExcel(filePath, sheetName);
+  });
+
+  // 🔹 Loop through users and create a separate test per user
+  for (let i=0;i<5;i++) {
+
+    test(`Signup and Login for #${i}`, async ({ page }) => {
+       const user=users[i];
+      const signup = new SignupPage(page);
+      const login = new LoginPage(page);
+
+      // ---------------- SIGNUP ----------------
+      await signup.completeSignup(BASE_URL, user);
+      
+
+      // ---------------- LOGOUT ----------------
+       const logoutLocator = "a[href='/logout']";
+    //   await page.click(logoutLocator);
+
+      // ---------------- LOGIN ----------------
+     // await login.goToLoginPage(BASE_URL);
+      await login.login(user.email, user.password);
+
+      // ---------------- VERIFY LOGIN ----------------
+      await expect(page.locator(logoutLocator)).toBeVisible();
+
+      // Optional: Logout at end so next test starts fresh
+      await page.click(logoutLocator);
+    });
+  }
+
+});
+
+
+
+
+import { test, expect }  from '@playwright/test';
+import { SignupPage, UserData } from '../pages/signupPage';
+import { LoginPage } from '../pages/loginPage';
+import { BASE_URL } from '../utils/config';
+import { faker } from '@faker-js/faker';
+
+test('Signup then login with Faker user', async ({ page }) => {
+  const signup = new SignupPage(page);
+  const login = new LoginPage(page);
+   
+
+  // Generate user
+  const user: UserData = {
+    name: faker.person.fullName(),
+    email: faker.internet.email(),
+    title: 'Mr',
+    password: 'Test@1234',
+    day: 10,
+    month: 5,
+    year: 1995,
+    newsletter: true,
+    offers: true,
+    first_name: faker.person.firstName(),
+    last_name: faker.person.lastName(),
+    company: faker.company.name(),
+    address1: faker.location.streetAddress(),
+    address2: faker.location.secondaryAddress(),
+    country: 'United States',
+    state: faker.location.state(),
+    city: faker.location.city(),
+    zipcode: faker.location.zipCode(),
+    mobile: faker.string.numeric(10)
+  };
+
+  // Signup first
+  await signup.completeSignup(BASE_URL, user);
+  await login.logoutIfLoggedIn();
+  // Then login with the same credentials
+  await login.goToLoginPage(BASE_URL);
+  await login.login(user.email, user.password);
+
+  // Assert successful login
+  const loggedIn = await page.locator("a[href='/logout']").isVisible();
+  expect(loggedIn).toBeTruthy();
+});
+
