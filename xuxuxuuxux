@@ -1,0 +1,176 @@
+@pytest.fixture
+def driver():
+    driver = webdriver.Chrome()
+    yield driver
+    driver.quit()
+def test_open_google(driver):
+    driver.get("https://www.google.com")
+    assert "Google" in driver.title
+driver.find_element(By.ID, "username")
+driver.find_element(By.NAME, "email")
+driver.find_element(By.TAG_NAME, "input")
+driver.find_element(By.PARTIAL_LINK_TEXT, "Hom")
+driver.find_element(By.CSS_SELECTOR, "#username")
+driver.find_element(By.XPATH, "//input[@id='username']")
+links = driver.find_elements(By.TAG_NAME, "a")
+print(len(links))
+  element = driver.find_element(By.ID, "menu")
+    actions = ActionChains(driver)
+    actions.move_to_element(element).perform()
+ actions = ActionChains(driver)
+    actions.context_click(element).perform()
+element = driver.find_element(By.ID, "username")
+element.send_keys("admin")
+actions = ActionChains(driver)
+actions.send_keys(Keys.ENTER).perform()
+
+def test_keyboard_actions(driver):
+    driver.get("https://www.google.com")
+    search_box = driver.find_element(By.NAME, "q")
+    search_box.send_keys("Selenium Python")
+    search_box.send_keys(Keys.ENTER)
+element = driver.find_element(By.ID, "loginBtn")
+element.click()
+checkbox = driver.find_element(By.ID, "subscribe")
+checkbox.click()
+or we can have more safer condition
+if checkbox.is_selected():
+    print("Checkbox is selected")
+else:
+    print("Checkbox is NOT selected")
+dropdown = Select(driver.find_element(By.ID, "country"))
+dropdown.select_by_visible_text("India")
+dropdown.select_by_visible_text("India")
+dropdown.select_by_index(2)
+et All Options
+options = dropdown.options
+for option in options:
+    print(option.text)
+screen shot
+driver.save_screenshot("screenshot.png")
+download_path = "C:/Users/Name/Downloads/selenium"
+
+options = Options()
+prefs = {
+    "download.default_directory": download_path,  # Set download folder
+    "download.prompt_for_download": False,        # Disable download prompt
+    "directory_upgrade": True,
+    "safebrowsing.enabled": True                  # Bypass security prompt
+}
+options.add_experimental_option("prefs", prefs)
+driver = webdriver.Chrome(options=options)
+driver.get("https://example.com/download")
+download_button = driver.find_element(By.ID, "downloadBtn")
+download_button.click()
+
+Implicit Wait
+Tells Selenium to wait a certain time before throwing NoSuchElementException.
+Applies to all elements.
+from selenium import webdriver
+driver = webdriver.Chrome()
+driver.implicitly_wait(10)  # Wait up to 10 seconds for elements to appear
+driver.get("https://example.com")
+element = driver.find_element(By.ID, "username")
+element.send_keys("admin")
+Explicit Wait
+Waits for a specific condition for a specific element.
+Uses WebDriverWait + ExpectedConditions.
+driver.get("https://example.com")
+wait = WebDriverWait(driver, 10)  # Wait up to 10 seconds
+element = wait.until(EC.visibility_of_element_located((By.ID, "username")))
+element.send_keys("admin")
+visibility_of_element_located	Element is visible
+element_to_be_clickable	Element is visible and enabled
+presence_of_element_located	Element exists in DOM, may be hidden
+text_to_be_present_in_element	Wait until element has specific text
+alert_is_present	Wait until alert appears
+Fluent Wait (Advanced)
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
+wait = WebDriverWait(driver, 10, poll_frequency=1, ignored_exceptions=[NoSuchElementException])
+element = wait.until(EC.visibility_of_element_located((By.ID, "username")))
+x = 5
+assert x == 5           # Pass
+assert x != 5           # Fail
+assert x > 0
+assert x == 10, "x should be 10"
+assert element.is_enabled() and element.is_displayed()
+What is Locust?
+Open-source load testing framework written in Python.
+Simulates millions of users visiting your site or API.
+Provides real-time statistics via a web interface.
+Uses Python code to define user behavior.
+Performance Testing
+Purpose: Measure the overall performance of a system under normal or expected workloads.
+Focus: Responsiveness, speed, and stability.
+Key Metrics: Response time, throughput (requests per second), CPU/memory usage.
+Example: Ensuring a website responds within 2 seconds for 1,000 users.
+Note: This is the broad category; load testing and stress testing fall under it.
+Load Testing
+Purpose: Test the system under expected peak load conditions to ensure it can handle real-world usage.
+Focus: Behavior under normal to high, but realistic, traffic.
+Key Metrics: Response time under load, error rates, system stability.
+Example: Simulating 5,000 users logging in simultaneously to see if the system remains stable.
+Analogy: Checking if a bridge can handle rush hour traffic safely.
+Stress Testing
+Purpose: Push the system beyond its limits to see how it fails and recovers.
+Focus: Maximum capacity, robustness, and error handling.
+Key Metrics: Breaking point, recovery time, failure modes.
+Example: Simulating 10,000 users when the system is designed for 5,000 to observe crashes or slowdowns.
+Analogy: Overloading the bridge with far more cars than it’s designed to hold to see when it collapses.
+User Class (HttpUser or User)
+Represents a simulated user in the system.
+Defines what actions the user will perform.
+Example: browsing pages, logging in, adding items to a cart.
+Tasks (@task)
+Actions performed by the user.
+Each method decorated with @task represents an activity.
+Tasks can have weights to simulate some actions more often than others.
+Wait Time
+Simulates realistic user behavior by adding a pause between tasks.
+Can be a fixed time, random time, or a range.
+wait_time = between(1, 5)  # wait 1 to 5 seconds between tasks
+. Client (self.client)
+The HTTP client that sends requests to your system.
+Supports GET, POST, and other HTTP methods.
+Can also handle authentication, headers, and data payloads.
+Load Shape / User Spawn
+Defines how many simulated users are active and how quickly they start.
+Controlled via command line or web interface:
+-u = number of users
+-r = hatch rate (users spawned per second)
+Example command:
+locust -f my_locustfile.py -u 100 -r 10
+This starts 100 users, adding 10 per second until reaching 100.
+
+A Promise is a placeholder for a value that will arrive in the future. It has three states: pending, resolved, and rejected. You create it with new Promise((resolve, reject) => {...}) and handle results with .then()/.catch() or async/await. In TypeScript, we can define the type of the resolved value using generics, like Promise<number> or Promise<{ id: number, name: string }>.”
+function fetchUser(id) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (id === 1) resolve({ id: 1, name: "Alice" });
+      else reject("User not found");
+    }, 1000);
+  });
+}
+
+fetchUser(1)
+  .then(user => console.log(user.name))
+  .catch(error => console.error(error));
+function fetchUser(id: number): Promise<{ id: number; name: string }> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (id === 1) resolve({ id: 1, name: "Alice" });
+      else reject("User not found");
+    }, 1000);
+  });
+}
+
+async function showUser() {
+  const user = await fetchUser(1);
+  console.log(user.name); // TypeScript knows user has 'name'
+}
+Code can start a long-running task and move on without waiting. When the task finishes, it executes a callback, resolves a Promise, or triggers an event.
+await is used in asynchronous functions (functions marked with async)
+It pauses the execution of the function until the Promise resolves or rejects
+It allows you to write asynchronous code as if it were synchronous, making it easier to read and maintain.
+.then() and await both handle Promises. .then() uses callbacks and chaining, which can get messy for multiple async calls. await pauses the function execution until the Promise resolves, letting you write asynchronous code that looks synchronous, which is cleaner and easier to read.”
