@@ -1,0 +1,252 @@
+import { BasePage } from './basePage';
+import { Page } from '@playwright/test';
+
+export interface UserData {
+  name: string;
+  email: string;
+  title?: string;
+  password: string;
+  day?: number;
+  month?: number;
+  year?: number;
+  newsletter?: boolean;
+  offers?: boolean;
+  first_name: string;
+  last_name: string;
+  company: string;
+  address1: string;
+  address2: string;
+  country: string;
+  state: string;
+  city: string;
+  zipcode: string;
+  mobile: string;
+}
+
+export class SignupPage extends BasePage {
+  readonly PAGETITLE = "//a[normalize-space()='Signup / Login']";
+  readonly SIGNUP = "//a[normalize-space()='Signup / Login']";
+
+  readonly NAME = "//input[@data-qa='signup-name']";
+  readonly EMAIL = "//input[@data-qa='signup-email']";
+  readonly SIGNUPBUTTON = "//button[@data-qa='signup-button']";
+
+  readonly TITLE = "input[name='title']";
+  readonly PASSWORD = "#password";
+  readonly DAYS = "#days";
+  readonly MONTHS = "#months";
+  readonly YEARS = "#years";
+  readonly NEWSLETTER = "#newsletter";
+  readonly OFFERS = "#optin";
+  readonly FIRST_NAME = "#first_name";
+  readonly LAST_NAME = "#last_name";
+  readonly COMPANY = "#company";
+  readonly ADDRESS1 = "#address1";
+  readonly ADDRESS2 = "#address2";
+  readonly COUNTRY = "#country";
+  readonly STATE = "#state";
+  readonly CITY = "#city";
+  readonly ZIPCODE = "#zipcode";
+  readonly MOBILE = "#mobile_number";
+  readonly CREATE_ACCOUNT_BTN = "[data-qa='create-account']";
+  readonly ACCOUNT_CREATED_TEXT = "[data-qa='account-created']";
+  readonly CONTINUE_BTN = "[data-qa='continue-button']";
+
+  constructor(page: Page) {
+    super(page);
+  }
+
+  async goToSignupPage(url: string) {
+    await this.page.goto(url);
+    if (!(await this.isVisible(this.PAGETITLE))) throw new Error("Home page did not load");
+    await this.click(this.SIGNUP);
+  }
+
+  async fillInitialSignup(name: string, email: string) {
+    await this.fill(this.NAME, name);
+    await this.fill(this.EMAIL, email);
+    await this.click(this.SIGNUPBUTTON);
+  }
+
+  async selectTitle(title: string = "Mr") {
+    await this.selectRadio(this.TITLE, title);
+  }
+
+  async fillAccountInfo(
+    name: string,
+    password: string,
+    day: number = 1,
+    month: number = 1,
+    year: number = 2000,
+    newsletter: boolean = true,
+    offers: boolean = true
+  ) {
+    await this.fill("#name", name);
+    await this.fill(this.PASSWORD, password);
+    await this.selectDate(this.DAYS, this.MONTHS, this.YEARS, day, month, year);
+    await this.selectCheckbox(this.NEWSLETTER, newsletter);
+    await this.selectCheckbox(this.OFFERS, offers);
+  }
+
+  async fillAddressInfo(user: Pick<UserData, 'first_name'|'last_name'|'company'|'address1'|'address2'|'country'|'state'|'city'|'zipcode'|'mobile'>) {
+    await this.fill(this.FIRST_NAME, user.first_name);
+    await this.fill(this.LAST_NAME, user.last_name);
+    await this.fill(this.COMPANY, user.company);
+    await this.fill(this.ADDRESS1, user.address1);
+    await this.fill(this.ADDRESS2, user.address2);
+    await this.selectDropdown(this.COUNTRY, user.country);
+    await this.fill(this.STATE, user.state);
+    await this.fill(this.CITY, user.city);
+    await this.fill(this.ZIPCODE, user.zipcode);
+    await this.fill(this.MOBILE, user.mobile);
+  }
+
+  async submit() { await this.click(this.CREATE_ACCOUNT_BTN); }
+  async clickContinue() { await this.click(this.CONTINUE_BTN); }
+
+  async isAccountCreated(): Promise<string | null> {
+    if (await this.isVisible(this.ACCOUNT_CREATED_TEXT)) return (await this.getText(this.ACCOUNT_CREATED_TEXT)).trim();
+    return null;
+  }
+
+  async completeSignup(url: string, userData: UserData): Promise<string | null> {
+    await this.goToSignupPage(url);
+    await this.fillInitialSignup(userData.name, userData.email);
+    await this.selectTitle(userData.title ?? "Mr");
+    await this.fillAccountInfo(
+      userData.name, userData.password,
+      userData.day ?? 10, userData.month ?? 5, userData.year ?? 1995,
+      userData.newsletter ?? true, userData.offers ?? true
+    );
+    await this.fillAddressInfo({
+      first_name: userData.first_name, last_name: userData.last_name,
+      company: userData.company, address1: userData.address1, address2: userData.address2,
+      country: userData.country, state: userData.state, city: userData.city,
+      zipcode: userData.zipcode, mobile: userData.mobile
+    });
+    await this.submit();
+    const value = await this.isAccountCreated();
+    await this.clickContinue();
+    return value;
+  }
+}
+
+
+
+
+login page
+
+
+import { BasePage } from './basePage';
+import { Page } from '@playwright/test';
+
+export class LoginPage extends BasePage {
+  readonly LOGIN_LINK = "//a[normalize-space()='Signup / Login']";
+  readonly EMAIL = "//input[@data-qa='login-email']";
+  readonly PASSWORD = "//input[@data-qa='login-password']";
+  readonly LOGIN_BUTTON = "//button[@data-qa='login-button']";
+  readonly logoutLocator = "a[href='/logout']";
+  constructor(page: Page) {
+    super(page);
+  }
+
+  async goToLoginPage(url: string) {
+    await this.page.goto(url);
+    await this.click(this.LOGIN_LINK);
+  }
+
+  async login(email: string, password: string) {
+    await this.logoutIfLoggedIn();
+    await this.fill(this.EMAIL, email);
+    await this.fill(this.PASSWORD, password);
+    await this.click(this.LOGIN_BUTTON);
+  }
+}
+
+
+
+
+
+base page
+
+
+import { Page } from '@playwright/test';
+
+export class BasePage {
+  page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  async click(locator: string, timeout: number = 5000) {
+    try {
+      await this.page.locator(locator).click({ timeout });
+    } catch (error) {
+      throw new Error(`❌ Element not clickable: ${locator} - ${error}`);
+    }
+  }
+
+  async fill(locator: string, text: string, timeout: number = 5000) {
+    try {
+      await this.page.locator(locator).fill(text, { timeout });
+    } catch (error) {
+      throw new Error(`❌ Element not visible for typing: ${locator} - ${error}`);
+    }
+  }
+
+  async getText(locator: string, timeout: number = 5000): Promise<string> {
+    try {
+      return await this.page.locator(locator).innerText({ timeout });
+    } catch (error) {
+      throw new Error(`❌ Element not found for getting text: ${locator} - ${error}`);
+    }
+  }
+
+  async isVisible(locator: string, timeout: number = 5000): Promise<boolean> {
+    try {
+      return await this.page.locator(locator).isVisible({ timeout });
+    } catch {
+      return false;
+    }
+  }
+
+  async selectRadio(locator: string, value: string) {
+    await this.click(`${locator}[value='${value}']`);
+  }
+
+  async selectCheckbox(locator: string, check: boolean = true) {
+    const box = this.page.locator(locator);
+    const isChecked = await box.isChecked();
+    if (check && !isChecked) await box.check();
+    else if (!check && isChecked) await box.uncheck();
+  }
+
+  async selectDropdown(locator: string, value: string) {
+    try {
+      await this.page.locator(locator).selectOption(value);
+    } catch (error) {
+      throw new Error(`❌ Dropdown not found or option invalid: ${locator} -> ${value} - ${error}`);
+    }
+  }
+
+  async selectDate(dayLocator: string, monthLocator: string, yearLocator: string, day: number, month: number, year: number) {
+    await this.selectDropdown(dayLocator, day.toString());
+    await this.selectDropdown(monthLocator, month.toString());
+    await this.selectDropdown(yearLocator, year.toString());
+  }
+
+  async logoutIfLoggedIn() {
+  const logoutLocator = 'a[href="/logout"]';
+  if (await this.isVisible(logoutLocator)) {
+    await this.click(logoutLocator);
+  }
+}
+}
+
+
+
+
+
+
+
