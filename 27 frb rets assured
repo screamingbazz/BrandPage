@@ -1,0 +1,576 @@
+.get(url) → send GET request
+
+.post(url) → send POST request
+
+.put(url) → send PUT request
+
+.delete(url) → send DELETE request
+
+.given() – Prepare the Request
+
+given() → set headers, params, body, cookies
+when() → choose HTTP method (get, post, put)
+then() → validate response
+.given() is where you set up all details of the request.
+Everything here is optional, depending on what the server expects.
+RestAssured
+    .given()
+        .header("Authorization", "Bearer mytoken123")
+        .header("Cache-Control", "no-cache")
+        .header("If-None-Match", "\"abcdef123456\"")
+        .header("If-Modified-Since", "Wed, 22 Feb 2023 10:00:00 GMT")
+        .header("Accept", "application/json")
+        .contentType("application/json")
+        .param("id", "123")
+        .body("{\"username\":\"user1\",\"password\":\"pass\"}")
+        .cookie("sessionId", "abcd1234")
+        .log().all()
+    .when()
+        .post("https://api.example.com/login")
+    .then()
+        .statusCode(200);
+
+
+Working with body
+import io.restassured.RestAssured;
+import java.util.HashMap;
+import java.util.Map;
+
+public class RestAssuredExample {
+    public static void main(String[] args) {
+
+        // Step 1: Create a map with key-value pairs
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("username", "user1");
+        requestBody.put("password", "pass");
+
+        // Step 2: Send POST request
+        RestAssured
+            .given()
+                .contentType("application/json")  // Tell server it's JSON
+                .body(requestBody)                // REST-assured converts map → JSON
+                .log().all()
+            .when()
+                .post("https://api.example.com/login")
+            .then()
+                .statusCode(200);
+    }
+}
+
+Using JSON Libraries (Optional)
+If you prefer, you can create JSON using libraries like org.json or Gson:
+import org.json.JSONObject;
+JSONObject json = new JSONObject();
+json.put("username", "user1");
+json.put("password", "pass");
+RestAssured
+    .given()
+        .contentType("application/json")
+        .body(json.toString()) // Convert JSONObject → string
+        .log().all()
+    .when()
+        .post("https://api.example.com/login")
+    .then()
+        .statusCode(200);
+Working WIth Autohorization TOken
+How to handle basic authorization
+Using REST-assured
+Option A – Using .auth().preemptive().basic()
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+
+public class BasicAuthExample {
+    public static void main(String[] args) {
+        Response response = RestAssured
+                .given()
+                .auth()
+                .preemptive()  // sends credentials without waiting for 401
+                .basic("user1", "mypassword") // username, password
+                .get("https://api.example.com/protected-data");
+
+        System.out.println("Status code: " + response.getStatusCode());
+        System.out.println("Response: " + response.asString());
+    }
+}
+.preemptive() → sends credentials immediately. Without it, REST-assured waits for the server to respond with 401 Unauthorized before sending credentials.
+
+.basic(username, password) → automatically encodes in Base64 and adds the header.
+
+LOGIN aND GETTING TOKEN
+Step 1: Login to Get Token
+
+Most APIs provide a login endpoint that returns a JWT token or some session token.
+
+Example login request:
+
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+
+public class ApiLoginExample {
+    public static void main(String[] args) {
+
+        // 1️⃣ Login payload
+        String loginPayload = "{ \"username\": \"user1\", \"password\": \"mypassword\" }";
+
+        // 2️⃣ POST request to login endpoint
+        Response loginResponse = RestAssured
+                .given()
+                .contentType("application/json")
+                .body(loginPayload)
+                .post("https://api.example.com/login"); // replace with your login URL
+
+        // 3️⃣ Extract token from JSON response
+        String token = loginResponse.jsonPath().getString("token");
+        System.out.println("Token: " + token);
+    }
+}
+
+✅ Key points:
+
+.contentType("application/json") → tell server we are sending JSON.
+
+.body(loginPayload) → login credentials.
+
+.jsonPath().getString("token") → extract token from the JSON response.
+2️⃣ Step 2: Use Token in Other Requests
+Once you have the token, you can attach it to any request via Authorization header:
+Response response = RestAssured
+        .given()
+        .header("Authorization", "Bearer " + token) // attach token
+        .get("https://api.example.com/protected-data"); // protected endpoint
+
+System.out.println("Status code: " + response.getStatusCode());
+System.out.println("Response: " + response.asString());
+Step 1: Print the Full Response
+Before you try to extract anything, see what the server actually sent:
+Response response = RestAssured
+    .given()
+        .contentType("application/json")
+    .when()
+        .get("https://api.example.com/user/101");
+
+// Print full response as a string
+System.out.println(response.asString());
+
+response.asString() prints everything in the body, exactly as the server sent it.
+1️⃣ Understanding the Response
+When you send a request with REST-assured, you get a Response object:
+Response response = RestAssured
+    .given()
+        .contentType("application/json")
+    .when()
+        .get("https://api.example.com/user/1");
+response contains everything the server sent:
+Headers (Content-Type, Set-Cookie, etc.)
+Status code (200, 404, etc.)
+Body (JSON, XML, plain text)
+🔹 2️⃣ How to Check the Response Type
+Before deciding how to extract data, check the Content-Type header:
+String contentType = response.getHeader("Content-Type");
+System.out.println("Content-Type: " + contentType);
+If Content-Type is application/json → body is JSON → use JSONPath
+If Content-Type is text/plain → treat body as plain text
+If Content-Type is application/xml → use XMLPath
+🔹 3️⃣ Getting the Status Code
+int statusCode = response.getStatusCode();
+System.out.println("Status code: " + statusCode);
+Status code is always an integer
+200 → OK, 401 → Unauthorized, 404 → Not Found, etc.
+🔹 4️⃣ Getting the Body as a String
+String responseBody = response.asString();
+System.out.println("Response body: " + responseBody);
+This prints the raw response body exactly as the server sent it
+Useful for debugging or seeing what you got
+🔹 5️⃣ Using JSONPath
+JSONPath is like XPath for JSON.
+It lets you extract specific values from a JSON response
+Works only if the response is JSON
+Example server response:
+
+{
+  "userId": 101,
+  "username": "user1",
+  "token": "abcd1234xyz",
+  "roles": ["admin","user"]
+}
+
+To extract values:
+
+String username = response.jsonPath().getString("username");
+String token = response.jsonPath().getString("token");
+int userId = response.jsonPath().getInt("userId");
+List<String> roles = response.jsonPath().getList("roles");
+jsonPath() → converts response body into a JSON object you can query
+getString() → returns String
+getInt() → returns int
+getList() → returns List<String>
+🔹 6️⃣ Step by Step Flow
+Get response → Response response = ...
+Check content type → response.getHeader("Content-Type")
+Get status code → response.getStatusCode()
+Get full body as string → response.asString()
+If JSON → use JSONPath
+Validate Response Body Values
+Use body() with JSONPath and matchers:
+
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
+
+given()
+    .contentType("application/json")
+.when()
+    .get("https://api.example.com/user/101")
+.then()
+    .statusCode(200)
+    .body("username", equalTo("user1"))          // Validate string
+    .body("userId", equalTo(101))                // Validate int
+    .body("isActive", equalTo(true))             // Validate boolean
+    .body("roles", hasItems("admin","user"));    // Validate list contains values
+equalTo() → exact match
+hasItems() → checks if array contains values
+
+🔹 4️⃣ Validate Headers
+given()
+    .when()
+        .get("https://api.example.com/user/101")
+    .then()
+        .header("Content-Type", "application/json")
+        .header("Cache-Control", "no-cache");
+1️⃣ What is ResponseSpecification?
+A ResponseSpecification is a predefined set of expectations or checks for API responses.
+Instead of writing the same assertions repeatedly for every request, you can define it once and reuse it across multiple API calls.
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.specification.ResponseSpecification;
+import static org.hamcrest.Matchers.*;
+public class ResponseSpecExample {
+  public static void main(String[] args) {
+
+        // 1️⃣ Create a ResponseSpecification
+        ResponseSpecification responseSpec = new ResponseSpecBuilder()
+                .expectStatusCode(200)
+                .expectContentType("application/json")
+                .expectBody("size()", greaterThan(0))
+                .build();
+
+        // 2️⃣ Use it in requests
+        RestAssured
+                .given()
+                .get("https://api.example.com/users")
+                .then()
+                .spec(responseSpec); // reuse spec
+
+        RestAssured
+                .given()
+                .get("https://api.example.com/products")
+                .then()
+                .spec(responseSpec); // same spec can be reused
+    }
+}
+Example: Full RequestSpecification
+import io.restassured.RestAssured;
+import io.restassured.specification.RequestSpecification;
+
+RequestSpecification reqSpec = RestAssured.given()
+        .baseUri("https://api.example.com")
+        .basePath("/v1/users")
+        .port(443)
+        .header("Authorization", "Bearer " + token)
+        .contentType("application/json")
+        .accept("application/json")
+        .queryParam("page", 1)
+        .pathParam("userId", 123)
+        .cookie("sessionId", "abc123")
+        .body("{\"name\":\"Alice\"}")
+        .log().all();
+
+Then you can reuse it:
+
+Response response = reqSpec.get("/{userId}");
+=================================================
+Once you define a RequestSpecification, you can attach it to any request method:
+
+// Define reusable request specification
+RequestSpecification reqSpec = RestAssured.given()
+        .baseUri("https://api.example.com")
+        .header("Authorization", "Bearer " + token)
+        .contentType("application/json");
+
+// GET request
+Response getResp = reqSpec.get("/users");
+
+// POST request
+Response postResp = reqSpec
+        .body("{\"name\":\"Alice\"}")
+        .post("/users");
+
+// PUT request
+Response putResp = reqSpec
+        .body("{\"name\":\"Alice Updated\"}")
+        .put("/users/123");
+
+// PATCH request
+Response patchResp = reqSpec
+        .body("{\"name\":\"Alice Patched\"}")
+        .patch("/users/123");
+
+// DELETE request
+Response deleteResp = reqSpec.delete("/users/123");
+======================================================
+import static org.hamcrest.Matchers.*;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.specification.ResponseSpecification;
+
+ResponseSpecification responseSpec = new ResponseSpecBuilder()
+        .expectStatusCode(200)
+        .expectContentType("application/json")
+        .expectBody("id", notNullValue())
+        .expectBody("name", equalTo("Alice"))
+        .expectHeader("Server", containsString("nginx"))
+        .expectTime(lessThan(2000L))
+        .build();
+
+Then use it in any request:
+
+RestAssured.given()
+    .get("/users/123")
+    .then()
+    .spec(responseSpec);
+
+ValidatableResponse
+ValidatableResponse is the object returned by .then().
+It provides all the “expect/validation” methods.
+You can also store it in a variable if you want:
+ValidatableResponse validResp = given()
+    .get("https://api.example.com/users/123")
+.then();
+validResp
+    .statusCode(200)
+    .body("name", equalTo("Alice"));
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+
+import java.io.File;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
+
+public class FullRequestExample {
+    public static void main(String[] args) {
+   // Base URI
+        RestAssured.baseURI = "https://api.example.com";
+   // File to upload
+        File fileToUpload = new File("C:/Users/user/Documents/testfile.txt")
+        Response response = given()
+                // -----------------------
+                // Headers
+                // -----------------------
+                .header("Authorization", "Bearer mytoken123") // Bearer token
+                .header("Cache-Control", "no-cache")          // Caching header
+                .header("If-None-Match", "etagvalue123")     // ETag
+                .header("If-Modified-Since", "Wed, 21 Oct 2023 07:28:00 GMT") // Last-Modified
+                .contentType(ContentType.MULTIPART)          // For file upload
+                // -----------------------
+                // Cookies
+                // -----------------------
+                .cookie("sessionId", "abcd1234")
+                // -----------------------
+                // Query parameters
+                // Example: ?userId=101&active=true
+                // -----------------------
+                .queryParam("userId", 101)
+                .queryParam("active", true)
+                // -----------------------
+                // Path parameters
+                // Example: /users/{userId}/upload
+                // -----------------------
+                .pathParam("userId", 101)
+                // -----------------------
+                // Form parameters + file
+                // -----------------------
+                .multiPart("file", fileToUpload)             // File upload
+                .formParam("description", "Test file upload")
+                .formParam("type", "text")
+                // -----------------------
+                // Logging
+                // -----------------------
+                .log().all()
+        .when()
+                // Path param used in URL
+                .post("/users/{userId}/upload")
+        .then()
+                // -----------------------
+                // Validations
+                // -----------------------
+                .statusCode(200)
+                .body("message", equalTo("File uploaded successfully"))
+                .extract().response();
+
+        // Print response
+        System.out.println("Response: " + response.asString());
+    }
+}
+
+1️⃣ .formParam()
+Purpose: Send form data in a request
+Content-Type: application/x-www-form-urlencoded (default for forms)
+Used for: Key-value pairs like a login for
+Example:
+given()
+    .formParam("username", "user1")
+    .formParam("password", "pass123")
+.when()
+    .post("/login");
+Sent as URL-encoded body:
+username=user1&password=pass123
+Cannot send a file with .formParam() alone
+
+✅ Use .formParam() when API expects plain form data, like HTML forms.
+
+🔹 2️⃣ .multiPart()
+Purpose: Send files or mixed data (file + fields)
+Content-Type: multipart/form-data
+Used for: Uploading files, or sending a file + some metadata
+Example (file upload):
+File file = new File("C:/test.txt");
+
+given()
+    .multiPart("file", file)           // File
+    .formParam("description", "test")  // Extra form field
+.when()
+    .post("/upload");
+
+Get the Body as a String
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+
+public class GetBodyExample {
+    public static void main(String[] args) {
+
+        Response response = RestAssured
+                .given()
+                .get("https://api.example.com/users/123"); // replace with your API
+
+        // Get response body as String
+        String responseBody = response.getBody().asString();
+        System.out.println(responseBody);
+    }
+}
+
+
+
+
+Using Response Object
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.http.Headers;
+
+public class PrintHeadersExample {
+    public static void main(String[] args) {
+
+        Response response = RestAssured
+                .given()
+                .get("https://api.example.com/users/123"); // replace with your API endpoint
+
+        // Get all headers
+        Headers headers = response.getHeaders();
+
+        // Print each header
+        headers.forEach(header -> 
+            System.out.println(header.getName() + " : " + header.getValue())
+        );
+    }
+}
+
+✅ Key points:
+
+response.getHeaders() returns a Headers object
+
+You can iterate and print name : value for each header
+
+2️⃣ Alternative: Logging All Headers Directly
+
+REST-assured also provides a logging shortcut:
+
+RestAssured
+    .given()
+    .get("https://api.example.com/users/123")
+.then()
+    .log().headers(); // prints all response headers
+
+{
+  "id": 123,
+  "name": "Alice",
+  "address": {
+    "street": "123 Main St",
+    "city": "New York",
+    "zipcode": "10001"
+  },
+  "contacts": [
+    {"type": "email", "value": "alice@example.com"},
+    {"type": "phone", "value": "123-456-7890"}
+  ]
+}
+
+1️⃣ Understand a Nested JSON Response
+Suppose your API returns something like this:
+{
+  "id": 123,
+  "name": "Alice",
+  "address": {
+    "street": "123 Main St",
+    "city": "New York",
+    "zipcode": "10001"
+  },
+  "contacts": [
+    {"type": "email", "value": "alice@example.com"},
+    {"type": "phone", "value": "123-456-7890"}
+  ]
+}
+address → is a nested object
+contacts → is an array of objects
+You need to access nested fields correctly.
+2️⃣ Access Nested Object Fields
+Use dot notation for nested objects:
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
+given()
+    .get("https://api.example.com/users/123")
+.then()
+    .body("address.street", equalTo("123 Main St"))
+    .body("address.city", equalTo("New York"))
+    .body("address.zipcode", equalTo("10001"));
+✅ Explanation:
+address.street → goes inside the address object and gets street
+Same for city and zipcode
+3️⃣ Access Array of Objects
+For the contacts array:
+given()
+    .get("https://api.example.com/users/123")
+.then()
+    .body("contacts[0].type", equalTo("email"))
+    .body("contacts[0].value", equalTo("alice@example.com"))
+    .body("contacts[1].type", equalTo("phone"))
+    .body("contacts[1].value", equalTo("123-456-7890"));
+ Explanation:
+contacts[0] → first element in the array
+.type and .value → access fields inside that object
+You can also use Hamcrest matchers like hasItem():
+.body("contacts.value", hasItem("alice@example.com"));
+This checks if any object in the contacts array has value = "alice@example.com
+"`
+4️⃣ Extract Nested Values for Later Use
+Sometimes you want to store a nested value in a variable:
+import io.restassured.response.Response;
+
+Response response = given()
+    .get("https://api.example.com/users/123");
+
+String city = response.jsonPath().getString("address.city");
+String email = response.jsonPath().getString("contacts[0].value");
+
+System.out.println("City: " + city);
+System.out.println("Email: " + email);
+
+.jsonPath().getString("path") → extracts values from nested JSON
+
