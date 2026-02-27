@@ -1,0 +1,219 @@
+Request Python
+. Sending a basic GET request
+Here’s a simple example:
+import requests
+# URL we want to get data from
+url = "https://jsonplaceholder.typicode.com/todos/1"
+# Send GET request
+response = requests.get(url)
+# Print response content
+print(response.text)
+Explanation:
+import requests → imports the library.
+url → the address of the server we are requesting data from.
+requests.get(url) → sends a GET request to that URL.
+response → stores the server’s response.
+response.text → contains the body of the response (usually HTML, JSON, or text).
+Getting JSON data
+If the server returns JSON (which is common in APIs), you can convert it directly to a Python dictionary:
+import requests
+url = "https://jsonplaceholder.typicode.com/todos/1"
+response = requests.get(url)
+# Convert response to Python dict
+data = response.json()
+print(data)
+print("Title:", data['title'])
+Output example:
+{'userId': 1, 'id': 1, 'title': 'delectus aut autem', 'completed': False}
+Title: delectus aut autem
+import requests
+import json  # optional, for pretty printing
+# -----------------------
+# Base URL and path param
+# -----------------------
+base_url = "https://api.example.com"
+path = "/users/{userId}/upload"
+user_id = 101
+url = base_url + path.format(userId=user_id)
+
+# -----------------------
+# Headers
+# -----------------------
+headers = {
+    "Authorization": "Bearer mytoken123",
+    "Cache-Control": "no-cache",
+    "If-None-Match": "etagvalue123",
+    "If-Modified-Since": "Wed, 21 Oct 2023 07:28:00 GMT"
+}
+# -----------------------
+# Cookies
+# -----------------------
+cookies = {"sessionId": "abcd1234"}
+# -----------------------
+# Query parameters
+# -----------------------
+params = {"userId": 101, "active": True}
+# -----------------------
+# Form data
+# -----------------------
+data = {"description": "Test file upload", "type": "text"}
+# -----------------------
+# File to upload
+# -----------------------
+files = {"file": open("C:/Users/user/Documents/testfile.txt", "rb")}
+
+# -----------------------
+# Send POST request
+# -----------------------
+response = requests.post(
+    url,
+    headers=headers,
+    cookies=cookies,
+    params=params,
+    data=data,
+    files=files
+)
+
+# Close the file
+files["file"].close()
+
+# -----------------------
+# Handle JSON response
+# -----------------------
+try:
+    json_data = response.json()  # Parse JSON
+    print("JSON Response (pretty):")
+    print(json.dumps(json_data, indent=4))  # Pretty print
+except ValueError:
+    print("Response is not JSON")
+    print(response.text)
+
+# -----------------------
+# Access individual fields
+# -----------------------
+if response.headers.get("Content-Type") == "application/json":
+    # Example: if response has "status" and "message"
+    status = json_data.get("status")
+    message = json_data.get("message")
+    print("Status:", status)
+    print("Message:", message)
+
+Using requests with Basic Auth
+import requests
+from requests.auth import HTTPBasicAuth
+
+# API URL
+url = "https://api.example.com/data"
+
+# Your credentials
+username = "myusername"
+password = "mypassword"
+
+# Send GET request with Basic Auth
+response = requests.get(url, auth=HTTPBasicAuth(username, password))
+
+# Check response
+print("Status Code:", response.status_code)
+print("Response Body:", response.text)
+Sending a Bearer Token in Python
+import requests
+
+# API URL
+url = "https://api.example.com/data"
+
+# Your token
+token = "mytoken123"
+
+# Headers with Authorization
+headers = {
+    "Authorization": f"Bearer {token}"
+}
+
+# Send GET request
+response = requests.get(url, headers=headers)
+# Print response
+print("Status Code:", response.status_code)
+print("Response Body:", response.text)
+POST Request – Create data
+import requests
+url = "https://api.example.com/users"
+data = {
+    "name": "John Doe",
+    "email": "john@example.com"
+}
+# Send POST request
+response = requests.post(url, json=data)  # Use json= for JSON payload
+print(response.status_code)
+print(response.json())
+4. DELETE Request – Remove a resource
+url = "https://api.example.com/users/101"
+response = requests.delete(url)
+print(response.status_code)
+print(response.text)
+Request Headers (response.request.headers)
+These are the headers your client sends to the server. They control how the request is handled.
+Example in Python
+import requests
+url = "https://api.example.com/data"
+headers = {
+    "Authorization": "Bearer mytoken123",
+    "User-Agent": "MyApp/1.0",
+    "Accept": "application/json"
+}
+response = requests.get(url, headers=headers)
+# Print headers sent to the server
+print("Request Headers:")
+for key, value in response.request.headers.items():
+    print(f"{key}: {value}")
+Example Output:
+Request Headers:
+User-Agent: MyApp/1.0
+Authorization: Bearer mytoken123
+Accept: application/json
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+
+Authorization, User-Agent, Accept → explicit headers you sent
+
+Accept-Encoding, Connection → added automatically by requests
+
+2. Response Headers (response.headers)
+
+These are the headers the server sends back. They tell you about the response content and other metadata.
+
+Example in Python
+# Print headers returned by the server
+print("\nResponse Headers:")
+for key, value in response.headers.items():
+    print(f"{key}: {value}")
+
+Simple GET Request and Extract JSON Data
+import requests
+# URL of the API
+url = "https://jsonplaceholder.typicode.com/todos/1"
+# Send GET request
+response = requests.get(url)
+# Parse JSON body
+data = response.json()  # converts JSON into Python dict
+# Print the whole body nicely
+import json
+print("Response Body:")
+print(json.dumps(data, indent=4))
+. Example: Extract Nested Data
+Suppose API returns:
+{
+    "status": "success",
+    "user": {
+        "id": 101,
+        "name": "John Doe",
+        "email": "john@example.com"
+    }
+}
+You can extract nested fields:
+status = data.get("status")
+user_id = data["user"]["id"]
+user_name = data["user"]["name"]
+
+print("Status:", status)
+print("User ID:", user_id)
+print("User Name:", user_name)
