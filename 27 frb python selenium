@@ -1,0 +1,314 @@
+1️⃣ driver.get(url) — Open a Web Page
+from selenium import webdriver
+driver = webdriver.Chrome()
+driver.get("https://example.com")  # Opens the URL in the browser
+Equivalent to typing a URL in the browser.
+Doesn’t return anything.
+2️⃣ Get Current URL
+current_url = driver.current_url
+print(current_url)
+Returns the URL of the page currently loaded in the browser.
+3️⃣ Get Page Title
+title = driver.title
+print(title)
+Returns the <title> of the page.
+4️⃣ Get Page Source
+source = driver.page_source
+print(source[:500])  # prints first 500 chars
+Returns the full HTML of the current page.
+5️⃣ Get Element Text
+from selenium.webdriver.common.by import By
+element = driver.find_element(By.ID, "example")
+text = element.text
+print(text)
+Returns the visible text inside an element.
+6️⃣ Get Element Attribute
+href = element.get_attribute("href")
+print(href)
+Useful for links, inputs, images, etc.
+Common attributes: href, src, value, class, id.
+7️⃣ Get Element CSS Value
+color = element.value_of_css_property("color")
+print(color)
+Retrieves computed CSS properties like color, font-size, display.
+8️⃣ Get Element Tag Name
+tag = element.tag_name
+print(tag)  # e.g., 'div', 'a', 'button'
+Useful for verifying element types dynamically.
+9️⃣ Get Element Size and Location
+size = element.size          # {'height': 20, 'width': 100}
+location = element.location  # {'x': 50, 'y': 200}
+Helpful for UI testing or visual validation.
+10️⃣ Get Element Selected or Enabled State
+is_selected = element.is_selected()  # for checkboxes/radios
+is_enabled = element.is_enabled()    # for buttons, inputs
+is_displayed = element.is_displayed() # visible on screen
+
+How to handle broken links
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import requests
+
+# Start WebDriver
+driver = webdriver.Chrome()
+driver.get("https://example.com")
+
+# Find all anchor tags
+links = driver.find_elements(By.TAG_NAME, "a")
+broken_links = []
+
+for link in links:
+    url = link.get_attribute("href")
+    
+    # Skip empty or invalid URLs
+    if not url or not url.startswith("http"):
+        continue
+    
+    try:
+        # Use HEAD request to check URL quickly
+        response = requests.head(url, allow_redirects=True, timeout=5)
+        if response.status_code >= 400:
+            broken_links.append((url, response.status_code))
+    except requests.exceptions.RequestException as e:
+        broken_links.append((url, str(e)))
+
+driver.quit()
+
+# Locate checkbox
+checkbox = driver.find_element(By.ID, "subscribe")  # or By.NAME, By.XPATH, etc.
+if checkbox.is_selected():
+    print("Checkbox is already selected")
+else:
+    print("Checkbox is not selected")
+
+By Index
+driver.switch_to.frame(0)  # first iframe on the page
+b) By Name or ID
+driver.switch_to.frame("iframe_name_or_id")
+c) By WebElement
+iframe = driver.find_element(By.XPATH, "//iframe[@id='iframe1']")
+driver.switch_to.frame(iframe)
+2️⃣ Interact With Elements Inside the iframe
+
+Once switched, you can locate and interact normally:
+
+driver.switch_to.frame("iframe_name_or_id")
+button = driver.find_element(By.ID, "submit")
+button.click()
+3️⃣ Switch Back to Default Content
+
+After finishing actions inside the iframe, switch back to the main page:
+
+driver.switch_to.default_content()
+
+dropdown_element = driver.find_element(By.ID, "country")
+select = Select(dropdown_element)
+
+select.select_by_visible_text("India")  # select option
+c) Select by Index
+select.select_by_index(2)  # selects the 3rd option (index starts at 0)
+d) Select by Value
+select.select_by_value("IN")  # select option with value="IN"
+e) Get All Options
+options = select.options
+for option in options:
+    print(option.text)
+f) Deselect Options (For multi-select)
+select.deselect_all()            # deselects all (multi-select only)
+select.deselect_by_index(1)      
+select.deselect_by_value("US")   
+select.deselect_by_visible_text("Canada")
+
+# Get current window
+main_window = driver.current_window_handle
+
+# Get all windows
+all_windows = driver.window_handles
+
+# Switch to the new window (not equal to main)
+for window in all_windows:
+    if window != main_window:
+        driver.switch_to.window(window)
+        break
+
+# Now you can interact with the new window
+print(driver.title)
+
+Perform Actions in New Window
+driver.find_element(By.ID, "submit").click()
+5️⃣ Switch Back to Main Window
+driver.switch_to.window(main_window)
+
+1️⃣ Implicit Wait
+
+Tells Selenium to wait a certain time when trying to find elements.
+
+Applied globally to all element searches.
+
+Syntax
+from selenium import webdriver
+
+driver = webdriver.Chrome()
+driver.implicitly_wait(10)  # wait up to 10 seconds for elements to appear
+driver.get("https://example.com")
+
+element = driver.find_element(By.ID, "myElement")  # waits if needed
+
+2️⃣ Explicit Wait
+
+Waits until a specific condition is true.
+
+More precise than implicit wait.
+
+Syntax
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
+
+driver = webdriver.Chrome()
+driver.get("https://example.com")
+
+wait = WebDriverWait(driver, 10)  # maximum 10 seconds
+
+element = wait.until(
+    EC.presence_of_element_located((By.ID, "myElement"))
+)
+
+Fluent Wait (Advanced)
+
+Similar to explicit wait but allows polling interval and ignoring exceptions.
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
+
+wait = WebDriverWait(driver, 10, poll_frequency=1, 
+                     ignored_exceptions=[NoSuchElementException])
+
+element = wait.until(EC.presence_of_element_located((By.ID, "myElement")))
+
+
+from selenium import webdriver
+
+driver = webdriver.Chrome()
+driver.get("https://example.com")
+
+# Take screenshot
+driver.save_screenshot("screenshot.png")  # saves in the current folder
+# or
+driver.get_screenshot_as_file("screenshot2.png")
+
+Click an Element via JS
+
+Sometimes Selenium click fails due to overlays:
+
+element = driver.find_element(By.ID, "submitButton")
+driver.execute_script("arguments[0].click();", element)
+
+element = driver.find_element(By.ID, "submitBtn")
+
+# Remove the 'disabled' attribute
+driver.execute_script("arguments[0].removeAttribute('disabled')", element)
+
+# Now click
+element.click()
+
+Initialize ActionChains
+driver = webdriver.Chrome()
+driver.get("https://example.com")
+
+actions = ActionChains(driver)
+3️⃣ Mouse Actions
+a) Hover over element (Mouse Over)
+element = driver.find_element(By.ID, "menu")
+actions.move_to_element(element).perform()
+
+.perform() executes the action.
+
+Useful for menus that appear on hover.
+
+b) Right-Click (Context Click)
+actions.context_click(element).perform()
+
+Opens context menu on the element.
+
+c) Double Click
+actions.double_click(element).perform()
+
+Useful for selecting text or triggering JS events.
+
+d) Drag and Drop
+source = driver.find_element(By.ID, "drag")
+target = driver.find_element(By.ID, "drop")
+
+actions.drag_and_drop(source, target).perform()
+
+Also works for complex drag using offset:
+
+actions.click_and_hold(source).move_by_offset(100, 50).release().perform()
+
+Keyboard Actions
+a) Send Keys to Element
+element = driver.find_element(By.ID, "inputBox")
+actions.send_keys_to_element(element, "Hello World").perform()
+
+Can combine with special keys:
+
+actions.send_keys_to_element(element, Keys.ENTER).perform()
+b) Press Keys Globally (Not to element)
+actions.key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).perform()
+
+Example: Ctrl+A to select all text in an input field.
+
+c) Combined Keyboard + Mouse
+actions.move_to_element(element).click().send_keys("Text").perform()
+
+# Scroll down 1000 pixels
+driver.execute_script("window.scrollBy(0, 1000);")
+Scroll to a Specific Element
+
+If you want to bring an element into view:
+
+from selenium.webdriver.common.by import By
+
+element = driver.find_element(By.ID, "myElement")
+driver.execute_script("arguments[0].scrollIntoView();", element)
+
+body = driver.find_element(By.TAG_NAME, "body")
+
+# Scroll down
+body.send_keys(Keys.PAGE_DOWN)
+
+# Scroll up
+body.send_keys(Keys.PAGE_UP)
+
+# Scroll to top
+body.send_keys(Keys.HOME)
+
+# Scroll to bottom
+body.send_keys(Keys.END)
+When Upload Requires OS File Dialog
+If the site uses a custom button that opens an OS file dialog (e.g., <button>Upload</button>), Selenium cannot interact with OS dialogs directly. You need external libraries:
+Option A: PyAutoGUI
+import pyautogui
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+driver = webdriver.Chrome()
+driver.get("https://example.com/upload")
+
+# Click the button that opens file dialog
+driver.find_element(By.ID, "uploadBtn").click()
+time.sleep(2)  # wait for dialog to open
+
+# Type file path and press Enter
+pyautogui.typewrite(r"C:\path\to\file.txt")
+pyautogui.press("enter")
+
+options = Options()
+options.headless = True  # Run in headless mode
+options.add_argument("--window-size=1920,1080")  # Optional: set window size
+
+driver = webdriver.Chrome(options=options)
+driver.get("https://example.com")
