@@ -1,0 +1,77 @@
+Using Both Together in Postman
+
+URL (with path parameters):
+
+https://api.example.com/users/:userId/posts/:postId
+
+Params tab:
+
+Key	Value
+userId	101
+postId	2001
+sort	desc
+limit	5
+
+Final URL sent by Postman:
+
+https://api.example.com/users/101/posts/2001?sort=desc&limit=5
+
+✅ Postman automatically replaces path params and appends query params.
+
+What is Shadow DOM?
+
+Shadow DOM is part of Web Components
+
+It allows a self-contained DOM tree inside an element
+
+Normal Selenium locators cannot see inside shadow DOM
+
+Selenium 4 supports nested shadow DOM by chaining getShadowRoot()
+
+🔹 3️⃣ Nested Shadow DOM
+
+Some elements have shadow inside shadow:
+
+<custom-element id="host1">
+  #shadow-root
+      <custom-inner id="inner">
+          #shadow-root
+              <input id="nestedInput">
+      </custom-inner>
+</custom-element>
+
+You can handle it like this:
+
+WebElement host1 = driver.findElement(By.cssSelector("custom-element#host1"));
+WebElement shadowRoot1 = host1.getShadowRoot();
+
+WebElement innerHost = shadowRoot1.findElement(By.cssSelector("custom-inner#inner"));
+WebElement shadowRoot2 = innerHost.getShadowRoot();
+
+WebElement nestedInput = shadowRoot2.findElement(By.cssSelector("input#nestedInput"));
+nestedInput.sendKeys("Hello");
+
+Chain getShadowRoot() for each nested shadow host
+
+🔹 4️⃣ Tips for Beginners
+
+Always locate the shadow host first (<custom-element> or similar)
+
+Then call .getShadowRoot()
+
+Use CSS selectors inside shadow root
+
+For nested shadow DOM, repeat the process
+
+Method 4: Get Coordinates Programmatically in Java (Optional)
+
+If you have a WebElement in Selenium:
+
+WebElement element = driver.findElement(By.id("submit"));
+
+// Get element location in viewport
+Point location = element.getLocation();
+int x = location.getX();
+int y = location.getY();
+System.out.println("Element location: " + x + ", " + y);
+
