@@ -1,0 +1,238 @@
+In JavaScript:
+The call stack keeps track of which function is currently running.
+When a function starts, it’s pushed onto the stack.
+When the function finishes, it’s popped off the stack.
+function a() { console.log("a"); }
+function b() { console.log("b"); a(); }
+b();
+b() is called → goes on top of the stack.
+Inside b(), a() is called → goes on top of b().
+a() finishes → removed from stack.
+b() finishes → removed from stack.
+Call Stack (top → bottom)
+Step 1: b()
+Step 2: a() on top of b()
+Step 3: a() finished → b() remains
+Step 4: b() finished → stack empty
+The call stack only tracks functions currently running, not asynchronous tasks like setTimeout or fetch
+async function asyncFunc() {
+  console.log("Start async");
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log("End async");
+}
+console.log("Before asyncFunc");
+asyncFunc();
+console.log("After asyncFunc");
+console.log("Before asyncFunc") → stack → prints "Before asyncFunc" → removed.
+asyncFunc() → async function starts, pushed to stack.
+"Start async" is printed immediately → stack continues.
+await new Promise(...) → pauses asyncFunc here.
+JS does not block the main thread.
+The rest of asyncFunc (after await) is scheduled as a microtask.
+asyncFunc() now returns a Promise immediately → stack clears.
+console.log("After asyncFunc") → stack → prints "After asyncFunc" → removed.
+After 1 second → Promise resolves → microtask queue runs "End async" → pushed to stack → prints "End async" → popped off.
+Before asyncFunc
+Start async
+After asyncFunc
+End async
+function first() {
+  console.log("First");
+}
+
+function second() {
+  console.log("Second");
+  first();
+}
+
+console.log("Start");
+second();
+console.log("End");
+Step-by-step execution with the call stack
+Think of the call stack as a stack of plates: the function on top is currently running, and nothing else can run until it finishes.
+Execution:
+console.log("Start") → goes on top of the stack → prints "Start" → removed from stack.
+Call Stack: empty
+second() → pushed onto stack → stack now has second on top.
+Call Stack: second()
+Inside second(), console.log("Second") → pushed on stack → prints "Second" → popped.
+Call Stack: second()
+Still inside second(), first() is called → pushed onto stack → prints "First" → popped.
+Call Stack: second()
+second() finishes → popped from stack.
+Call Stack: empty
+console.log("End") → pushed on stack → prints "End" → popped.
+✅ Output
+Start
+Second
+First
+End
+3. Event loop with synchronous code
+With pure synchronous code, the event loop doesn’t really “do” anything.
+Why? Because:
+The call stack never empties until all synchronous functions finish.
+There are no tasks in the task queue (like setTimeout or Promises).
+The JS engine just executes functions one by one, top to bottom.
+Think of the event loop as a security guard checking if there’s work to do:
+
+If everything is synchronous, the guard just waits until the stack is empty — but nothing new is coming.
+Time  | Call Stack       | Action
+--------------------------------------------
+t0    | console.log      | prints "Start", pops
+t1    | second()         | enters function
+t2    | console.log      | prints "Second", pops
+t3    | first()          | enters function
+t4    | console.log      | prints "First", pops
+t5    | second()         | finishes, pops
+t6    | console.log      | prints "End", pops
+t7    | empty            | program done
+Notice: everything happens sequentially.
+No waiting, no microtasks, no task queue, just a simple stack flow.
+The Role of the Event Loop
+The event loop is a mechanism that lets JavaScript perform non-blocking I/O. It continually checks:
+Call Stack – where functions are executed.
+Task Queues (or Callback Queues) – where asynchronous callbacks wait.
+Microtask Queue – higher-priority queue for promises and process.nextTick() in Node.js.
+Flow:
+JavaScript executes all code on the call stack.
+When an asynchronous operation completes (like setTimeout or a network request), its callback is added to the task queue.
+The event loop checks if the call stack is empty:
+If yes → it takes the next callback from the queue and pushes it to the stack for execution.
+If no → it waits until the stack is empty.
+Microtasks (e.g., promises) are executed before tasks in the regular queue, giving them higher priority.
+console.log('Start');
+
+setTimeout(() => {
+  console.log('Timeout callback');
+}, 0);
+
+Promise.resolve().then(() => {
+  console.log('Promise callback');
+});
+
+console.log('End');
+Execution Order:
+
+'Start' → printed immediately (synchronous)
+'End' → printed immediately (synchronous)
+'Promise callback' → executed next (microtask queue)
+'Timeout callback' → executed last (task queue)
+Synchronous Functions
+When you call a synchronous function, it goes directly onto the call stack and executes immediately.
+Nothing else happens until it finishes.
+Example:
+function syncFunc() {
+  console.log("Sync function running");
+}
+syncFunc();
+console.log("After sync function");
+Flow:
+syncFunc → pushed onto the call stack → executed → popped off the stack
+"After sync function" executes next
+Asynchronous Functions
+When you call an asynchronous function (like setTimeout, fetch, or a promise), the function itself may run immediately, but its callback does not run on the call stack right away.
+Instead, the callback is sent to a queue:
+Macrotask queue – for setTimeout, setInterval, I/O callbacks
+Microtask queue – for Promise.then(), queueMicrotask, process.nextTick() in Node.js
+The event loop watches the call stack:
+If the call stack is empty, it takes tasks from the queues and pushes them onto the stack.
+console.log("Start");
+setTimeout(() => {
+  console.log("Async function (setTimeout)");
+}, 0);
+
+Promise.resolve().then(() => {
+  console.log("Async function (Promise)");
+});
+console.log("End");
+Step-by-step:
+"Start" → printed immediately (sync, on stack)
+setTimeout is called → its callback is sent to the macrotask queue
+Promise.resolve().then(...) → its callback is sent to the microtask queue
+"End" → printed immediately (sync, on stack)
+Call stack is now empty → event loop picks microtasks first → "Async function (Promise)"
+After microtasks, event loop picks macrotasks → "Async function (setTimeout)"
+Waiting in the Queue
+Once an async operation (like setTimeout or a Promise) is triggered:
+Its callback is placed in a queue (microtask or macrotask).
+While in the queue:
+The callback does not execute.
+It’s just a reference stored in memory, ready for execution.
+The call stack continues executing other synchronous code.
+Event Loop Checks the Queues
+The event loop continuously does this:
+Check if the call stack is empty.
+If empty:
+First, execute all callbacks in the microtask queue (Promises, queueMicrotask) until it’s empty.
+Then pick one callback from the macrotask queue (like setTimeout) and execute it.
+console.log("Start");
+setTimeout(() => {
+  console.log("Macrotask callback (setTimeout)");
+}, 0);
+
+Promise.resolve().then(() => {
+  console.log("Microtask callback (Promise)");
+});
+console.log("End");
+a callback is simply a function that you pass as an argument to another function to be “called back” later. The key idea is that you’re not executing it immediately—you’re letting someone else (another function, timer, or event system) run it when the time is right.
+Callback in Asynchronous Code
+Most people encounter callbacks in async code:
+setTimeout(() => {
+  console.log("This runs later");
+}, 1000);
+The function () => { console.log("This runs later") } is the callback.
+setTimeout takes it and schedules it to run after 1000ms.
+Important: It doesn’t run immediately. It’s put in the macrotask queue and will execute only when the call stack is empty.
+3. Callbacks in Promises
+Promise.resolve().then(() => {
+  console.log("Promise callback runs next");
+});
+The function () => { console.log("Promise callback runs next") } is also a callback.
+It’s added to the microtask queue and will run after the current stack finishes.
+
+const myPromise = new Promise((resolve, reject) => {
+  // Asynchronous operation
+  let success = true; // simulate result
+  if (success) {
+    resolve("Operation succeeded!"); // promise resolved
+  } else {
+    reject("Operation failed!"); // promise rejected
+  }
+});
+new Promise((resolve, reject) => { ... }) → constructor takes a callback function with 2 parameters:
+
+resolve(value) → marks the promise as fulfilled
+
+reject(error) → marks the promise as rejected
+
+2. Consuming a Promise with .then / .catch
+myPromise
+  .then(result => {
+    console.log("Success:", result);
+  })
+  .catch(error => {
+    console.error("Error:", error);
+  });
+.then(...) → runs when the promise resolves
+
+.catch(...) → runs when the promise rejects
+Promise.resolve(5)
+  .then(num => num * 2)
+  .then(num => num + 1)
+  .then(result => console.log(result)); 
+console.log("Start");
+
+const p = new Promise((resolve, reject) => {
+  resolve("Success!");
+});
+
+p.then((value) => {
+  console.log("Promise callback:", value);
+});
+
+console.log("End");
+
+Start
+End
+Promise callback: Success!
+
