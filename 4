@@ -1,0 +1,469 @@
+Test Plan is the top-level container that defines how your performance test will run. It acts like the blueprint of the entire test, organizing all components such as threads, requests, listeners, and configurations.
+Thread Group is the component that simulates virtual users and controls how many users will send requests to the server and how they behave during the test.
+Number of Threads (Users)
+Represents the number of virtual users.
+Example:
+50 threads = 50 users accessing the application.
+2. Ramp-Up Period
+Time JMeter takes to start all users.
+Example:
+Threads = 10
+Ramp-up = 10 seconds
+Meaning:
+1 user starts every second.
+3. Loop Count
+How many times each user executes the test.
+Example:
+Loop Count = 5
+10 users × 5 loops = 50 total executions
+1. Same User on Each Iteration
+Meaning:
+When this option is enabled, the same virtual user (thread) is used for every loop iteration instead of creating a fresh user state each time.
+What happens
+Cookies
+Sessions
+Authentication data
+are maintained across iterations.
+Example
+If a user logs in during iteration 1:
+Iteration 2 will continue with the same session.
+Use Case
+Useful when testing real user behavior, such as:
+Login → Browse → Logout
+Shopping cart flows
+Without this option, each iteration behaves like a new user session
+2. Delay Thread Creation Until Needed
+Meaning:
+JMeter does not create all threads at the start of the test. Instead, it creates them gradually when they are required according to the ramp-up period.
+Benefit
+Saves memory
+Improves performance when running large load tests.
+Example
+Threads = 1000
+Ramp-up = 100 seconds
+JMeter will create threads only when needed during ramp-up, not all 1000 immediately.
+3. Specify Thread Lifetime
+Meaning:
+Allows you to control how long each thread runs using time instead of loop count.
+You can define:
+Start Time
+End Time
+Duration
+Startup Delay
+Example
+Duration = 5 minutes
+Startup Delay = 10 seconds
+Result:
+Test starts after 10 seconds
+Runs for 5 minutes
+What It Means
+Test starts after 10 seconds
+When you click Start, JMeter waits for 10 seconds.
+No virtual users (threads) send requests during this time.
+Test runs for 5 minutes
+After the 10-second delay, the threads start executing requests.
+They continue running for 5 minutes.
+Test automatically stops
+After 5 minutes, JMeter stops all threads automatically, even if loops are not finished.
+Config Elements added directly under the Test Plan (not inside a Thread Group) are global configurations.
+This means they apply to all Thread Groups and Samplers in the Test Plan unless overridden locally.
+1. User Defined Variables
+Used to create global variables.
+Example:
+server = example.com
+port = 443
+Then you can use them in requests like:
+${server}
+${port}
+2. HTTP Request Defaults
+Used to set default values for HTTP requests.
+Exmple:
+Server Name: example.com
+Protocol: https
+Now every HTTP request automatically uses these defaults, so you don't have to repeat them.
+3.HTTP Header Manager
+Adds common headers to all requests.
+Example headers:
+Content-Type: application/json
+Authorization: Bearer token
+This avoids adding headers to every request manually.
+4. HTTP Cookie Manager
+Handles cookies automatically like a browser.
+Use case:
+Session management
+Login flows
+Example:
+When a user logs in, the session cookie is stored and used in the next requests.
+5. CSV Data Set Config
+Used for data-driven testing.
+Example CSV file:
+username,password
+user1,pass1
+user2,pass2
+Each thread can read different data from the CSV file.
+Listeners are components that collect, process, and display the results of a performance test.
+In simple words:
+Listeners show what happened during the test execution.
+They help you analyze:
+Response time
+Success or failure of requests
+Throughput
+Error percentage
+View Results Tree is a Listener that shows detailed information about every request and response during the test execution.
+Response time
+Response code (200, 404, 500)
+Response message
+Thread name
+Latency
+Bytes received
+Timers are components that add a delay between requests during test execution.
+They are used to simulate real user behavior because real users do not send requests continuously without any pause.
+Without timers:
+JMeter sends requests as fast as possible.
+This creates unrealistic load.
+With timers:
+Requests are sent after some delay, just like real users browsing a website.
+Example real scenario:
+User opens homepage
+Waits 3 seconds
+Clicks login
+Waits 5 seconds
+Opens dashboard
+Timers help simulate this think time.
+How Timers Work
+Timers are added inside a Thread Group.
+They affect the samplers (requests) that are in the same scope.
+1. Constant Timer
+Adds a fixed delay between requests.
+Example:
+Delay = 2000 ms
+Result:
+JMeter waits 2 seconds before the next request.
+2. Uniform Random Timer
+Adds random delay within a range.
+Example:
+Constant delay = 2000 ms
+Random delay = 1000 ms
+Actual delay = 2000 to 3000 ms
+This simulates more realistic user behavior.
+Gaussian Random Timer is used to add a random delay between requests following a normal (Gaussian) distribution.
+What Gaussian Random Timer Does
+It pauses the thread for a time calculated like this:
+Delay = Constant Delay Offset + Random Delay
+Where the Random Delay follows a Gaussian (normal) distribution.
+So most delays will be around the average, with fewer very small or very large delays.
+🔹 Parameters
+1️⃣ Deviation (in milliseconds)
+Standard deviation of the Gaussian distribution.
+Controls how much the delay varies.
+Higher value → more variability.
+Example:
+Deviation = 2000
+2️⃣ Constant Delay Offset (in milliseconds)
+Minimum base delay added to every request.
+Example:
+Constant Delay Offset = 3000
+🔹 Example
+If you configure:
+Deviation = 2000
+Constant Delay Offset = 3000
+Then delays will roughly be:
+3000 ms ± random gaussian(2000)
+Typical delays might look like:
+3500 ms
+2800 ms
+4100 ms
+3200 ms
+Most values will cluster around ~3000–5000 ms.
+Constant Throughput Timer is used to control the rate of requests (throughput) so that the test sends a specific number of requests per minute.
+Instead of adding a fixed delay like other timers, it dynamically calculates the delay between requests to maintain the target throughput.
+It ensures your test runs at a target requests-per-minute rate.
+Example:
+If you set 60 samples/min, JMeter tries to send 1 request every second.
+It automatically adjusts waiting time between requests so the average throughput stays close to the configured value.
+1️⃣ Target Throughput (samples per minute)
+The number of requests you want per minute.
+Example:
+Target Throughput = 120
+Meaning:
+120 requests per minute
+= 2 requests per second
+2️⃣ Calculate Throughput Based On
+This determines how JMeter distributes the throughput across threads.
+Options include:
+1. This thread only
+Each thread tries to reach the target throughput individually.
+Example:
+Target = 60
+Threads = 10
+Result:
+60 req/min × 10 threads = 600 req/min
+2. All active threads (shared)
+The target throughput is shared across all threads.
+Example:
+Target = 60
+Threads = 10
+Result:
+Total = 60 req/min
+Each thread sends part of it
+This is most commonly used.
+3. All active threads in current thread group
+Throughput is shared within the thread group only.
+4. All active threads (shared) in all groups
+Throughput shared across all thread groups.
+Target Throughput
+It is not the number of users.
+It is how fast requests are sent overall.
+PreProcessors are components that execute before a sampler (request) is sent to the server.
+They are used to modify the request, prepare data, or set variables before the request runs.
+🔹 Simple Definition
+PreProcessor = Code or logic that runs before a request is executed.
+User Parameters PreProcessor
+Allows each thread (user) to use different parameter values.
+Example:
+username = user1
+password = pass1
+Each user gets different credentials.
+HTTP URL Re-writing Modifier
+Automatically adds session IDs to URLs if needed.
+Example:
+;jsessionid=ABC123
+Used when sessions are passed through URLs instead of cookies.
+BeanShell PreProcessor
+Runs BeanShell scripting before the request.
+Example:
+vars.put("randomNumber", String.valueOf(Math.random()));
+Creates a variable before the request.
+JSR223 PreProcessor
+Runs Groovy scripts before the sampler.
+Example:
+vars.put("timestamp", System.currentTimeMillis().toString())
+Used for advanced scripting.
+What is a Preprocessor?
+Definition: A Preprocessor is a JMeter component that runs before a sampler (HTTP request, JDBC request, etc.) executes.
+Purpose: To modify or prepare the request dynamically before it is sent to the server.
+Key point: Preprocessors do not send requests themselves — they only set up or change the sampler.
+What are Listeners?
+Listeners are components in JMeter that receive the results of samplers (like HTTP requests, JDBC requests, etc.).
+They display, save, or process the results of your tests.
+You can think of them as “reporting and analysis tools” within JMeter.
+Main Types of Listeners
+View Results Tree
+Shows detailed results for each sampler, including request, response, headers, and response code.
+Very useful for debugging test scripts.
+Summary Report
+Shows aggregate metrics like number of samples, average response time, min/max, throughput, and error %.
+Good for quick performance overview.
+Aggregate Report
+Similar to Summary Report but provides more statistics like standard deviation.
+Useful for detailed performance analysis.
+Graph Results
+Plots response times and throughput on a line graph.
+Gives a visual idea of performance trends.
+View Results in Table
+Displays results in a tabular format, including sample, response time, and status.
+Good for exporting data or reviewing specific requests.
+Simple Data Writer
+Writes results directly to a CSV or XML file without GUI.
+Useful for large-scale tests to reduce memory usage.
+Backend Listener
+Sends test metrics to external systems like InfluxDB or Grafana.
+Ideal for real-time dashboards in production-like environments.
+jp@gc – Response Times Over Time (plugin)
+Plugin listener to show response time trends over the test duration.
+Useful for spotting gradual performance degradation.
+
+What is an Assertion?
+
+Definition: An Assertion in JMeter is a component that validates the response from a sampler (HTTP request, JDBC request, etc.).
+
+Purpose: To check if the server returned the expected result.
+
+They help ensure your application is functionally correct while performing performance testing.
+Types of Assertions in JMeter
+
+Response Assertion
+
+Most commonly used.
+
+Checks response text, code, headers, or patterns.
+
+Example: Verify GET /user/{username} response contains "username":"user1".
+
+Duration Assertion
+
+Validates that a request completes within a certain time.
+
+Example: POST /user must respond in less than 2000 ms.
+
+Size Assertion
+
+Checks response size in bytes.
+
+Example: Ensure product list response is at least 1000 bytes.
+
+XML Assertion
+
+Validates that response is valid XML.
+
+Example: SOAP API responses follow correct XML schema.
+
+HTML Assertion
+
+Checks HTML responses for errors or valid tags.
+
+Example: Web page response does not contain <error> tag.
+
+JSON Assertion / JSON Path Assertion
+
+Checks JSON responses.
+
+Example: Response JSON has "status":"success" or "id": 101.
+
+XPath Assertion
+
+Validates XML or HTML response using XPath.
+
+Example: Ensure <user><id>101</id></user> exists in response.
+
+JSR223 Assertion
+
+Custom script (Groovy) to validate response dynamically.
+
+Example: Fail the sampler if a JSON field does not meet a business rule.
+
+BeanShell Assertion
+
+Older scripting assertion using BeanShell.
+
+Example: Complex validation logic for legacy scripts.
+
+What is a Sampler?
+
+A Sampler is a component in JMeter that actually sends requests to the server.
+
+Samplers are the core of your test plan, because they perform the actions you want to test — like HTTP requests, database queries, or FTP transfers.
+
+Common Types of Samplers in JMeter
+
+HTTP Request Sampler
+
+Send HTTP/HTTPS GET, POST, PUT, DELETE requests.
+
+Example:
+
+POST /user to create a new Petstore user
+
+GET /user/{username} to retrieve user details
+
+FTP Request Sampler
+
+Upload/download files from an FTP server.
+
+JDBC Request Sampler
+
+Execute SQL queries against a database.
+
+SOAP/XML-RPC Request Sampler
+
+Send SOAP web service requests.
+
+Java Request Sampler
+
+Execute custom Java code.
+
+JMS Publisher / Subscriber Sampler
+
+Test messaging systems (JMS queues/topics).
+
+TCP Sampler
+
+Send TCP packets to servers for testing custom protocols.
+
+What is a Postprocessor?
+
+Definition: A Postprocessor in JMeter is a component that executes after a sampler runs.
+
+Purpose: To extract, manipulate, or process the response data from a request before moving on to the next request.
+
+Key point: Postprocessors do not send requests themselves; they work with the response returned by the sampler.
+
+Why Use Postprocessors?
+
+Extract dynamic data for next requests
+
+Example: Extract a userId from POST /user response to use in GET /user/{userId}
+
+Handle correlations
+
+Many APIs return tokens, session IDs, or dynamic IDs. Postprocessors extract these for later use.
+
+Process data for assertions or reporting
+
+Example: Extract values to validate with assertions or pass to another sampler.
+
+Types of Postprocessors
+
+Regular Expression Extractor
+
+Extract values from response using regex patterns.
+
+Example: Extract "id": 101 from JSON response.
+
+JSON Extractor
+
+Extract values from JSON responses using JSON Path.
+
+Example: Extract "username" from {"id":101,"username":"user1"}
+
+XPath Extractor
+
+Extract values from XML or HTML responses using XPath expressions.
+
+Example: Extract <userId>101</userId> from XML response.
+
+Boundary Extractor (older, less common)
+
+Extract values between start and end strings.
+
+JSR223 Postprocessor
+
+Custom script (Groovy) to manipulate response or generate variables dynamically.
+
+Example: Convert response JSON to uppercase before next request.
+
+Debug PostProcessor
+
+Prints all variables and properties to the log for debugging.
+
+
+What is JSR223?
+
+Definition:
+
+JSR223 is a scripting interface in JMeter that allows you to write custom scripts using languages that implement the JSR223 specification, such as Groovy, JavaScript, Beanshell, JEXL, or Python (via plugins).
+
+Most commonly used language: Groovy, because it is fast, efficient, and fully integrated with Java.
+
+Where it’s used:
+
+Preprocessor → modify request before sending
+
+Postprocessor → extract/manipulate response after request
+
+Assertion → validate response with custom logic
+
+Sampler (JSR223 Sampler) → send request or perform custom action
+
+Timer → create dynamic wait times
+
+How Timers Work in JMeter
+
+**Timers in JMeter add a delay before a sampler executes.
+
+Scope: They affect samplers for each thread independently, not the start of other threads.
+
+Important: Timers do not control the start order of threads (users).
+
+
+
