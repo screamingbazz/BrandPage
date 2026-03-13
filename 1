@@ -1,0 +1,963 @@
+Software is a collection of programs, instructions, and data that tells a computer what to do and how to perform tasks. It is the non-physical part of a computer system (unlike hardware such as keyboard, CPU, or monitor).
+Simple Definition
+Software = Set of instructions that runs on a computer to perform specific tasks.
+Types of Software
+1. System Software
+This controls the computer hardware and allows other software to run.
+Examples:
+Windows
+Linux
+macOS
+2. Application Software
+Software designed for end users to perform specific tasks.
+Examples:
+Microsoft Excel
+Instagram
+Adobe Photoshop
+3. Programming Software
+Tools used by developers to create software.
+Examples:
+Eclipse IDE
+Visual Studio Code
+IntelliJ IDEA
+
+Software Testing is the process of checking and verifying a software application to ensure it works correctly and meets the specified requirements. The goal is to find defects (bugs) and make sure the software is reliable and high quality before it is released to users.
+Why Software Testing is Important
+To identify bugs or defects
+To ensure software quality
+To verify requirements are met
+To improve performance and reliability
+To deliver bug-free software to users
+
+1. Error
+An Error is a mistake made by a human, usually by a developer, tester, or designer while writing code or designing the system.
+Example:
+A developer writes the wrong logic in the code.
+A requirement is misunderstood.
+Example situation:
+A developer writes addition instead of subtraction in a calculator program.
+➡ This human mistake is called Error.
+
+2. Bug (Defect)
+A Bug is the problem in the software code that occurs because of the error.
+Example:
+Because the developer wrote the wrong logic, the calculator shows 10 + 5 = 20 instead of 15.
+➡ This issue in the software is called a Bug or Defect.
+Testers usually report bugs in tools like:
+Jira
+
+3. Failure
+A Failure happens when the software does not perform the expected result during execution.
+Example:
+When the user uses the calculator and gets the wrong result, the application fails to produce the correct output.
+➡ This incorrect behavior is called Failure.
+
+A Failure occurs when the software does not produce the expected result during execution.
+Example:
+If a user enters correct login details but the system does not allow login, the application fails to work properly. That is a failure.
+
+Reasons for Bugs in Software are the common causes why defects occur in an application during development.
+1. Misunderstanding of Requirements
+If developers misunderstand the requirements, they may implement the wrong functionality.
+Example:
+Requirement says password must be 8 characters, but developer implements 6 characters.
+2. Complex Code
+When the code is too complex, developers may make mistakes while writing logic.
+Example:
+Complex calculations in banking or billing systems.
+3. Lack of Communication
+Poor communication between developers, testers, and business teams can create bugs.
+Example:
+Requirement changes but the development team is not informed.
+4. Time Pressure
+When there is less time to complete the project, developers may skip proper testing or coding standards.
+Result → More bugs in the application.
+5. Lack of Experience
+If developers are new or inexperienced, they may write incorrect logic or miss edge cases.
+6. Frequent Requirement Changes
+When requirements change often during development, it may introduce new bugs.
+Example: Agile projects with frequent updates.
+7. Poor Design
+If the system design or architecture is not proper, it can lead to many defects later.
+8. Integration Issues
+When different modules are combined, they may not work properly together.
+Example: Payment module not connecting correctly with the order module.
+
+SDLC (Software Development Life Cycle) is a process used to develop high-quality software in a structured way. It defines the different phases involved in building software from start to end.
+Simple Definition
+SDLC is the step-by-step process used to design, develop, test, and deliver software.
+Phases of SDLC
+1. Requirement Analysis
+Gather requirements from the client or stakeholders.
+Understand what the software should do.
+Example: Client wants a login system, payment system, and user dashboard.
+2. System Design
+Developers and architects design the system structure.
+Decide database, architecture, UI design, and technology.
+3. Development (Coding)
+Developers write the actual code to build the application.
+Example languages: Java, Python, etc.
+4. Testing
+Testers check the software to find bugs or defects.
+Ensure the application works according to requirements.
+Bugs are reported using tools like:
+Jira
+Bugzilla
+5. Deployment
+After testing, the software is released to users or production environment.
+6. Maintenance
+Fix bugs and add new features after the software is released.
+Example: Updates in apps like WhatsApp.
+SDLC Diagram (Flow)
+Requirement → Design → Development → Testing → Deployment → Maintenance
+
+“The Waterfall Model is a linear and sequential SDLC model where each phase such as requirement analysis, design, development, testing, deployment, and maintenance is completed before moving to the next phase.”
+Advantages
+Simple and easy to understand
+Well-structured documentation
+Good for small projects with clear requirements
+Disadvantages
+Difficult to change requirements later
+Testing starts only after development is completed
+Not suitable for large or complex projects
+
+Spiral Model is a software development model that combines iterative development with risk analysis, where the project progresses through repeated cycles (spirals).
+Phases in Each Spiral
+Each spiral usually contains four main steps:
+1. Planning
+Define objectives and requirements for that phase.
+2.Risk Analysis
+Identify possible risks and find solutions to reduce them.
+3. Development & Testing
+Developers build the feature and testers test it.
+Bug tracking may be done using tools like:
+Jira
+4. Evaluation
+Client or stakeholders review the progress and give feedback.
+Then the next spiral cycle starts with improvements.
+Simple Flow
+Planning → Risk Analysis → Development & Testing → Evaluation → Next Spiral
+The process repeats until the software is completed.
+Advantages
+Better risk management
+Suitable for large and complex projects
+Client feedback is included in every cycle
+Disadvantages
+Expensive and complex
+Requires risk analysis expertise
+Not suitable for small projects
+
+Iterative Development means developing software step-by-step in small cycles, where each cycle adds improvements or new features.
+How It Works
+Build a small part of the software
+Test that part
+Get feedback
+Improve or add new features
+Repeat the process again
+Each cycle is called an iteration.
+
+“The V-Model is a software development model where each development phase has a corresponding testing phase. It emphasizes verification on the left side and validation on the right side, allowing early defect detection.”
+“V,” where the left side represents development phases (verification) and the right side represents testing phases (validation).
+Left Side (Verification – “Building the product”)
+Requirement Analysis → Acceptance Testing
+Ensure that the final product will meet the business needs.
+System Design → System Testing
+Design the architecture of the system; later, test the whole system.
+High-Level Design (HLD) → Integration Testing
+Design modules and their interactions; later, test how modules work together.
+Low-Level Design (LLD) / Coding → Unit Testing
+Developers write code; testers check individual components.
+Right Side (Validation – “Testing the product”)
+Unit Testing → Tests individual modules
+Integration Testing → Tests combined modules
+System Testing → Tests the complete system
+Acceptance Testing → Ensures software meets user requirements
+Requirement → HLD → LLD → Coding → Unit Test → Integration Test → System Test → Acceptance Test
+
+System Design
+What it is: Designing the overall architecture of the software.
+Goal: Decide how different parts of the system will work together.
+Example: For an e-commerce website, decide modules like Login, Payment, Product Catalog, Cart.
+Corresponding Test: System Testing → Test the entire system once it’s built.
+
+High-Level Design (HLD)
+What it is: Designing modules and their relationships.
+Goal: Break the system into smaller modules and show how they interact.
+Example: Payment module communicates with Cart module and Payment Gateway.
+Corresponding Test: Integration Testing → Test if these modules work together correctly.
+
+Low-Level Design (LLD) / Coding
+What it is: Writing detailed design of each module and then coding it.
+Goal: Build the actual software module by module.
+Example: Writing the code for the Login module.
+Corresponding Test: Unit Testing → Test each module individually to make sure it works.
+
+Unit Testing
+Definition: Testing a single module or component individually.
+Example: Test only the Login module to see if username and password work correctly.
+Integration Testing
+Definition: Testing multiple modules together to ensure they work properly as a group.
+Example: Test if Login module + Product Catalog module + Cart module work together correctly.
+System Testing
+Definition: Testing the complete system as a whole to ensure it meets the functional and non-functional requirements.
+Example: Test the entire e-commerce application for login, browsing, cart, checkout, and payment.
+Acceptance Testing
+Definition: Testing by the end users or client to ensure the software meets their requirements.
+Example: Client uses the e-commerce website and verifies if it works as expected before going live.
+
+1. Technical Review
+Purpose: Evaluate technical quality of software artifacts (like design, code, requirements).
+Participants: Usually technical experts (developers, senior engineers).
+Focus: Correctness, design decisions, compliance with standards.
+Formality: Semi-formal.
+Outcome: Feedback, suggested changes, sometimes approval.
+Example: Senior developers reviewing code logic or system design.
+2. Walkthrough
+Purpose: Step-by-step presentation of a document or code to gather feedback.
+Participants: Author presents the work; reviewers may include peers or stakeholders.
+Focus: Understanding and feedback rather than formal defect detection.
+Formality: Informal to semi-formal.
+Outcome: Awareness, clarifications, minor corrections.
+Example: A developer walks the team through a new module design or code logic.
+3. Inspection
+Purpose: Formal, detailed review to detect defects in software artifacts.
+Participants: Moderator, author, reviewers, recorder.
+Focus: Finding as many defects as possible before testing.
+Formality: Highly formal with defined roles and procedures.
+Outcome: Logged defects, reports, metrics.
+Example: Reviewing a requirements document with checklist, recording every defect.
+
+Module = A separate piece of software that can be developed, tested, and maintained independently.
+
+1. Quality Assurance (QA)
+Definition: QA is a process-oriented activity that focuses on preventing defects in software during the development process.
+Goal: Ensure processes are followed correctly to deliver high-quality software.
+Focus: Process improvement and defect prevention.
+Example Activities:
+Preparing test plans and test strategies
+Conducting reviews and walkthroughs
+Ensuring coding and testing standards are followed
+✅ Key Point: QA is about preventing defects before they happen.
+2. Quality Control (QC)
+Definition: QC is a product-oriented activity that focuses on identifying defects in the final software.
+Goal: Ensure the software meets the specified requirements.
+Focus: Defect detection and validation of the product.
+Example Activities
+Executing test cases
+Reporting bugs using tools like Jira or Bugzilla
+Performing functional, regression, system, and acceptance testing
+✅ Key Point: QC is about finding defects after they happen.
+3. Quality Engineer (QE)
+Definition: A Quality Engineer is a professional responsible for both QA and QC activities to ensure software quality.
+Responsibilities:
+Designing test plans and test cases (QA)
+Executing tests and reporting defects (QC)
+Automating repetitive tests if needed
+Ensuring software meets quality standards
+Goal: Ensure high-quality, defect-free software is delivered to users
+
+Levels of Software Testing
+Software testing is usually done at four main levels:
+1. Unit Testing
+Definition: Testing individual modules or components of the software.
+Goal: Verify that each module works correctly on its own.
+Who does it: Developers (sometimes testers).
+Tools:
+JUnit
+TestNG
+Example: Testing only the Login module of an application to check if it accepts valid username/password.
+2 Integration Testing
+Definition: Testing two or more modules together to see if they work as a group.
+Goal: Detect issues in module interactions.
+Who does it: Testers.
+Types: Top-down, Bottom-up, Big Bang.
+Example: Check if the Login module correctly passes user info to the Profile module.
+3. System Testing
+Definition: Testing the complete system as a whole.
+Goal: Verify that all functional and non-functional requirements are met.
+Who does it: Testers.
+Example: Test the entire e-commerce website for login, product search, cart, payment, and order confirmation.
+4. Acceptance Testing
+Definition: Testing to ensure the software meets user requirements and business needs.
+Goal: Check if the software is ready for production.
+Who does it: End users or clients.
+Example: A client tests the e-commerce website to verify checkout, payment, and order history work as expected.
+Types:
+User Acceptance Testing (UAT)
+Operational Acceptance Testing (OAT)
+1. System Testing
+Definition:
+System Testing is the testing of the complete, integrated software to verify that it meets the specified requirements (both functional and non-functional).
+It is done after integration testing.
+It focuses on end-to-end testing of the application.
+Goal: Ensure the software works as a whole and is ready for release.
+System Testing Process
+Requirement Analysis:
+Review the requirements and specifications.
+Identify what needs to be tested in the system.
+Test Planning:
+Define scope, objectives, resources, and schedule.
+Prepare the System Test Plan.
+Test Case Design:
+Create test cases for functional and non-functional requirements.
+Examples: Login functionality, performance under load, security checks.
+Test Environment Setup:
+Prepare hardware, software, network, and database environment similar to production.
+Test Execution:
+Execute system test cases.
+Report defects in tools like:
+Jira
+Bugzilla
+Defect Tracking and Retesting:
+Track defects, fix them, and retest.
+Test Closure:
+Prepare Test Summary Report.
+Ensure all requirements are validated.
+2. Types of System Testing
+A. Functional System Testing
+Tests what the system is supposed to do.
+Examples: Login, signup, checkout process, search functionality.
+B. Non-Functional System Testing
+Tests how the system performs.
+Examples:
+Performance Testing (speed, load, stress)
+Security Testing
+Usability Testing (explained below)
+Compatibility Testing
+
+Functional Testing
+
+Definition:
+Functional Testing is a type of software testing that verifies the software works according to the specified requirements or business rules.
+Focuses on what the system does (not how it does it).
+Validates functional requirements of the application.
+Types of Functional Testing
+Unit Testing: Test individual modules or components.
+Integration Testing: Test combined modules for interaction.
+System Testing: Test the complete system for functional requirements.
+User Acceptance Testing (UAT): Test by the client or end user to ensure business needs are met.
+
+Regression Testing
+
+Definition:
+Regression Testing is the process of retesting the software after changes (like bug fixes, enhancements, or updates) to ensure that existing functionalities are not broken.
+Focuses on checking that new changes did not affect old features.
+Can be manual or automated (automation is preferred for repetitive regression tests).
+When to Perform Regression Testing
+After fixing a defect.
+After adding a new feature.
+After upgrading the software.
+After changes in configuration or environment.
+Types of Regression Testing
+Corrective Regression Testing – Definition: Retesting existing functionality without any changes in the code or functionality.
+Selective Regression Testing – Definition: Retesting only the modules affected by recent changes.
+Progressive Regression Testing – Definition: Retesting newly added features along with affected existing modules.
+Complete Regression Testing – Definition: Retesting all modules of the application to ensure overall stability after major changes.
+
+Smoke Testing
+
+Definition:
+Smoke Testing is a high-level, preliminary testing performed to check whether the basic and critical functionalities of the software are working.
+Often called “Build Verification Testing” (BVT).
+Ensures that the build is stable enough for further detailed testing.
+When to Perform Smoke Testing
+After receiving a new build or release.
+Before performing detailed functional or regression testing.
+To quickly verify critical workflows of the application.
+
+Sanity Testing
+Focuses only on the part of the system that has changed.
+Performed after receiving a new build with minor changes or bug fixes.
+
+Ad-Hoc Testing
+Definition:
+Ad-Hoc Testing is an informal and unstructured testing performed without any planning or test cases.
+Testers explore the application freely to find defects.
+Done without following any formal process or test documentation.
+Focus is on finding critical or unexpected defects quickly.
+
+Monkey Testing
+Definition:
+Monkey Testing is a random testing technique where the tester enters random inputs or performs random actions in the application to check if it crashes or behaves unexpectedly.
+Testers do not follow any test case or plan.
+Focus is mainly on finding stability issues or application crashes.
+
+Exploratory Testing 
+Definition Recap:
+Exploratory Testing is a simultaneous process of learning the application, designing tests, and executing them to find defects. It’s dynamic and flexible, unlike scripted testing where you follow pre-written test cases.
+Simultaneous Test Design & Execution:
+Testers create test cases on the fly, based on what they learn during testing.
+
+Positive Testing
+
+Definition:
+Positive Testing is a type of functional testing where the software is tested with valid input data to verify that it behaves as expected.
+Focus is on “what the system should do”.
+Ensures the system accepts valid input and works correctly.
+
+Negative Testing
+Definition:
+Negative Testing is a type of functional testing where the software is tested with invalid, unexpected, or incorrect inputs to ensure it handles errors gracefully.
+Focus is on “what the system should not do”.
+Ensures the system does not crash and provides proper error messages when given invalid input.
+
+End-to-End (E2E) Testing
+
+Definition:
+End-to-End Testing is a type of testing where the complete flow of an application is tested from start to finish to ensure the system behaves as expected.
+Focuses on validating the entire application workflow, including all integrated components, external systems, and dependencies.
+Ensures the software works correctly in a real-world scenario.
+Example
+
+Imagine an e-commerce website:
+E2E Test Scenario:
+User logs in with valid credentials.
+Searches for a product.
+Adds product to the cart.
+Applies a coupon code.
+Proceeds to checkout and selects a payment method.
+Completes payment successfully.
+Order confirmation is generated and stored in the database.
+User receives an email confirmation.
+Goal: Verify that all steps from login to order confirmation work correctly, including database updates and external email service integration.
+
+Decision Table Testing (DTT)
+Definition:
+Decision Table Testing is a black-box testing technique used to test the system for different combinations of inputs and conditions.
+It is particularly useful when the system behavior depends on multiple conditions or rules.
+It helps identify all possible combinations of inputs and their expected outputs.
+Key Points
+Based on Conditions and Actions:
+Conditions = Inputs or criteria that affect system behavior.
+Actions = Expected output or system response.
+Helps Cover All Scenarios:
+Avoids missing critical combinations that could lead to defects.
+Useful For:
+Complex business rules
+Multiple input conditions affecting the outcome
+Workflow decisions (like loan approval, shopping discounts)
+Example
+Scenario: Loan Approval System
+Conditions:
+Applicant’s age ≥ 18
+Applicant has a steady income
+Applicant has no existing loan
+Decision Table:
+
+Rule	Age ≥ 18	Steady  Income	No Existing Loan	Loan Approval
+1	Yes	Yes	                  Yes	                  Approve
+2	Yes	Yes	                  No	                  Reject
+3	Yes	No	Yes	                                  Reject
+4	No	Yes	Yes	                                 Reject
+5	No	No	No	                                   Reject
+
+Each rule represents a combination of conditions and the expected output.
+Testers can create test cases from each rule to ensure full coverage.
+
+Software Testing Life Cycle (STLC)
+Definition:
+STLC is a step-by-step process of testing activities performed to ensure software quality.
+Defines how testing should be planned, executed, and closed.
+Helps deliver a bug-free and high-quality product.
+STLC Phases
+1. Requirement Analysis
+Analyze functional and non-functional requirements.
+Identify testable requirements.
+Prepare Requirement Traceability Matrix (RTM) linking requirements to test cases.
+Inputs: Business requirements, functional specs.
+Key Output: RTM, test coverage scope.
+2. Test Planning
+Define testing strategy, objectives, scope, schedule, resources, and risks.
+Decide on tools, environments, and types of testing.
+Key Output: Test Plan Document.
+3. Test Case Design / Test Development
+Write test cases and test scripts based on requirements.
+Identify test data needed for execution.
+Key Output: Test cases, test scripts, test data.
+4. Test Environment Setup
+Prepare hardware, software, network, and database for testing.
+Ensure the environment mirrors production as closely as possible.
+Key Output: Ready test environment, smoke test build verification.
+5. Test Execution
+Execute test cases manually or using automation tools.
+Log defects for any failures using tools like:
+Jira
+Bugzilla
+Key Output: Executed test cases, defect reports.
+6. Defect Reporting and Retesting
+Track defects and communicate with developers for fixes.
+Perform retesting to verify that defects are resolved.
+Perform regression testing to ensure fixes didn’t break other areas.
+Key Output: Retested defect reports, updated status in defect tracking tool.
+7. Test Closure
+Evaluate test completion criteria: planned test cases executed, defects resolved.
+Prepare Test Summary Reports / QA Sign-off.
+Document lessons learned and metrics.
+Key Output: Test closure report, quality metrics, knowledge base for future projects.
+
+
+Test Plan
+Definition:
+A Test Plan is a formal document that outlines the strategy, scope, objectives, resources, schedule, and approach for testing a software application.
+Serves as a blueprint for the testing team.
+Helps ensure all functional and non-functional aspects are covered.
+
+Contents of a Test Plan
+
+A standard Test Plan usually includes:
+
+Test Plan ID: Unique identifier for the test plan.
+Introduction / Objective: Purpose of testing and scope of the project.
+Scope:
+Features to be tested
+Features not to be tested (out of scope)
+Test Strategy / Approach:
+Types of testing: Functional, Regression, Smoke, Sanity, Performance, etc.
+Testing methods: Manual or Automated
+Test Environment:
+Hardware, software, network, tools, and databases required.
+Test Criteria:
+Entry Criteria: Conditions to start testing (e.g., build received, environment ready)
+Exit Criteria: Conditions to stop testing (e.g., all test cases executed, defects resolved)
+Test Deliverables:
+Test cases, test scripts, defect reports, test summary report.
+Roles and Responsibilities:
+Who will perform testing, defect reporting, and reviews.
+Schedule / Milestones:
+Testing start and end dates, milestones for reviews and reports.
+Risks and Mitigation:
+Possible risks (e.g., incomplete requirements, environment issues) and how to handle them.
+Approval / Sign-Off:
+Test Plan approval from QA Lead, Project Manager, and Stakeholders.
+
+Use Case
+Definition:
+A Use Case is a documented description of how a user (or “actor”) interacts with a system to achieve a specific goal.
+It describes system behavior from the end-user perspective.
+Helps understand functional requirements clearly.
+Commonly used in requirement analysis, test case design, and QA planning.
+Key Components of a Use Case
+Use Case ID / Name: Unique identifier for the use case.
+Actor: The user or system interacting with the application.
+Preconditions: Conditions that must be true before the use case starts.
+Postconditions: State of the system after the use case is completed.
+Main Flow / Basic Flow: Step-by-step description of how the user achieves the goal.
+Alternate Flow / Exception Flow: Steps for optional paths, errors, or exceptions.
+Description / Summary: Short description of the functionality.
+Example
+Scenario: Login to an E-commerce Website
+Use Case ID: UC001
+Actor: Registered User
+Preconditions: User must have a valid account.
+Postconditions: User successfully logged in and directed to dashboard.
+Main Flow:
+User navigates to login page.
+User enters valid username and password.
+System validates credentials.
+System directs user to dashboard.
+Alternate Flow / Exception:
+If the password is incorrect, system displays “Invalid credentials” and asks for re-entry.
+If the account is locked, system shows “Account Locked” message.
+
+Test Case
+Definition:
+A Test Case is a documented set of conditions, steps, and expected results that a tester uses to verify whether a particular feature or functionality of an application works as intended.
+It ensures software behaves correctly for a given scenario.
+Can be manual or automated.
+Key Components of a Test Case
+Test Case ID: Unique identifier (e.g., TC001).
+Test Scenario / Module: Which feature or functionality is being tested.
+Description / Objective: Purpose of the test case.
+Preconditions: Conditions that must be true before executing the test case.
+Test Steps / Action: Step-by-step instructions to perform the test.
+Test Data: Inputs required for the test.
+Expected Result: What should happen after performing the test steps.
+Actual Result: Outcome after executing the test.
+Status / Pass-Fail: Whether the test passed or failed.
+Remarks / Notes: Any observations or issues during execution.
+
+Example
+
+Scenario: Login Functionality
+
+Field	Example
+Test Case ID	TC001
+Test Scenario	User Login
+Objective	Verify login with valid credentials
+Preconditions	User must have a valid account
+Test Steps	1. Go to login page
+2. Enter valid username and password
+3. Click Login
+Test Data	Username: user123
+Password: Pass@123
+Expected Result	User should be redirected to dashboard
+Actual Result	User redirected to dashboard
+Status	Pass
+
+Test Scenario
+Definition:
+A Test Scenario is a high-level description of a functionality or feature to be tested.
+Represents what to test, not how to test it.
+Serves as a starting point for writing detailed test cases.
+Helps ensure all features are covered during testing.
+Key Points
+High-Level: Focuses on functionalities, not step-by-step actions.
+Derived From Requirements / Use Cases: Covers all possible user actions.
+Multiple Test Cases: One scenario may have multiple test cases for different inputs or conditions.
+Used for Test Planning: Ensures all features are tested.
+Example
+Feature: Login Functionality
+Test Scenario 1: Verify login with valid credentials
+Test Scenario 2: Verify login with invalid credentials
+Test Scenario 3: Verify login with empty username or password
+Test Scenario 4: Verify “Forgot Password” link functionality
+Each of these scenarios can have detailed test cases specifying exact steps, test data, and expected results.
+Test Suite
+Definition:
+A Test Suite is a collection of test cases that are grouped together to test a particular functionality, module, or the entire application.
+Helps organize testing efforts.
+Can be executed together manually or through automation tools.
+Often created for regression testing, smoke testing, or specific modules.
+Key Points
+Organized Group: Test cases in a suite are related to the same feature, module, or objective.
+Can Include Multiple Test Scenarios: A suite can have multiple test cases derived from one or more scenarios.
+Reusability: Test suites can be executed multiple times (e.g., for regression testing).
+Execution Control: Tools like Selenium WebDriver, Jira Xray, and TestNG allow running test suites selectively or fully.
+Example
+Module: Login Functionality
+Test Suite Name: Login Module Test Suite
+Test Cases Included:
+TC001 – Login with valid credentials
+TC002 – Login with invalid credentials
+TC003 – Login with empty username or password
+TC004 – Forgot Password link functionality
+All these test cases are grouped under one suite to test the login module as a whole.
+
+Test Case Design Techniques
+Definition:
+Test Case Design Techniques are methods or approaches used to create effective test cases to ensure maximum test coverage with minimum effort.
+Helps identify scenarios and conditions to test the system properly.
+Two main categories: Black-Box Testing and White-Box Testing techniques.
+1. Black-Box Test Case Design Techniques
+Focus on testing the system without knowledge of internal code or logic.
+a) Equivalence Partitioning (EP)
+Divide input data into valid and invalid partitions.
+Test one value from each partition instead of all possible inputs.
+Goal: Reduce test cases while maintaining coverage.
+Example: Age input (1–100)
+Valid: 18–60 → test with 25
+Invalid: <18 → test with 10
+Invalid: >60 → test with 65
+b) Boundary Value Analysis (BVA)
+Focus on boundary values of input ranges, as errors often occur at edges.
+Test minimum, just above minimum, maximum, just below maximum.
+Example: Age input (18–60)
+Test values: 17, 18, 19, 59, 60, 61
+Types of BVA
+Minimum Value (Min) – Lowest valid input value
+Maximum Value (Max) – Highest valid input value
+Just Below Minimum (Min-1) – Invalid value below boundary
+Just Above Maximum (Max+1) – Invalid value above boundary
+c) Decision Table Testing
+Used for complex business rules with multiple conditions and actions.
+Covers all possible combinations of inputs and outputs.
+Example: Loan approval based on age, income, and credit score (see Decision Table example earlier).
+d) State Transition Testing
+Used for systems where output depends on current state and input events.
+Covers all state transitions and expected outputs.
+Example: Login system with states: Logged Out, Logged In, Account Locked.
+e) Use Case / Scenario Testing
+Test cases derived from use cases or user scenarios.
+Focuses on real-world user actions and workflows.
+Example: E-commerce checkout workflow (login → select product → payment → order confirmation).
+2. White-Box Test Case Design Techniques
+Focus on testing the internal code, logic, and structure.
+Statement Coverage: Test every line of code at least once.
+Branch Coverage: Test all decision points (if/else, loops).
+Path Coverage: Test all possible paths through the program.
+Condition Coverage: Test all logical conditions in decision statements.
+Example: Testing a function that calculates discount:
+Cover all IF/ELSE conditions, all loops, and all logical branches.
+
+State Transition Test Design Technique
+Definition:
+State Transition Testing is a black-box test design technique used to test how a system transitions from one state to another based on events, inputs, or conditions.
+Focuses on systems where behavior depends on both the current state and the input/event.
+Ensures the system responds correctly to all valid and invalid transitions.
+Key Concepts
+State: A condition or mode in which the system exists at a particular moment.
+Example: Logged Out, Logged In, Account Locked.
+Event / Input: Action that triggers a change of state.
+Example: Enter password, click logout.
+Transition: Movement from one state to another due to an event.
+Output / Action: The system response after a transition.
+When to Use
+Systems with state-dependent behavior.
+Workflow-driven applications like ATM systems, login modules, vending machines.
+Systems with finite state machines.
+Example
+Scenario: Login System
+States:
+Logged Out
+Logged In
+Account Locked
+Events:
+Correct Password
+Incorrect Password
+Exceed Max Attempts
+State Transition Table:
+Current State	Event	                              Next State	Output
+Logged Out	Correct Password	         Logged In	            Login successful
+Logged Out	Incorrect Password	         Logged Out	            Show “Invalid credentials”
+Logged Out	Incorrect Password 3 times	   Account Locked	     Show “Account Locked”
+Logged In	Logout	                       Logged Out	               Successfully logged out
+Account Locked	Admin Reset	                 Logged Out	                  Unlock account
+
+Requirement Traceability Matrix (RTM)
+
+Definition:
+A Requirement Traceability Matrix (RTM) is a document that maps and traces user requirements with corresponding test cases.
+Ensures all requirements are covered by test cases.
+Helps in tracking requirements from start to finish (requirements → test cases → defects).
+Can be used for functional, non-functional, and business requirements.
+Purpose of RTM
+Ensure all requirements are tested.
+Identify missing or untested requirements.
+Help track defects linked to specific requirements.
+Useful for audits, reviews, and regulatory compliance.
+Helps in impact analysis when requirements change.
+Structure of RTM
+Requirement ID	Requirement Description	Test Case ID(s)	Test Scenario	Status	Remarks
+R001	User can log in	TC001, TC002	Login Scenario	Passed	Covered successfully
+R002	User can reset password	TC003	Forgot Password Scenario	Pending	Waiting for build
+R003	User can add items to cart	TC004, TC005	Add to Cart Scenario	Failed	Defects logged
+Explanation of Columns:
+Requirement ID: Unique ID for each requirement.
+Requirement Description: What the system should do.
+Test Case ID(s): Test cases that validate this requirement.
+Test Scenario: High-level functionality tested.
+Status: Execution status (Pass, Fail, Pending).
+Remarks: Notes, defects, or observations.
+
+
+Test Environment Setup
+Definition:
+A Test Environment is a configured setup of hardware, software, network, and tools where testers execute test cases to validate the application.
+It mimics the production environment as closely as possible.
+Ensures reliable and consistent testing results.
+Purpose
+To verify the system works under real-world conditions.
+To ensure test cases can be executed successfully.
+To identify environment-related issues before production.
+Helps QA teams reproduce defects easily.
+Components of Test Environment
+Hardware:
+Servers, desktops, laptops, mobile devices.
+Example: Web server, database server, client machines.
+
+Software:
+Operating systems, browsers, applications, database software.
+Example: Windows 10, Ubuntu, Chrome, MySQL.
+Network Configuration:
+LAN/WAN, internet access, VPN, firewalls, proxies.
+Test Data:
+Preloaded data required for executing test cases.
+Example: Sample users, products, transactions.
+Test Tools:
+Test management, defect tracking, automation tools.
+Example: Jira, Selenium WebDriver, Postman.
+Test Environment Access / Credentials:
+User accounts, database access, admin rights, API keys.
+Types of Test Environments
+Development Environment: Used by developers for initial coding and unit testing.
+QA / Testing Environment: Mirrors production for functional and regression testing.
+Staging / Pre-Production Environment: Almost identical to production; used for final testing.
+Production Environment: Live environment where the application runs for end-users.
+Steps to Set Up Test Environment
+Identify hardware, software, and network requirements.
+Install required OS, applications, browsers, and databases.
+Configure network, firewalls, and security settings.
+Load test data into the environment.
+Install and configure test management and automation tools.
+Verify the environment by running smoke tests.
+Document the environment configuration for future reference.
+
+Test Execution
+Definition:
+Test Execution is the phase in which test cases are executed in the prepared test environment to validate the software’s functionality and detect defects.
+This is where actual testing happens, and testers check if the software behaves as expected.
+Test Execution can be manual or automated, depending on the project.
+Steps in Test Execution
+Prepare the Test Environment:
+Ensure hardware, software, network, and test data are ready.
+Execute Test Cases:
+Follow the test steps in each test case using the defined test data.
+Record Actual Results:
+Compare actual outcomes with expected results.
+Log Defects:
+Report any deviations, bugs, or failures in a defect tracking tool (e.g., Jira, Bugzilla).
+Retesting & Regression:
+After defects are fixed, retest the failed test cases.
+Perform regression testing to ensure no new defects are introduced.
+Update Test Case Status:
+Mark each test case as Pass, Fail, Blocked, or Not Executed.
+Document Observations:
+Record issues, logs, screenshots, or any unusual behavior.
+Key Points
+Test Execution is iterative: Often, tests are executed in multiple cycles (especially in Agile or Regression testing).
+Defects are tracked and retested until the application meets quality standards.
+Critical for quality assurance and ensures the product meets requirements.
+Defect (Bug)
+Definition:
+A defect is any deviation from the expected result in the software.
+Found when the actual behavior does not match the requirement or specification.
+Can occur during testing, code review, or even in production.
+Example:
+Requirement: Login with valid credentials should redirect to the dashboard.
+Actual Result: User stays on the login page → Defect reported.
+2. Defect Report
+Definition:
+A Defect Report is a document or record in a defect tracking system that captures all details of a defect.
+Typical Fields in a Defect Report:
+Field	Description
+Defect ID	Unique identifier (e.g., DEF001)
+Summary / Title	Short description of the defect
+Description	Detailed explanation of the defect
+Steps to Reproduce	Step-by-step instructions to reproduce the defect
+Test Case ID	Reference to the test case that found the defect
+Severity	Impact of the defect on the system
+Priority	How soon the defect should be fixed
+Environment	OS, browser, device, or build where defect was found
+Status	Open, Assigned, Fixed, Retested, Closed
+Assigned To	Developer responsible for fixing
+Remarks / Attachments	Screenshots, logs, or additional notes
+3. Defect Severity & Priority
+Term	Definition	Example
+Severity	Measures the impact of defect on system functionality	Critical: Login not working; Major: Payment button not clickable; Minor: UI misalignment
+Priority	Determines how soon the defect should be fixed	High: Must fix before release; Medium: Fix in next release; Low: Can fix later
+Key Points:
+Severity is technical impact, priority is business urgency.
+A defect can be High Severity but Low Priority (rarely affects users immediately).
+Example: A backend calculation error affecting admin reports → High Severity, Medium Priority.
+4. Defect Resolution
+Definition:
+Defect Resolution is the process of fixing, verifying, and closing a defect.
+Common Statuses in Defect Resolution:
+New / Open: Defect is logged.
+Assigned: Developer assigned to fix.
+In Progress / Fixed: Developer resolves the defect.
+Retest / Verified: Tester retests to confirm the fix.
+Closed: Defect fixed and verified.
+Reopened: If defect persists after retesting.
+Deferred / Won’t Fix: Decision to fix in a future release or not fix at all.
+
+1. Bug Life Cycle (Defect Life Cycle)
+Definition:
+The Bug Life Cycle is the stages a defect goes through from detection to closure.
+Typical Stages:
+Stage	Description
+New / Open	Defect is logged in the tracking tool.
+Assigned	Assigned to a developer for fixing.
+In Progress / Fixed	Developer fixes the defect.
+Retest / Verified	Tester retests the defect to verify the fix.
+Closed	Defect is fixed and verified successfully.
+Reopened	If defect persists after retesting.
+Deferred / Won’t Fix	Decision made to fix later or not fix.
+Example:
+Defect DEF001 logged → Assigned to Dev01 → Fixed → Retested → Closed
+2. Test Cycle Closure
+Definition:
+Test Cycle Closure is the phase in STLC where testing for a particular cycle or release is formally completed.
+Activities:
+Ensure all planned test cases are executed.
+Verify defects are resolved or deferred.
+Analyze test coverage, defects, and pending items.
+Conduct lessons learned meeting to improve future cycles.
+Document Test Closure Report.
+3. Test Metrics
+Definition:
+Test Metrics are quantitative measures used to evaluate the quality, progress, and effectiveness of testing.
+Common Test Metrics:
+Metric	                                Description
+Test Case Execution Status	     Number of test cases executed, passed, failed, blocked
+Defect Density	                     Defects per module or per lines of code
+Defect Leakage	                         Defects found in production vs testing
+Test Coverage	                      % of requirements or functionalities tested
+Test Execution Productivity	      Test cases executed per tester per day
+Purpose:
+Helps monitor testing progress.
+Provides data for management decisions.
+Improves future testing efficiency.
+4. Test Closure Report (TCR)
+Definition:
+A Test Closure Report is a formal document prepared at the end of a testing cycle to summarize testing activities and outcomes.
+Contents of TCR:
+Section	Description
+Summary	              Overall testing summary and objectives
+Test Coverage	    % of requirements/test cases executed and passed
+Defects Status	      Summary of defects: open, closed, deferred
+Test Metrics	    Key metrics such as execution rate, defect density, severity distribution
+Lessons Learned	      Observations to improve future testing
+Recommendations	          Go/No-Go for release or next phase
+Sign-off	QA lead and stakeholder approvals
+Purpose:
+Ensures formal closure of the test cycle.
+Provides management and stakeholders with testing outcomes.
+Helps improve quality and processes for future cycles.
+
+White Box Testing
+White Box Testing (also called Clear Box, Glass Box, or Structural Testing) is a testing technique that examines the internal logic, structure, and code of the software.
+Testers need knowledge of the source code, algorithms, and architecture.
+
+Focuses on how the system works internally, rather than just inputs and outputs.
+Black box testing is a technique where the tester tests the functionality of an application without looking at the source code.
+The tester only verifies:
+Input given to the system
+Output produced by the system
+It focuses on inputs, outputs, and behavior against requirements.”
+
+Grey box testing is a technique where the tester tests the application with limited knowledge of its internal code and design, often focusing on data flow, architecture, and integration points.
+It is useful for integration and security testing.
+
+Alpha Testing
+Definition: Testing done by internal teams (developers or QA testers) before the software is released to external users.
+Goal: Identify bugs, errors, and usability issues early.
+Environment: Usually in the development environment or a controlled setting.
+Performed by: Company employees.
+Focus: Functional testing, UI issues, performance issues.
+Example:
+If a new e-commerce app is being developed, the QA team tests the app internally to check if adding items to cart, checkout, and payment work correctly.
+
+Beta Testing
+Definition: Testing done by real users (external users) after alpha testing and before full release.
+Goal: Get feedback from actual users, identify real-world issues, and check usability.
+Environment: Real-world environment (user devices).
+Performed by: Selected external users or volunteers.
+Focus: User experience, compatibility, performance under real conditions.
+Example:
+The e-commerce app is shared with a group of real users who try it on different devices and report bugs or suggest improvements.
+
+1. Incremental Model
+Definition: The Incremental Model is a software development approach where the product is built and delivered in small functional parts (increments). Each increment adds new features to the system until the complete product is delivered.
+Key Point: Each increment is fully functional and usable.
+2. Iterative Model
+Definition: The Iterative Model is a software development approach where the product is developed and refined through repeated cycles (iterations). Each iteration improves or enhances the previous version of the software.
+Key Point: Each iteration may not be fully functional, but it refines the system gradually.
+
+Incremental Model – How It Works
+Workflow:
+Requirements are divided into smaller modules or increments.
+Each increment is designed, developed, and tested independently.
+After testing, the increment is added to the existing system.
+Repeat until all modules are delivered, forming the complete system.
+
+Iterative Model: Previous functionality can be modified or refined in each iteration based on feedback.
+Incremental Model: Delivered increments are usually fixed; new increments add additional functionality without changing the old ones.
+
+Sprint – Definition
+A Sprint is a time-boxed iteration in Agile/Scrum during which a team works to complete a set of prioritized tasks or user stories from the Product Backlog.
+Usually lasts 1 to 4 weeks.
+Delivers a working, potentially shippable product increment at the end of the Sprint.
+Allows the team to plan, execute, review, and improve in a short cycle.
+
+
