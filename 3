@@ -1,0 +1,141 @@
+1. Performance Testing
+
+Purpose: Measure overall system performance under expected workload.
+
+Focus: Response time, throughput, and resource usage.
+
+Goal: Ensure the system meets performance requirements.
+
+When to use: General performance evaluation before deployment.
+
+Example: Checking that a web page loads within 2 seconds for 500 concurrent users.
+
+Key Metric: Response time, throughput, CPU/memory utilization.
+
+2. Load Testing
+
+Purpose: Test system behavior under expected peak load.
+
+Focus: How the system handles normal and peak traffic.
+
+Goal: Identify bottlenecks and system limits under load.
+
+When to use: Before release or high traffic events.
+
+Example: Simulate 1000 users logging in simultaneously to an e-commerce site.
+
+Key Metric: Throughput, response time under peak load.
+
+3. Stress Testing
+
+Purpose: Test system behavior beyond normal limits.
+
+Focus: Stability and failure recovery under extreme conditions.
+
+Goal: Identify breaking points and check graceful recovery.
+
+When to use: To understand system limits or resilience.
+
+Example: Simulate 5000 users when the system is designed for 1000.
+
+Key Metric: Point of failure, error rates, crash recovery.
+
+4. Endurance Testing (Soak Testing)
+
+Purpose: Test system performance over a long duration.
+
+Focus: Memory leaks, resource depletion, or degradation over time.
+
+Goal: Ensure system can handle long-term continuous usage.
+
+When to use: Systems that run continuously (e.g., servers, payment gateways).
+
+Example: Run 1000 users continuously for 24 hours to check for memory leaks.
+
+Key Metric: Response time trends, memory/CPU usage over time.
+
+1️⃣ Performance Testing
+
+Definition:
+
+Testing to measure how fast, responsive, and stable a system is under a specific workload.
+
+Focuses on speed, scalability, and reliability.
+
+Goal: Ensure the application performs well for its intended users.
+
+Example:
+
+Testing a Petstore website to see how quickly searching products responds when 50 users browse simultaneously.
+
+✅ Key metrics: response time, throughput, CPU/memory usage.
+
+2️⃣ Load Testing
+
+Definition:
+
+Type of performance testing where you simulate expected user load to see if the system can handle it.
+
+Goal: Ensure the system works under normal and peak load conditions.
+
+Example:
+
+50 users logging in to Petstore at the same time.
+
+Measure if all users can login successfully and quickly.
+
+Difference from Performance Testing:
+
+Performance testing is general, measuring speed and stability.
+
+Load testing is specific, testing expected load conditions.
+
+3️⃣ Stress Testing
+
+Definition:
+
+Type of testing where you push the system beyond its limits to see how it behaves under extreme conditions.
+
+Goal: Find breaking points and see how the system recovers.
+
+Example:
+
+5000 users trying to access Petstore at the same time when it’s designed for 500.
+
+Observe if server crashes, slows down, or recovers gracefully.
+
+✅ Useful to find bottlenecks and plan scaling strategies.
+
+4️⃣ Functional Testing
+
+Definition:
+
+Testing to check if the features of the application work correctly according to requirements.
+
+Focuses on what the system does, not how fast it does it.
+
+Example:
+
+POST /user creates a user.
+
+GET /user/{username} returns the correct user data.
+
+Validating that adding to cart works correctly.
+
+✅ Done with manual testing or automation, usually not about load.
+
+5️⃣ Endurance Testing (Soak Testing)
+
+Definition:
+
+Type of performance testing that checks if the system can handle load over a long period.
+
+Detects memory leaks, resource degradation, or crashes over time.
+
+Goal: Ensure the system remains stable under continuous load.
+
+Example:
+
+Keep 50 users logged into Petstore for 24 hours, performing searches and purchases.
+
+Check for memory leaks, slowdowns, or errors over time.
