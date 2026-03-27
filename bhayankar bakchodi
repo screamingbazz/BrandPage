@@ -3997,3 +3997,718 @@ System switches immediately to single-user mode (does not persist after reboot)
 sudo systemctl isolate reboot.target
 sudo systemctl isolate poweroff.target
 System switches into reboot/shutdown mode
+
+
+What SELinux is SELinux is a mandatory access control (MAC) system. That means it controls who (or what process) can access which files, ports, or resources, even if traditional permissions would allow it. Think of it like this: Normal Linux permissions = “user/group can read/write/execute” SELinux = “even if allowed, should this action really happen?”
+
+Enforcing Mode
+SELinux policy is actively enforced.
+Unauthorized access is blocked.
+Violations are logged in /var/log/audit/audit.log.
+2. Permissive Mode
+SELinux policy is not enforced.
+Access that would normally be blocked is allowed, but violations are still logged.
+Useful for testing or debugging policies.
+3. Disabled Mode
+SELinux is completely turned off.
+No policies are enforced, and nothing is logged.
+How to Check SELinux Mode
+Using getenforce
+getenforce
+Outputs: Enforcing, Permissive, or Disabled.
+Using sestatus
+sestatus
+Shows detailed info: current mode, policy loaded, and booleans.
+1. Temporarily Change SELinux Mode
+This change doesn’t persist after a reboot.
+Use the setenforce command:
+sudo setenforce 1   # Switch to Enforcing
+sudo setenforce 0   # Switch to Permissive
+You can verify with:
+getenforce
+2. Permanently Change SELinux Mode
+Edit the SELinux configuration file:
+sudo nano /etc/selinux/config
+Look for the line:
+SELINUX=enforcing
+Change it to one of the following:
+SELINUX=enforcing   # Enforcing mode
+SELINUX=permissive  # Permissive mode
+SELINUX=disabled    # Disabled mode
+Save the file and reboot your system for changes to take effect.
+
+A context is like a “security label” assigned to every file, process, and resource. It tells SELinux who can do what based on the policy.
+Structure of an SELinux Context
+A context has four main parts:
+user:role:type:level
+User – SELinux user identity (not the Linux username)
+Role – Defines what roles a user can assume (usually object_r for files)
+Type – The most important part; defines access rules for processes/files (httpd_t, ssh_t, etc.)
+Level – Optional; used in MLS (Multi-Level Security) systems (s0:c0,c1)
+Example:
+system_u:object_r:httpd_sys_content_t:s0
+system_u → SELinux user
+object_r → Role
+httpd_sys_content_t → Type (label for web content)
+s0 → Security level
+How to View SELinux Context
+For files:
+ls -Z /path/to/file
+For processes:
+ps -eZ | grep process_name
+Example: check context of Apache:
+ps -eZ | grep httpd
+SELinux uses these contexts to allow or deny access. Even if Linux file permissions allow an action, SELinux will block it if the context rules don’t match.
+
+1. SELinux User
+This is not your Linux username.
+SELinux comes with predefined users, e.g.:
+system_u – for system processes
+unconfined_u – for normal users without restrictions
+staff_u – for staff-type users
+You usually select one of these predefined users; you rarely create your own unless you are writing a custom policy.
+2. Role
+Roles define what the SELinux user is allowed to do.
+Common roles:
+object_r – for files/objects
+system_r – for system daemons
+staff_r – for staff users
+Roles are mostly predefined in SELinux policy. You pick a valid one; you don’t invent new roles unless you’re writing custom SELinux policies.
+3. Type
+This is the most important part of the context. It’s what SELinux uses to allow or deny actions.
+Examples:
+httpd_t – Apache process
+httpd_sys_content_t – web files
+ssh_t – SSH process
+You usually use predefined types from the SELinux policy.
+If your application or service is custom, you can create a new type, but this requires writing a custom policy module.
+4. Level
+Only used in MLS (Multi-Level Security) systems.
+Standard Linux setups usually just have s0.
+Predefined; you normally don’t create your own.
+
+✅ Summary:
+
+Most SELinux contexts are predefined.
+
+What is Type Enforcement (TE)?
+Type Enforcement (TE) is the main access control mechanism in SELinux.
+In TE, everything (files, processes, ports, etc.) is assigned a “type”.
+Policies then define which types can interact with which other types, and how.
+
+Think of it like a traffic control system:
+
+Each process and resource has a type (like a traffic badge).
+TE rules are the traffic rules: they say, “process type A can read file type B, but cannot execute it.”
+How It Works
+Assign types
+Files, directories, processes, and ports all get a type.
+Examples:
+Process: httpd_t (Apache server)
+File: httpd_sys_content_t (web files)
+Define rules
+Rules are written in the SELinux policy.
+Example:
+Allow httpd_t processes to read httpd_sys_content_t files.
+Deny httpd_t from writing /etc/passwd.
+Enforce access
+When a process tries to access a resource, SELinux checks the type of the process and the type of the resource against the rules.
+Access is allowed or denied based on the policy.
+Example
+Process type: httpd_t (Apache)
+File type: httpd_sys_content_t (web content)
+
+Policy rule:
+allow httpd_t httpd_sys_content_t:dir { read write execute };
+Meaning: Apache can read/write/execute files labeled as web content.
+
+1. Understand the Components
+Take this example:
+allow httpd_t httpd_sys_content_t:dir { read write execute };
+allow → This is the permission type, meaning “grant access.”
+httpd_t → Source type (the process, e.g., Apache).
+httpd_sys_content_t → Target type (the resource, e.g., files/directories).
+dir → The class of object (could be file, dir, port, etc.).
+{ read write execute } → Permissions granted for that class.
+2. Write a Custom Policy Module
+Create a .te file
+Example: myhttpd.te
+module myhttpd 1.0;
+require {
+    type httpd_t;
+    type httpd_sys_content_t;
+    class dir { read write execute };
+}
+# Allow httpd_t to read/write/execute directories labeled httpd_sys_content_t
+allow httpd_t httpd_sys_content_t:dir { read write execute };
+module myhttpd 1.0; → Names your policy module
+require { ... } → Declares the types and classes you will reference
+allow ... → The actual rule
+Compile the policy module
+checkmodule -M -m -o myhttpd.mod myhttpd.te
+-M -m → Generate a module from the TE file
+-o myhttpd.mod → Output file
+Package it into a loadable module
+semodule_package -o myhttpd.pp -m myhttpd.mod
+.pp file → SELinux policy package
+Install the module
+sudo semodule -i myhttpd.pp
+This loads the rule into SELinux.
+Changes are persistent.
+Verify the module
+semodule -l | grep myhttpd
+Confirms your policy module is installed.
+✅ Tips:
+Use audit2allow if SELinux logs show blocked access — it can help generate TE rules automatically.
+Always test in permissive mode first to avoid locking your system.
+
+What SELinux Booleans Do
+SELinux policies are strict by default.
+Booleans let you adjust behavior for specific use cases.
+Example: Allowing Apache (httpd_t) to serve user home directories without writing a new policy.
+2. How to View Booleans
+getsebool -a
+Lists all SELinux booleans and their current state (on or off).
+Example snippet:
+allow_httpd_anon_write --> off
+httpd_enable_homedirs --> on
+allow_httpd_anon_write → if turned on, Apache can write to anonymous directories
+httpd_enable_homedirs → allows serving user home directories
+3. How to Change Booleans
+Temporarily (until next reboot)
+sudo setsebool httpd_enable_homedirs on
+sudo setsebool httpd_enable_homedirs off
+Permanently
+sudo setsebool -P httpd_enable_homedirs on
+-P flag makes it persistent across reboots
+4. Examples
+Allow Apache to connect to the network:
+sudo setsebool -P httpd_can_network_connect on
+Allow MySQL to read/write home directories:
+sudo setsebool -P mysql_connect_home_dirs on
+✅ Key Points:
+Booleans are predefined switches in SELinux policies.
+They let you adjust behavior without writing custom modules.
+Always check with getsebool -a before changing.
+
+Where SELinux Logs Are Stored
+Main location:
+/var/log/audit/audit.log
+Sometimes, denied access messages also appear in:
+/var/log/messages
+On systems without auditd, SELinux messages may go to the system journal:
+journalctl | grep SELinux
+2. Reading SELinux Logs
+Example: see recent denied access attempts:
+ausearch -m avc -ts today
+avc = Access Vector Cache messages (denials)
+-ts today = filter from today
+Another way:
+grep "AVC" /var/log/audit/audit.log
+3. Understanding an AVC Denial Message
+Example log line:
+type=AVC msg=audit(1678372000.123:456): avc:  denied  { write } for  pid=1234 comm="httpd" name="index.html" dev="sda1" ino=5678 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:httpd_sys_content_t:s0 tclass=file
+Breakdown:
+pid=1234 → Process ID
+comm="httpd" → Command / process name
+scontext=system_u:system_r:httpd_t:s0 → Source context (process)
+tcontext=system_u:object_r:httpd_sys_content_t:s0 → Target context (file)
+{ write } → Denied action
+tclass=file → Class of object
+4. Using audit2allow to Generate Policy
+SELinux provides a tool to turn AVC denials into allow rules:
+ausearch -m avc -ts today | audit2allow -M mypolicy
+This generates a policy module mypolicy.pp you can install:
+sudo semodule -i mypolicy.pp
+Always review rules before applying to avoid accidentally giving too much access.
+✅ Key Points
+Audit logs = your main window into SELinux activity
+Denials appear as AVC messages
+Use ausearch + audit2allow to analyze and create rules safely
+
+
+
+Scenario: Root password is forgotten, and you need to regain access.
+Step 1: Reboot the system
+If the system is running, reboot it:
+reboot
+If you are already at the login prompt, you may need to physically access the server console or use the hypervisor/remote console.
+Why:
+We need to boot into rescue or emergency mode to change the password.
+Step 2: Interrupt GRUB at boot
+During boot, when the GRUB menu appears:
+Highlight the default RHEL kernel.
+Press e to edit the boot parameters.
+Why:
+We’re going to boot into single-user mode or emergency mode to reset the password.
+Step 3: Edit the boot parameters
+Find the line starting with:
+linux16 /vmlinuz-<version> ...
+or
+linux /vmlinuz-<version> ...
+At the end of the line, append one of these:
+For RHEL 7/8:
+rd.break
+(Alternative older method: single or 1)
+Meaning:
+rd.break → Breaks before the root filesystem is mounted in read-write mode.
+Allows emergency shell to reset password.
+Step 4: Boot into emergency shell
+Press Ctrl + X to boot with the modified parameters.
+You’ll see a prompt like:
+switch_root:/#
+Step 5: Remount the root filesystem in read/write mode
+By default, the filesystem is read-only.
+Command:
+mount -o remount,rw /sysroot
+Meaning:
+mount → remount filesystem
+-o remount,rw → remount read/write
+/sysroot → root filesystem in emergency mode
+Step 6: Chroot into the system
+Command:
+chroot /sysroot
+Meaning:
+chroot → Change root to /sysroot
+Gives normal system environment for changing passwords.
+Step 7: Reset the root password
+Command:
+passwd root
+You’ll be prompted to enter a new password twice.
+Example:
+New password: <type new password>
+Retype new password: <confirm>
+Meaning:
+passwd → changes the password for the given user (here root)
+Updates /etc/shadow with new hash.
+Step 8: Relabel SELinux context (Important)
+In RHEL, booting with rd.break bypasses SELinux, so we must relabel files.
+Command:
+touch /.autorelabel
+Meaning:
+Forces SELinux to relabel filesystem on next boot.
+Prevents SELinux denial errors after changing password.
+Step 9: Exit chroot and reboot
+Exit chroot:
+exit
+Remount root (optional):
+mount -o remount,ro /sysroot
+Continue boot:
+exit
+System will boot normally. SELinux will relabel in background (may take some minutes).
+Step 10: Test the new password
+At login prompt, enter:
+root
+<new password>
+If successful, root access is restored.
+
+What is chroot?
+chroot stands for “change root”.
+It is a Linux command that changes the apparent root directory (/) for a process and its children.
+After running chroot /newroot, the process cannot see anything outside /newroot.
+It effectively isolates the environment, creating a “mini Linux system” inside a directory.
+Think of it as giving a process its own “sandboxed root filesystem.”
+Why it’s used
+System recovery / rescue
+When you boot RHEL in emergency mode (rd.break), the root filesystem is not fully mounted.
+chroot /sysroot allows you to operate as if you booted normally, so you can:
+Reset root password
+Reinstall bootloader
+Fix configuration files
+Testing / isolation
+Developers can test software in a chroot environment without affecting the main system.
+Package building
+Some Linux distributions use chroot to build packages in a clean environment.
+Basic Syntax
+chroot [OPTION] NEWROOT [COMMAND]
+NEWROOT → directory to act as new /
+[COMMAND] → optional command to run inside chroot (default is a shell)
+Example 1: Enter emergency root
+chroot /sysroot
+/sysroot is mounted root filesystem from emergency mode
+After running this, your shell behaves as if /sysroot is /
+You can now run passwd root or yum update kernel as if the system is booted normally.
+Example 2: Run a command inside chroot
+chroot /mnt /bin/bash
+Starts a bash shell with /mnt as /
+All commands run inside are limited to /mnt
+
+GRUB Password in RHEL
+Purpose
+Protect GRUB menu from unauthorized edits.
+Prevent someone from:
+Booting into single-user/emergency mode.
+Changing kernel parameters.
+Accessing root without logging in.
+RHEL uses GRUB 2. Passwords are stored in hashed form in /boot/grub2/user.cfg (BIOS) or /boot/efi/EFI/redhat/grub.cfg (UEFI).
+Step 1: Generate a GRUB password hash
+Use grub2-setpassword command:
+grub2-setpassword
+You’ll be prompted:
+Enter new password:
+Confirm new password:
+Meaning:
+grub2-setpassword → prompts for a password and generates hashed password for GRUB 2.
+The hash is stored in /boot/grub2/user.cfg.
+Important: This is secure, the password is not stored in plain text.
+Alternative: Manual hash generation
+grub2-mkpasswd-pbkdf2
+Prompts for password
+Outputs something like:
+PBKDF2 hash of your password is grub.pbkdf2.sha512.10000.abcdef1234567890...
+You can use this hash directly in /etc/grub.d/40_custom for manual setup.
+Step 2: Update GRUB configuration
+BIOS-based system
+grub2-mkconfig -o /boot/grub2/grub.cfg
+UEFI-based system
+grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
+Meaning:
+grub2-mkconfig → generates the actual grub.cfg file from scripts in /etc/grub.d and /etc/default/grub.
+-o <file> → output file for GRUB to use at boot.
+This ensures the password protection is applied at boot.
+Step 3: Test GRUB password
+Reboot the system:
+reboot
+At GRUB menu, try:
+Press e to edit a kernel entry
+It should prompt for the password
+Meaning:
+If password is correct → GRUB allows booting
+If wrong → access denied
+Step 4: Optional - Manual setup using 40_custom
+If you want to manually add the password:
+Edit file:
+vi /etc/grub.d/40_custom
+Add:
+set superusers="root"
+password_pbkdf2 root <paste-your-hash-here>
+Regenerate GRUB config:
+grub2-mkconfig -o /boot/grub2/grub.cfg   # BIOS
+# or
+grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg   # UEFI
+Step 5: Important Production Notes
+Always backup grub.cfg before making changes:
+cp /boot/grub2/grub.cfg /boot/grub2/grub.cfg.bak
+Verify kernel entries before rebooting.
+Misconfiguring GRUB can make system unbootable.
+UEFI vs BIOS
+BIOS → /boot/grub2/grub.cfg
+UEFI → /boot/efi/EFI/redhat/grub.cfg
+Password types
+password_pbkdf2 → hashed, secure, recommended
+password → plain text, insecure (avoid in production)
+Step 6: Reset GRUB password if forgotten
+If you forget the GRUB password:
+Boot using RHEL installation media (rescue mode).
+Mount root filesystem:
+mount /dev/sda1 /mnt
+Chroot into the system:
+chroot /mnt
+Remove or regenerate /boot/grub2/user.cfg:
+rm /boot/grub2/user.cfg
+grub2-setpassword
+Regenerate GRUB config:
+grub2-mkconfig -o /boot/grub2/grub.cfg
+Reboot and test.
+This is the safe emergency method to reset GRUB password in production.
+
+Step 1: Obtain RHEL Installation Media
+Download the RHEL ISO from the Red Hat Customer Portal.
+Make sure the ISO matches the same version/minor release as your installed system.
+Make it bootable:
+
+USB drive (pendrive):
+# On Linux, assuming ISO is rhel.iso and USB is /dev/sdb
+sudo dd if=rhel.iso of=/dev/sdb bs=4M status=progress && sync
+dd → writes the ISO to the USB
+bs=4M → block size, faster write
+sync → ensures all data is written
+
+DVD: burn ISO using your preferred software.
+Production Tip: Bootable media must be physically connected to the server before reboot.
+
+Step 2: Boot from Installation Media
+Reboot the server.
+Enter BIOS/UEFI boot menu:
+Keys vary: F12, F10, Esc, Del
+Select USB or DVD drive as boot device.
+Meaning:
+The system temporarily boots from external media instead of your hard disk.
+This is essential because we cannot log in normally when root password is forgotten.
+✅ No Linux commands run here yet; this is BIOS/boot-level operation.
+
+Step 3: Select “Troubleshooting”
+Once the RHEL installation menu appears:
+Highlight Troubleshooting (bottom of menu)
+Press Enter
+This gives access to rescue and recovery options.
+
+Step 4: Choose “Rescue a Red Hat Enterprise Linux system”
+Select Rescue a RHEL system → Enter
+The system will start a minimal rescue environment.
+
+Step 5: Mount your Linux installation
+Prompt appears:
+1) Continue with mounting your system under /mnt/sysimage
+2) Skip mounting your system
+Choose 1 → mounts your system under /mnt/sysimage
+Meaning:
+/mnt/sysimage is now your root filesystem mount point.
+You can now access /etc/shadow, /boot/grub2, /etc/grub.d from the live rescue environment.
+✅ This is the first point where commands actually interact with the installation media:
+The rescue environment reads your mounted partitions from the hard disk while booting from the media.
+
+Step 5: Mount Your Linux Installation — Commands
+When you choose option 1 in rescue mode, the system automatically mounts your installed root filesystem under /mnt/sysimage. But sometimes you may need to do it manually (or verify it). Here’s how:
+
+1. Identify your root partition
+Before mounting, find out which disk/partition contains your root filesystem:
+lsblk -f
+Example output:
+NAME   FSTYPE LABEL UUID                                 MOUNTPOINT
+sda
+├─sda1 ext4         a1b2c3d4-5678-90ef-1234-567890abcdef /boot
+├─sda2 xfs          1234abcd-5678-90ef-1234-abcdef567890 /
+└─sda3 swap         abcdef12-3456-7890-abcd-ef1234567890 [SWAP]
+
+In this example:
+/dev/sda2 is root /
+/dev/sda1 is /boot
+
+2. Mount root filesystem manually (optional)
+If the rescue environment didn’t automatically mount:
+mount /dev/sda2 /mnt/sysimage
+mount → attaches a filesystem to a directory.
+/dev/sda2 → root partition of your installed system.
+/mnt/sysimage → mount point provided by rescue environment.
+
+3. Mount /boot (if separate partition)
+If /boot is on a separate partition (/dev/sda1 in example):
+mount /dev/sda1 /mnt/sysimage/boot
+Ensures GRUB files and kernel images are accessible.
+
+4. Verify mounts
+ls /mnt/sysimage
+Should show directories like: etc, boot, home, var
+df -h /mnt/sysimage
+Shows which partition is mounted and confirms size/usage.
+
+Step 6: Enter Shell
+chroot /mnt/sysimage
+Changes root to your installed system so you can run commands as if booted normally.
+
+Step 7: Reset Password or Repair GRUB
+passwd root                       # Reset root password
+grub2-mkconfig -o /boot/grub2/grub.cfg   # Regenerate GRUB
+fsck -f /dev/sda1                 # Check filesystem (if needed)
+Important: /dev/sda1 should be your system partition, not the USB/installation media. Use lsblk to confirm.
+
+Step 8: Exit and Reboot
+exit       # Exit chroot
+reboot    # Reboot system
+Remove USB/DVD so the system boots from disk.
+
+✅ Key Clarifications About Installation Media
+No Linux commands run while booting the ISO — the media itself provides a temporary Linux environment.
+Commands start after rescue environment loads.
+Mounting partitions (/mnt/sysimage) is how the live environment accesses your system.
+Always confirm which disk is your system root vs the USB (lsblk) — /dev/sda1 could sometimes be the pendrive.
+
+Step 1: Install vsftpd
+sudo yum install vsftpd -y
+Explanation:
+yum install vsftpd → installs the Very Secure FTP Daemon package.
+-y → automatically confirms installation.
+Production tip: Always install from RHEL official repositories for security.
+
+Step 2: Start and Enable vsftpd Service
+sudo systemctl start vsftpd
+sudo systemctl enable vsftpd
+sudo systemctl status vsftpd
+Explanation:
+systemctl start vsftpd → starts the FTP service immediately.
+systemctl enable vsftpd → makes it auto-start on boot.
+systemctl status vsftpd → checks service status.
+
+Step 3: Configure Firewall
+Allow FTP ports:
+sudo firewall-cmd --permanent --add-service=ftp
+sudo firewall-cmd --reload
+Explanation:
+--add-service=ftp → opens port 21 for FTP traffic.
+--reload → applies changes.
+Production note: For passive FTP, additional ports may need opening (e.g., 30000–31000).
+
+Step 4: Backup and Edit vsftpd Configuration
+Backup original config:
+sudo cp /etc/vsftpd/vsftpd.conf /etc/vsftpd/vsftpd.conf.bak
+Edit:
+sudo vi /etc/vsftpd/vsftpd.conf
+Key parameters to set:
+Parameter	Value	Explanation
+anonymous_enable	NO	Disable anonymous FTP for security
+local_enable	YES	Allow local users to login
+write_enable	YES	Allow uploading/modifying files
+chroot_local_user	YES	Restrict users to their home directories
+pasv_min_port	30000	For passive FTP range
+pasv_max_port	31000	For passive FTP range
+allow_writeable_chroot=YES
+
+Step 5: Restart vsftpd Service
+sudo systemctl restart vsftpd
+Reloads the configuration changes.
+
+Step 6: Create FTP Users
+sudo useradd ftpuser
+sudo passwd ftpuser
+Creates a dedicated FTP user (ftpuser).
+Production tip: Use restricted directories and avoid giving FTP users root access.
+Optional: Restrict FTP user to their home directory:
+sudo mkdir -p /home/ftpuser/ftp
+sudo chown ftpuser:ftpuser /home/ftpuser/ftp
+
+Step 7: SELinux Considerations (if enforcing)
+Check SELinux status:
+sestatus
+If enforcing, allow FTP write:
+sudo setsebool -P ftp_home_dir on
+Explanation:
+ftp_home_dir on → allows users to upload files to their home directory.
+
+Step 8: Test FTP Server
+From a client or localhost:
+ftp <server-ip>
+Login with ftpuser credentials
+Test upload/download files:
+put testfile.txt
+get testfile.txt
+
+Step 9: Optional – Enable Passive FTP for Firewalls/NAT
+In /etc/vsftpd/vsftpd.conf:
+pasv_enable=YES
+pasv_min_port=30000
+pasv_max_port=31000
+Then open ports in firewall:
+sudo firewall-cmd --permanent --add-port=30000-31000/tcp
+sudo firewall-cmd --reload
+
+ftp 192.168.1.100
+Name: ftpuser
+Password: ******
+ftp> pwd
+Remote directory: /home/ftpuser
+ftp> !pwd
+Local directory: /home/user
+ftp> lcd /home/user/downloads
+Local directory now /home/user/downloads
+ftp> get report.txt
+# File saved to /home/user/downloads/report.txt
+ftp> put upload.txt
+# File uploaded from /home/user/downloads/upload.txt to /home/ftpuser/upload.txt
+ftp> bye
+
+1. What is NFS
+NFS allows you to share directories over the network.
+Clients can mount remote directories as if they are local.
+
+Example:
+Server (/data)  ---> shared --->  Client (/mnt)
+
+2. Architecture
+Component	Role
+NFS Server	Shares directories
+NFS Client	Mounts and accesses shared directories
+rpcbind	Helps clients locate NFS services
+
+3. Step-by-Step NFS Server Configuration
+Step 1: Install NFS Packages
+sudo yum install nfs-utils -y
+Explanation:
+nfs-utils → installs NFS server, client tools, and required daemons.
+
+Step 2: Start and Enable Services
+sudo systemctl start nfs-server
+sudo systemctl enable nfs-server
+sudo systemctl start rpcbind
+sudo systemctl enable rpcbind
+Explanation:
+Service	Purpose
+nfs-server	Main NFS service
+rpcbind	Maps RPC services for NFS
+Check status:
+systemctl status nfs-server
+
+Step 3: Create Shared Directory
+sudo mkdir -p /nfs_share
+sudo chmod 755 /nfs_share
+Explanation:
+Directory to be shared with clients.
+
+5. Correct Way to Configure Directory
+Step: Assign ownership to nfsnobody
+sudo chown -R nfsnobody:nfsnobody /nfs_share
+Set permissions
+sudo chmod 755 /nfs_share
+
+Step 4: Configure Exports File
+Edit file:
+sudo vi /etc/exports
+Add entry:
+/nfs_share 192.168.1.0/24(rw,sync,no_root_squash)
+Explanation of options
+Option	Meaning
+rw	Read and write access
+ro	Read-only access
+sync	Write changes immediately (safe for production)
+async	Faster but less safe
+no_root_squash	Remote root acts as root (use carefully)
+root_squash	Maps root user to anonymous user (default, safer)
+
+Step 5: Apply Export Configuration
+sudo exportfs -rav
+Explanation:
+-r → re-export directories
+-a → apply all entries
+-v → verbose output
+Check exports:
+exportfs -v
+
+Step 6: Configure Firewall
+sudo firewall-cmd --permanent --add-service=nfs
+sudo firewall-cmd --permanent --add-service=rpc-bind
+sudo firewall-cmd --permanent --add-service=mountd
+sudo firewall-cmd --reload
+
+Step 7: SELinux Configuration
+Check status:
+sestatus
+Allow NFS sharing:
+sudo setsebool -P nfs_export_all_rw on
+
+4. Verify NFS Server
+Check exported directories:
+showmount -e localhost
+Output example:
+Export list for localhost:
+/nfs_share 192.168.1.0/24
+
+5. Configure NFS Client (for testing)
+Step 1: Install NFS utilities
+sudo yum install nfs-utils -y
+Step 2: Create mount point
+sudo mkdir -p /mnt/nfs_client
+Step 3: Mount NFS share
+sudo mount 192.168.1.100:/nfs_share /mnt/nfs_client
+192.168.1.100 → NFS server IP
+Step 4: Verify
+df -h
+You should see NFS mount listed.
+
+6. Permanent Mount (Production)
+Edit:
+sudo vi /etc/fstab
+Add:
+192.168.1.100:/nfs_share  /mnt/nfs_client  nfs  defaults  0 0
+Apply:
+mount -a
+
