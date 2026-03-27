@@ -1,0 +1,609 @@
+Variables in Shell Scripts
+
+Variables store data (text, numbers, paths, etc.)
+
+a) Declaring a variable
+name="Alice"
+age=25
+
+Rules:
+No spaces around =
+Names can use letters, numbers, underscore (_)
+Cannot start with a number
+
+b) Accessing variables
+Use $ before the variable name:
+echo "My name is $name and I am $age years old."
+
+Output:
+My name is Alice and I am 25 years old.
+
+c) Reading user input into a variable
+#!/bin/bash
+echo "Enter your name:"
+read username
+echo "Hello, $username!"
+
+Script Arguments
+When you run a script, you can pass arguments (parameters) to it. Special variables help you access them.
+
+Variable	Meaning	Example
+$0	Name of the script	./myscript.sh
+$1, $2, ... $9	First, second, … ninth argument	$1 = first arg
+$#	Number of arguments passed	./script.sh a b c → $# = 3
+$@	All arguments as separate words	$@ = a b c
+$*	All arguments as a single string	$* = "a b c"
+
+Example:
+#!/bin/bash
+echo "Script name: $0"
+echo "First argument: $1"
+echo "All arguments using \$@: $@"
+echo "Number of arguments: $#"
+
+Run:
+./myscript.sh apple banana cherry
+
+Output:
+Script name: ./myscript.sh
+First argument: apple
+All arguments using $@: apple banana cherry
+Number of arguments: 3
+
+2️⃣ Last Command and Process Info
+Variable	Meaning	Example
+$?	Exit status of the last command	0 = success, non-zero = error
+$$	Process ID (PID) of the script	Useful for temp files: /tmp/file_$$
+$!	PID of last background process	sleep 10 & echo $! → PID of sleep
+$-	Current options set in the shell	e.g., i if interactive
+$LINENO	Current line number in the script	Useful for debugging
+
+Example:
+#!/bin/bash
+ls /nonexistent
+echo "Last command exit status: $?"
+echo "Script PID: $$"
+
+Output:
+ls: cannot access '/nonexistent': No such file or directory
+Last command exit status: 2
+Script PID: 12345
+
+#!/bin/bash
+echo "Enter first name and last name:"
+read first last
+echo "First name: $first"
+echo "Last name: $last"
+
+Basic if...then...else Syntax
+if [ condition ]; then
+    # commands if condition is true
+else
+    # commands if condition is false
+fi
+
+- [ condition ] → test expression
+- then → start of the true block
+- else → optional, runs if condition is false
+- fi → closes the if block
+
+Example:
+#!/bin/bash
+echo "Enter a number:"
+read num
+
+if [ $num -gt 10 ]; then
+    echo "Number is greater than 10"
+else
+    echo "Number is 10 or less"
+fi
+
+2️⃣ elif (Else-If) Syntax
+Allows multiple conditions:
+
+if [ condition1 ]; then
+    # commands if condition1 is true
+elif [ condition2 ]; then
+    # commands if condition2 is true
+else
+    # commands if none of the above are true
+fi
+
+Example:
+#!/bin/bash
+echo "Enter a number:"
+read num
+
+if [ $num -gt 10 ]; then
+    echo "Number is greater than 10"
+elif [ $num -eq 10 ]; then
+    echo "Number is equal to 10"
+else
+    echo "Number is less than 10"
+fi
+
+3️⃣ Common Comparison Operators
+
+a) Numbers
+Operator  Meaning
+-eq       equal
+-ne       not equal
+-gt       greater than
+-ge       greater or equal
+-lt       less than
+-le       less or equal
+
+Example:
+if [ $a -ge $b ]; then
+    echo "$a is greater or equal to $b"
+fi
+
+b) Strings
+Operator  Meaning
+=         equal
+!=        not equal
+-z        string is empty
+-n        string is not empty
+
+Example:
+read name
+if [ "$name" = "Alice" ]; then
+    echo "Hello Alice"
+else
+    echo "You are not Alice"
+fi
+
+*Always quote strings to avoid errors with spaces.*
+
+c) File Tests
+Operator  Meaning
+-e filename   file exists
+-f filename   regular file
+-d filename   directory exists
+-r filename   readable
+-w filename   writable
+-x filename   executable
+
+Example:
+file="test.txt"
+if [ -f "$file" ]; then
+    echo "$file is a regular file"
+else
+    echo "$file does not exist"
+fi
+
+4️⃣ Using Logical Operators
+- && → AND
+- || → OR
+
+Example:
+read a b
+if [ $a -gt 0 ] && [ $b -gt 0 ]; then
+    echo "Both numbers are positive"
+fi
+
+if [ $a -lt 0 ] || [ $b -lt 0 ]; then
+    echo "At least one number is negative"
+fi
+
+*Note: [[ ]] allows && and || inside a single expression.*
+
+5️⃣ Using [[ ]] for Advanced Conditions
+- [[ ]] → more powerful than [ ]
+- Supports pattern matching, string comparisons, and logical operators
+
+Example:
+read name
+if [[ $name == A* ]]; then
+    echo "Name starts with A"
+fi
+* * → wildcard, works like globbing*
+
+6️⃣ Nested If Statements
+Example:
+read num
+if [ $num -gt 0 ]; then
+    if [ $num -lt 10 ]; then
+        echo "Number is between 1 and 9"
+    else
+        echo "Number is 10 or greater"
+    fi
+else
+    echo "Number is zero or negative"
+fi
+
+7️⃣ Example Script Combining Everything
+#!/bin/bash
+echo "Enter your age:"
+read age
+
+if [ $age -lt 0 ]; then
+    echo "Invalid age"
+elif [ $age -lt 18 ]; then
+    echo "You are a minor"
+elif [ $age -le 60 ]; then
+    echo "You are an adult"
+else
+    echo "You are a senior citizen"
+fi
+
+1️⃣ Using $(( )) for Arithmetic
+
+# Syntax:
+# result=$((expression))
+
+Supported Operators:
++   Addition
+-   Subtraction
+*   Multiplication
+/   Division (integer only)
+%   Modulus (remainder)
+**  Exponentiation
+
+Example:
+#!/bin/bash
+read -p "Enter first number: " num1
+read -p "Enter second number: " num2
+
+sum=$((num1 + num2))
+diff=$((num1 - num2))
+prod=$((num1 * num2))
+div=$((num1 / num2))
+mod=$((num1 % num2))
+exp=$((num1 ** num2))
+
+echo "Sum: $sum"
+echo "Difference: $diff"
+echo "Product: $prod"
+echo "Quotient: $div"
+echo "Remainder: $mod"
+echo "Power: $exp"
+
+⚠ Note: Bash supports only integer arithmetic. Use `bc` for floating-point.
+
+2️⃣ Using expr Command
+
+# Requires spaces around operators; * must be escaped
+num1=10
+num2=3
+
+sum=$(expr $num1 + $num2)
+diff=$(expr $num1 - $num2)
+prod=$(expr $num1 \* $num2)
+div=$(expr $num1 / $num2)
+mod=$(expr $num1 % $num2)
+
+echo "Sum: $sum, Diff: $diff, Prod: $prod, Div: $div, Mod: $mod"
+
+3️⃣ Using let Command
+
+# Direct arithmetic in Bash
+let sum=num1+num2
+let diff=num1-num2
+let prod=num1*num2
+let div=num1/num2
+let mod=num1%num2
+
+echo "Sum=$sum, Diff=$diff, Prod=$prod, Div=$div, Mod=$mod"
+
+4️⃣ Using (( )) for Arithmetic Without $
+
+# Modify variables inline
+num1=5
+num2=2
+
+((num1 += num2))   # num1 = num1 + num2
+echo "After addition: $num1"
+
+((num1 *= num2))   # num1 = num1 * num2
+echo "After multiplication: $num1"
+
+5️⃣ Integer Comparison in Conditions
+
+# Use in if statements
+read -p "Enter a number: " num
+
+if [ $num -gt 10 ]; then
+    echo "Number is greater than 10"
+elif [ $num -eq 10 ]; then
+    echo "Number is 10"
+else
+    echo "Number is less than 10"
+fi
+
+Operators for Integer Comparison:
+-eq  equal
+-ne  not equal
+-gt  greater than
+-ge  greater or equal
+-lt  less than
+-le  less or equal
+
+Using bc for Decimal Arithmetic
+bc = Basic Calculator, supports decimals.
+Always use the -l option for floating-point math.
+#!/bin/bash
+
+# Read decimal numbers
+read -p "Enter first number: " num1
+read -p "Enter second number: " num2
+
+# Addition
+sum=$(echo "$num1 + $num2" | bc -l)
+echo "Sum: $sum"
+
+# Subtraction
+diff=$(echo "$num1 - $num2" | bc -l)
+echo "Difference: $diff"
+
+# Multiplication
+prod=$(echo "$num1 * $num2" | bc -l)
+echo "Product: $prod"
+
+# Division
+div=$(echo "$num1 / $num2" | bc -l)
+echo "Quotient: $div"
+
+# Modulus (decimal modulus not directly supported, use scale trick)
+mod=$(echo "$num1 % $num2" | bc -l)
+echo "Remainder: $mod"
+
+# Exponentiation
+exp=$(echo "$num1 ^ $num2" | bc -l)
+echo "Power: $exp"
+
+Sample Run:
+
+Enter first number: 10.5
+Enter second number: 3.2
+Sum: 13.7
+Difference: 7.3
+Product: 33.60
+Quotient: 3.28125
+Remainder: 0.9
+Power: 1461.7189305
+
+Note: Use scale=N to control decimal places, e.g., echo "scale=2; $num1 / $num2" | bc.
+
+for Loop
+Syntax (list-based)
+for variable in item1 item2 item3
+do
+    # commands
+done
+Example 1: Loop through words
+#!/bin/bash
+for fruit in apple banana cherry
+do
+    echo "I like $fruit"
+done
+
+Output:
+
+I like apple
+I like banana
+I like cherry
+Syntax (C-style for loop)
+for (( i=1; i<=5; i++ ))
+do
+    echo "Number $i"
+done
+
+Output:
+
+Number 1
+Number 2
+Number 3
+Number 4
+Number 5
+2️⃣ while Loop
+Syntax
+while [ condition ]
+do
+    # commands
+done
+Example 2: Count numbers
+#!/bin/bash
+count=1
+while [ $count -le 5 ]
+do
+    echo "Count: $count"
+    ((count++))
+done
+
+Output:
+
+Count: 1
+Count: 2
+Count: 3
+Count: 4
+Count: 5
+3️⃣ until Loop
+Opposite of while
+Runs until condition becomes true
+#!/bin/bash
+count=1
+until [ $count -gt 5 ]
+do
+    echo "Count: $count"
+    ((count++))
+done
+
+Output is the same as while loop above.
+
+4️⃣ Looping Through Files / Directories
+#!/bin/bash
+for file in /etc/*.conf
+do
+    echo "File: $file"
+done
+Loops through all .conf files in /etc/.
+5️⃣ Nested Loops
+#!/bin/bash
+for i in 1 2
+do
+    for j in a b
+    do
+        echo "$i - $j"
+    done
+done
+
+Output:
+
+1 - a
+1 - b
+2 - a
+2 - b
+6️⃣ Loop Control Statements
+Command	Purpose
+break	Exit the loop immediately
+continue	Skip to the next iteration
+
+Example:
+
+#!/bin/bash
+for i in 1 2 3 4 5
+do
+    if [ $i -eq 3 ]; then
+        continue    # skip 3
+    fi
+    if [ $i -eq 5 ]; then
+        break       # exit loop at 5
+    fi
+    echo "Number: $i"
+done
+
+Output:
+
+Number: 1
+Number: 2
+Number: 4
+
+Declaring an Array
+# Method 1: Using parentheses
+fruits=("apple" "banana" "cherry")
+
+# Method 2: Assign values individually
+fruits[0]="apple"
+fruits[1]="banana"
+fruits[2]="cherry"
+Indexing starts at 0.
+You can mix numbers and strings.
+2️⃣ Accessing Array Elements
+echo "${fruits[0]}"   # apple
+echo "${fruits[2]}"   # cherry
+Always use ${} to reference array elements.
+3️⃣ Accessing All Elements
+echo "${fruits[@]}"   # apple banana cherry
+echo "${fruits[*]}"   # apple banana cherry
+Both @ and * give all elements.
+Difference: "${array[@]}" preserves spaces in each element; "${array[*]}" joins all elements into a single string.
+4️⃣ Number of Elements in Array
+echo "Number of fruits: ${#fruits[@]}"   # 3
+5️⃣ Looping Through an Array
+for fruit in "${fruits[@]}"
+do
+    echo "I like $fruit"
+done
+
+Output:
+
+I like apple
+I like banana
+I like cherry
+Works with for loops easily.
+6️⃣ Array Indexes
+echo "First index: ${!fruits[0]}"       # 0
+echo "All indexes: ${!fruits[@]}"       # 0 1 2
+${!array[@]} → returns all indexes
+${!array[*]} → behaves similarly
+7️⃣ Adding/Updating Elements
+fruits+=("mango")          # add at end
+fruits[1]="blueberry"      # update index 1
+Now array = apple blueberry cherry mango
+8️⃣ Removing Elements
+unset fruits[2]             # removes cherry
+echo "${fruits[@]}"         # apple blueberry mango
+To remove entire array: unset fruits
+9️⃣ Arrays and Script Arguments
+You can store all script arguments in an array:
+args=("$@")                 # all arguments as array
+echo "First argument: ${args[0]}"
+10️⃣ Example: Array Script
+#!/bin/bash
+
+# Declare array
+colors=("red" "green" "blue")
+
+# Print all elements
+echo "Colors: ${colors[@]}"
+
+# Add new color
+colors+=("yellow")
+
+# Loop through array
+for color in "${colors[@]}"; do
+    echo "Color: $color"
+done
+
+# Array length
+echo "Number of colors: ${#colors[@]}"
+
+Sample Output:
+
+Colors: red green blue
+Color: red
+Color: green
+Color: blue
+Color: yellow
+Number of colors: 4
+✅ Key Points
+Arrays store multiple values in one variable.
+Indexing starts at 0.
+Use "${array[@]}" to loop over all elements.
++= → add elements, unset → remove elements.
+${#array[@]} → gives number of elements, ${!array[@]} → gives indexes.
+Arrays can store strings, numbers, or even results of commands.
+
+#!/bin/bash
+# Prompt user for input
+read -p "Enter some fruits separated by space: " -a fruits
+# Print all elements
+echo "You entered: ${fruits[@]}"
+# Loop through array
+for fruit in "${fruits[@]}"
+do
+    echo "Fruit: $fruit"
+done
+# Array length
+echo "Number of fruits: ${#fruits[@]}"
+
+#!/bin/bash
+# Ask how many elements
+read -p "How many fruits do you want to enter? " n
+# Initialize empty array
+fruits=()
+# Loop to read elements
+for (( i=0; i<n; i++ ))
+do
+    read -p "Enter fruit $((i+1)): " fruit
+    fruits+=("$fruit")
+done
+# Display array
+echo "You entered: ${fruits[@]}"
+
+#!/bin/bash
+fruits=()
+while true; do
+    read -p "Enter a fruit (or press Enter to stop): " fruit
+    if [ -z "$fruit" ]; then
+        break
+    fi
+    fruits+=("$fruit")
+done
+echo "You entered: ${fruits[@]}"
+# Key Points
+# read -a array_name → takes space-separated input into an array.
+# fruits+=("$fruit") → adds an element to the array.
+# You can control input by looping with a count or until user stops.
+# Always use "${array[@]}" when printing or looping to preserve spaces in elements.
