@@ -1,0 +1,3999 @@
+The filesystem hierarchy in Red Hat Enterprise Linux 8 (RHEL 8) organizes all files and directories in a standardized structure. It follows the Filesystem Hierarchy Standard (FHS) to ensure consistency. Everything starts from the root directory (/) and branches into other directories.
+/          – Root directory
+/bin       – Essential user commands (ls, cp, mv)
+/boot      – Bootloader files, kernel (vmlinuz, grub)
+/dev       – Device files (disks, USB devices)
+/etc       – System configuration files (network, users)
+/home      – User home directories (e.g., /home/user1)
+/root      – Home directory for root user
+/lib /lib64 – Essential shared libraries
+/media     – Auto-mounted external devices
+/mnt       – Manually mounted devices
+/opt       – Optional or third-party software
+/proc      – Virtual filesystem (system/process info)
+/sys       – Kernel and hardware information
+/tmp       – Temporary files (cleared on reboot)
+/usr       – User programs and utilities
+    /usr/bin   – User commands
+    /usr/lib   – Libraries
+    /usr/share – Shared data
+/var       – Variable data (logs, databases, mail)
+    /var/log   – Log files
+    /var/spool – Spool files
+/run       – Runtime data (process IDs, system info)
+
+Man Pages (Manual Pages)
+
+What are they?
+Manual pages are the built-in documentation for Linux commands, files, system calls, and library functions.
+
+How to use:
+man command_name
+Example: man ls
+
+Sections in man pages:
+- User commands (ls, cp)
+- System calls (open, read)
+- Libraries (printf)
+- Special files (/dev)
+- File formats (/etc/passwd)
+
+Navigation inside man pages:
+- Space → Next page
+- b → Previous page
+- /keyword → Search keyword
+- q → Quit
+
+Access a specific section:
+- man 5 passwd   # file formats section
+- man 2 open     # system calls
+
+2. --help Option
+Most commands come with a --help flag for a quick summary:
+- ls --help
+- cp --help
+Shows syntax, options, and examples.
+
+Basic Commands for Directories
+a. Viewing Directories
+
+pwd → Print working directory (shows your current path)
+
+pwd
+
+ls → List contents of a directory
+
+ls
+ls -l        # detailed listing
+ls -a        # include hidden files
+ls -lh       # human-readable sizes
+b. Changing Directories
+
+cd → Change directory
+
+cd /home/user
+cd ..        # go up one level
+cd ~         # go to your home directory
+cd -         # go to previous directory
+c. Creating Directories
+
+mkdir → Make a new directory
+
+mkdir myfolder
+mkdir -p parent/child   # create nested directories
+d. Removing Directories
+
+rmdir → Remove empty directories
+
+rmdir myfolder
+
+rm -r → Remove directory with contents
+
+rm -r myfolder
+e. Copying & Moving Directories
+
+Copy directory (cp -r)
+
+cp -r source_dir destination_dir
+
+Move/Rename directory (mv)
+
+mv old_dir new_dir
+🔹 3. Directory Permissions
+
+Each directory has permissions: r (read), w (write), x (execute/access)
+
+View permissions:
+
+ls -ld directory_name
+
+Change permissions:
+
+chmod 755 myfolder   # rwxr-xr-x
+
+Change ownership:
+
+chown user:group myfolder
+🔹 4. Finding Directories
+
+find → Search directories or files
+
+find / -type d -name "myfolder"
+
+cat Command (Concatenate & Display Files)
+✅ What it does
+The cat command is used to view, combine, and create files. Its primary function is to display file contents on the terminal.
+🔹 Syntax
+cat [options] filename(s)
+🔹 Basic Usage
+1. Display a file
+cat test.txt
+Output:
+This is line 1
+This is line 2
+This is line 3
+2. Display multiple files
+cat file1.txt file2.txt
+Output:
+Contents of file1.txt
+Contents of file2.txt
+It concatenates files in the order listed.
+3. Create a new file (using redirection)
+cat > newfile.txt
+Then type content:
+Hello World
+This is a test file
+Press Ctrl+D to save and exit.
+4. Append content to an existing file
+cat >> existingfile.txt
+Add more lines, then press Ctrl+D.
+5. Show line numbers
+cat -n test.txt
+Output:
+1  This is line 1
+2  This is line 2
+3  This is line 3
+6. Show non-printing characters
+cat -v test.txt
+Displays special characters like ^M for carriage return.
+
+
+Shell Expansion in Linux
+✅ What it is
+Shell expansion is a feature in Linux shells (like Bash) where the shell automatically modifies commands or arguments before executing them.
+It allows you to use patterns, variables, and shortcuts instead of typing full commands or filenames.
+🔹 Types of Shell Expansion
+Tilde Expansion (~)
+Parameter/Variable Expansion ($VAR)
+Command Substitution ($(command) or `command`)
+Arithmetic Expansion ($((expression)))
+Brace Expansion ({})
+Pathname (Globbing) Expansion (*, ?, [])
+Quote Removal and Escape Characters
+1️⃣ Tilde Expansion
+Replaces ~ with your home directory.
+cd ~
+If your home is /home/user, the shell interprets it as:
+cd /home/user
+echo ~
+Output:
+/home/user
+2️⃣ Parameter / Variable Expansion
+Replaces variables with its value.
+name="Alice"
+echo "My name is $name"
+Output:
+My name is Alice
+Supports default values:
+echo ${name:-"Unknown"}
+3️⃣ Command Substitution
+Runs a command and replaces it with its output.
+echo "Today is $(date)"
+Output:
+Today is Mon Mar 23 10:45:00 UTC 2026
+Alternative syntax:
+echo "Today is `date`"
+4️⃣ Arithmetic Expansion
+Evaluate mathematical expressions.
+x=5
+y=10
+echo $((x + y))
+Output:
+15
+5️⃣ Brace Expansion
+Generate lists of strings or ranges.
+echo file{1,2,3}.txt
+Output:
+file1.txt file2.txt file3.txt
+echo {A..D}
+Output:
+A B C D
+6️⃣ Pathname Expansion (Globbing)
+Expands wildcards into matching filenames.
+* → matches any number of characters
+? → matches a single character
+[abc] → matches one of the characters inside brackets
+ls *.txt
+Lists all .txt files in the directory.
+ls file?.txt
+Matches files like file1.txt, fileA.txt but not file12.txt.
+7️⃣ Quote Removal and Escape Characters
+Double quotes " " → allow variable and command expansion
+Single quotes ' ' → prevent expansion
+Backslash \ → escape a single character
+echo "Home: $HOME"   # variable expanded
+echo 'Home: $HOME'   # literal $HOME
+echo \$HOME          # prints $HOME
+
+
+Pipes & Commands in Linux
+✅ What are Pipes?
+A pipe (|) is a way to send the output of one command as input to another command.
+This allows you to combine commands to perform complex tasks efficiently.
+Only stdout (standard output) is passed through the pipe; errors (stderr) are not unless redirected.
+🔹 Basic Syntax
+command1 | command2
+command1 → produces output
+command2 → consumes input
+🔹 Example 1: List and count files
+ls -l | wc -l
+ls -l → lists all files in long format
+wc -l → counts the number of lines
+Output:
+25
+(if there are 25 files in the directory)
+🔹 Example 2: Search text in files
+cat file.txt | grep "error"
+cat file.txt → displays file content
+grep "error" → filters lines containing "error"
+Output:
+Line 5: error in configuration
+Line 12: critical error found
+
+Example 4: Combine multiple commands
+ps aux | grep firefox | wc -l
+ps aux → lists all running processes
+grep firefox → filters lines containing "firefox"
+wc -l → counts how many processes are running
+Output:
+3
+
+When to Use 0 and 1
+1️⃣ Standard Input (0)
+0 represents stdin, the default source of input.
+Used with < for input redirection.
+Example: Read from a file instead of keyboard
+sort < file.txt
+Equivalent to:
+sort 0< file.txt
+Here, 0 explicitly refers to stdin.
+
+2️⃣ Standard Output (1)
+1 represents stdout, the default destination for normal output.
+Used with > or >> for output redirection.
+Example: Save command output to a file
+echo "Hello" > file.txt
+Equivalent to:
+echo "Hello" 1> file.txt
+Here, 1 explicitly refers to stdout.
+
+3️⃣ Redirect stdout and stderr separately
+command > out.txt 2> err.txt
+> is shorthand for 1> (stdout)
+2> is stderr
+Writes normal output to out.txt and errors to err.txt
+
+4️⃣ Redirect both stdout and stderr together
+command > all.log 2>&1
+2>&1 → redirects stderr (2) to the same place as stdout (1)
+Both outputs go to all.log
+
+🔹 Quick Examples
+Redirect stdout only:
+ls 1> files.txt
+Redirect stderr only:
+ls /nonexistent 2> errors.txt
+Redirect both stdout and stderr to same file:
+ls /nonexistent > all.txt 2>&1
+Read from stdin explicitly:
+sort 0< data.txt
+
+
+How to Use vi Editor
+
+vi is a modal text editor, which means it has different modes for different actions.
+
+1️⃣ Modes in vi
+Mode	Purpose	How to Enter
+Command Mode	Navigate, delete, copy, save, quit	Default mode when opening a file
+Insert Mode	Insert or type text	Press i, a, o
+Last Line (Ex) Mode	Enter commands like save, quit, search, replace	Press :
+
+⚠ Important: Always press Esc to return to command mode from any other mode.
+
+2️⃣ Opening a File
+vi filename
+If filename exists → opens the file
+If not → creates a new file
+
+3️⃣ Switching to Insert Mode
+Command	What it does
+i	Insert before the cursor
+I	Insert at the beginning of the line
+a	Append after the cursor
+A	Append at the end of the line
+o	Open a new line below the current line
+O	Open a new line above the current line
+Type your text normally after entering insert mode
+Press Esc to go back to command mode
+
+4️⃣ Saving and Exiting (Last Line Mode)
+Command	Description
+:w	Save the file
+:q	Quit if no changes made
+:q!	Quit without saving changes
+:wq or ZZ	Save and quit
+:x	Save and quit (like :wq)
+Enter these commands after pressing : to go to last line mode.
+
+5️⃣ Basic Navigation (Command Mode)
+Key	Action
+h	Move cursor left
+j	Move cursor down
+k	Move cursor up
+l	Move cursor right
+0	Go to beginning of line
+^	Go to first non-blank character
+$	Go to end of line
+gg	Go to first line of file
+G	Go to last line of file
+Ctrl+f	Page down
+Ctrl+b	Page up
+
+Using grep (Most Common Method)
+
+The grep command is designed to search for text patterns in files.
+
+Syntax:
+grep [options] "pattern" filename
+Example 1: Search for a word
+grep "error" logfile.txt
+
+Output:
+
+Line 5: error in configuration
+Line 12: critical error found
+Prints lines containing the word error.
+Example 2: Ignore case
+grep -i "error" logfile.txt
+-i → ignore case (Error, ERROR are matched too)
+Example 3: Show line numbers
+grep -n "error" logfile.txt
+
+Output:
+
+5: error in configuration
+12: critical error found
+-n → shows line numbers where the word occurs
+Example 4: Search recursively in directory
+grep -r "error" /var/log/
+-r → search all files in a directory recursively
+Example 5: Count occurrences
+grep -c "error" logfile.txt
+-c → prints number of lines containing the word
+
+File Descriptors in Linux
+
+A file descriptor is a number that represents an open file or I/O stream for a process. Linux assigns these numbers by default for standard streams:
+
+FD	Name	Meaning / Purpose	Default Source/Destination
+0	stdin	Standard input	Keyboard or redirected file
+1	stdout	Standard output	Terminal or redirected file
+2	stderr	Standard error	Terminal or redirected file
+
+Explanation
+0 = stdin → input to a program (e.g., keyboard or piped input)
+1 = stdout → normal output from a program (e.g., messages, command output)
+2 = stderr → error messages from a program
+
+Local User Management in Linux
+
+Linux stores user accounts and authentication info locally in files like:
+
+File	Purpose
+/etc/passwd	Stores user account info (username, UID, home directory, shell)
+/etc/shadow	Stores encrypted passwords and password info
+/etc/group	Stores group info
+
+1️⃣ Viewing Users
+List all users
+cat /etc/passwd
+Sample line:
+alice:x:1001:1001:Alice:/home/alice:/bin/bash
+Fields:
+Username (alice)
+Password placeholder (x means password is in /etc/shadow)
+UID (1001)
+GID (1001)
+Comment / Full Name (Alice)
+Home Directory (/home/alice)
+Default Shell (/bin/bash)
+
+List currently logged-in users
+who
+Show all users currently logged in (with more info)
+w
+
+2️⃣ Adding a User
+Basic syntax
+sudo useradd username
+This creates the user but does not set a password or home directory by default.
+Create user with home directory and shell
+sudo useradd -m -s /bin/bash alice
+-m → create home directory (/home/alice)
+-s → specify shell
+Set password
+sudo passwd alice
+Prompts to enter password for alice
+
+3️⃣ Modifying a User
+Change username
+sudo usermod -l newname oldname
+Change home directory
+sudo usermod -d /home/newhome -m alice
+-d → new home directory
+-m → move content to new home
+Change shell
+sudo usermod -s /bin/zsh alice
+
+4️⃣ Deleting a User
+Delete user but keep home directory
+sudo userdel alice
+Delete user and home directory
+sudo userdel -r alice
+-r → remove home directory and mail spool
+
+Changing Password in Linux
+
+1️⃣ Change Your Own Password
+Use the passwd command:
+passwd
+Prompts:
+Current password
+New password
+Confirm new password
+
+Example:
+$ passwd
+Current password: ****
+New password: ****
+Retype new password: ****
+passwd: password updated successfully
+
+✅ Works for regular users changing their own password.
+
+2️⃣ Change Another User’s Password (Root Required)
+If you are root or sudo user, you can change any user’s password:
+sudo passwd username
+
+Example:
+sudo passwd john
+Prompts for new password for john
+No need to enter john’s current password
+
+3️⃣ Force User to Change Password on First Login
+sudo chage -d 0 username
+-d 0 → sets the last password change date to 0
+Forces the user to change password at next login
+
+Example:
+sudo chage -d 0 john
+
+4️⃣ Check Password Expiration Info
+chage -l username
+Output Example:
+Last password change                                    : Mar 23, 2026
+Password expires                                        : Jun 21, 2026
+Password inactive                                       : never
+Account expires                                         : never
+Minimum number of days between password change          : 0
+Maximum number of days between password change          : 90
+Number of days of warning before password expires       : 7
+Useful to manage password policies in Linux.
+
+5️⃣ Lock or Unlock a Password
+Lock account (disable login):
+sudo passwd -l username
+Unlock account:
+sudo passwd -u username
+
+Profile Files in Linux
+✅ What are Profile Files?
+Profile files are configuration files that are executed when a user logs in or starts a shell.
+They are used to:
+Set environment variables
+Configure shell settings
+Run startup commands
+Types of Profile Files
+Profile files are mainly divided into:
+1️⃣ System-wide Profile Files (for all users)
+🔸 /etc/profile
+Executed for all users at login
+Used to set global environment variables
+Example:
+export PATH=$PATH:/usr/local/bin
+🔸 /etc/bashrc (or /etc/bash.bashrc)
+Runs for all users in interactive shells
+Used for aliases, functions, etc.
+2️⃣ User-specific Profile Files
+These are located in the user’s home directory (/home/username):
+🔸 ~/.profile
+Executed at login
+Works for most shells (not just bash)
+🔸 ~/.bash_profile
+Executed for login shells (bash only)
+Often used to:
+Set environment variables
+Call .bashrc
+Example:
+if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+fi
+🔸 ~/.bashrc
+Executed for interactive non-login shells
+Most commonly used file
+Used for:
+Aliases
+Functions
+Prompt customization
+Example:
+alias ll='ls -l'
+export EDITOR=vim
+🔸 ~/.bash_logout
+Runs when user logs out
+Used for cleanup tasks
+🔷 Execution Order (Important)
+👉 Login Shell Order:
+/etc/profile → ~/.bash_profile → ~/.bashrc
+(Sometimes .profile is used if .bash_profile is missing)
+👉 Non-login Shell Order:
+~/.bashrc
+
+What is a Group?
+
+A group is a collection of users.
+👉 It is used to manage permissions easily for multiple users at once.
+
+🔷 Why Groups are Used
+Instead of giving permissions to users one by one ❌
+👉 You assign permissions to a group ✅
+
+Example:
+Create group: developers
+Add users: john, alice
+Give permission to group → all users get access
+
+🔷 Types of Groups
+1️⃣ Primary Group
+Each user has one primary group
+Created automatically when user is created
+👉 Example:
+john → primary group: john
+
+2️⃣ Secondary (Supplementary) Groups
+A user can belong to multiple groups
+👉 Example:
+john → developers, admin
+
+🔷 Group File
+Groups are stored in:
+/etc/group
+Example entry:
+developers:x:1002:john,alice
+Fields:
+Group name
+Password (usually x)
+GID (Group ID)
+Members
+
+🔷 Group Management Commands
+1️⃣ Create a Group
+sudo groupadd developers
+
+2️⃣ Delete a Group
+sudo groupdel developers
+
+3️⃣ Add User to a Group
+sudo usermod -aG developers john
+-aG → append user to group
+Without -a, user may be removed from other groups ⚠️
+
+4️⃣ Remove User from Group
+sudo gpasswd -d john developers
+
+5️⃣ Change Primary Group
+sudo usermod -g developers john
+
+6️⃣ View Group Information
+Show groups of a user:
+groups john
+Show user ID and groups:
+id john
+
+7️⃣ List All Groups
+cat /etc/group
+
+4. View user entry manually
+cat /etc/passwd | grep username
+Example:
+cat /etc/passwd | grep john
+
+✅ 5. View group membership
+cat /etc/group | grep username
+
+🔷 2️⃣ Important Files for User Management
+📁 1. /etc/passwd
+👉 Stores basic user information
+Example:
+john:x:1001:1001:John:/home/john:/bin/bash
+Fields:
+Username
+Password placeholder (x)
+UID
+GID
+Comment
+Home directory
+Shell
+
+📁 2. /etc/shadow
+👉 Stores encrypted passwords
+Example:
+john:$6$abc123...:19000:0:99999:7:::
+✔ Only root can access
+✔ Contains password expiry info
+
+📁 3. /etc/login.defs
+👉 Default settings for:
+Password expiry
+UID range
+Password policies
+
+🔷 3️⃣ Important Files for Group Management
+📁 1. /etc/group
+👉 Stores group information
+Example:
+developers:x:1002:john,alice
+Fields:
+Group name
+Password
+GID
+Members
+
+📁 2. /etc/gshadow
+👉 Stores group passwords (encrypted)
+✔ More secure version of /etc/group
+
+Groups with Passwords in Linux
+
+Normally, Linux groups do not require passwords.
+But sometimes, a group can be protected with a password so that only users who know it can temporarily join the group.
+
+1️⃣ Key Files
+File	Purpose
+/etc/group	Normal group info (name, GID, members)
+/etc/gshadow	Secure file for group passwords and admins
+2️⃣ /etc/gshadow Structure
+
+Example entry:
+
+developers:!:john:alice
+
+Fields:
+
+Group name → developers
+Password → ! means no password, otherwise encrypted
+Admins → users who can manage the group (john)
+Members → allowed users (alice)
+
+If a password is set, it’s stored encrypted here.
+
+3️⃣ Setting a Group Password
+
+Use gpasswd command:
+
+sudo gpasswd developers
+Prompts for a password
+Only users who know the password can join the group temporarily using:
+newgrp developers
+4️⃣ Using newgrp
+newgrp groupname → switch current session to that group
+Prompts for group password if set
+Useful for temporary access to files for that group
+newgrp developers
+After entering password → your shell now runs as that group
+Any files you create inherit that group ownership
+5️⃣ Removing or Changing Group Password
+sudo gpasswd -r developers  # remove password
+sudo gpasswd developers     # set/change password
+
+File Descriptors in Linux
+
+A file descriptor is a number that represents an open file or I/O stream for a process. Linux assigns these numbers by default for standard streams:
+
+FD	Name	Meaning / Purpose	Default Source/Destination
+0	stdin	Standard input	Keyboard or redirected file
+1	stdout	Standard output	Terminal or redirected file
+2	stderr	Standard error	Terminal or redirected file
+
+Explanation
+0 = stdin → input to a program (e.g., keyboard or piped input)
+1 = stdout → normal output from a program (e.g., messages, command output)
+2 = stderr → error messages from a program
+
+These numbers let Linux distinguish between normal output and errors and allow redirection like:
+ls /nonexistent > out.txt 2> err.txt
+> redirects FD 1 (stdout)
+2> redirects FD 2 (stderr)
+
+💡 Tip:
+Think of file descriptors as channels:
+0 → keyboard/input
+1 → screen/normal output
+2 → screen/error output
+
+3️⃣ Ways to Change File Permissions
+Method 1️⃣: Symbolic (letters)
+chmod u+rwx,g+rx,o-r file.txt
+u = owner
+g = group
+o = others
++ add permission, - remove, = set exact
+Example:
+chmod g+w file.txt   # give write permission to group
+Method 2️⃣: Numeric / Octal
+Numeric codes:
+r = 4
+w = 2
+x = 1
+Add them for each category (Owner | Group | Others):
+chmod 754 file.txt
+7 = 4+2+1 → owner rwx
+5 = 4+0+1 → group r-x
+4 = 4+0+0 → others r--
+1️⃣ Changing Ownership of a File or Directory
+Linux uses chown to change owner and group.
+Change owner of a file
+sudo chown newowner filename
+Example:
+sudo chown john file.txt
+✅ Now john is the owner of file.txt.
+Change group of a file
+sudo chgrp groupname filename
+Example:
+sudo chgrp developers file.txt
+✅ Now the group of file.txt is developers.
+Change both owner and group
+sudo chown john:developers file.txt
+✅ john is owner and developers is group.
+🔷 2️⃣ Changing Ownership of Directories Recursively
+To change all files and subdirectories under a directory:
+sudo chown -R john:developers /path/to/directory
+-R = recursive
+Applies to all files and subdirectories
+🔷 3️⃣ Giving Permissions to a Directory and Its Contents
+Linux uses chmod for permissions.
+Change permissions of a directory
+chmod 755 /path/to/directory
+7 → owner: rwx
+5 → group: r-x
+5 → others: r-x
+Recursive permission change
+chmod -R 755 /path/to/directory
+✅ Now all files and subdirectories inside get the same permission.
+
+What is Setuid?
+
+Setuid stands for “Set User ID”.
+It is a special permission on executable files.
+When a file has setuid, anyone who runs the file will execute it with the file owner’s permissions, not their own.
+
+Think of it like this:
+You normally run a program as your user. With setuid, you temporarily “borrow” the file owner’s powers to run the program.
+
+🔷 2️⃣ Why is Setuid Useful?
+Some programs need higher privileges to do their job, but you don’t want to give everyone full access to the system.
+
+Common Use Cases:
+passwd command
+Updates /etc/shadow (password file)
+Must run as root to write password data
+Normal users can execute it safely because setuid is set
+Custom programs
+Script or binary that needs to access restricted files
+Users run it safely without giving full root privileges
+
+🔷 3️⃣ How to Check if Setuid is Set
+Use ls -l on the executable:
+ls -l /usr/bin/passwd
+Output example:
+-rwsr-xr-x 1 root root 54256 Mar 23 12:00 /usr/bin/passwd
+Notice:
+s in the owner execute position (rws) → setuid is set
+Owner: root
+Anyone running it executes as root temporarily
+
+🔷 4️⃣ How to Set Setuid
+Syntax:
+chmod u+s filename
+Example:
+sudo chmod u+s myscript.sh
+u+s → add setuid to owner
+ls -l myscript.sh → -rwsr-xr-x
+
+Remove Setuid:
+chmod u-s myscript.sh
+
+Numeric Way
+Add 4 as the first digit of chmod for setuid:
+chmod 4755 myscript.sh
+4 → setuid
+7 → owner rwx
+5 → group r-x
+5 → others r-x
+
+What is Setgid?
+
+Setgid stands for “Set Group ID”.
+It is a special permission that can be applied to files or directories.
+
+Behavior
+On files:
+Executes the file with the file’s group permissions instead of the user’s group.
+Useful for programs that need group-level privileges.
+On directories:
+Any new file or folder created inside inherits the directory’s group automatically.
+Makes collaboration easier, especially in team/shared directories.
+
+🔷 2️⃣ Why is Setgid Used?
+To ensure consistency in group ownership for new files in shared directories
+To allow users to execute a file with the file’s group privileges
+To control access in multi-user environments
+
+Example:
+A team project directory /project should have all new files owned by group developers, no matter who creates them.
+
+🔷 3️⃣ How to Check Setgid
+Use ls -l:
+ls -ld /project
+Output example:
+drwxrwsr-x 2 john developers 4096 Mar 23 12:00 /project
+Notice:
+s in group execute position (rws) → setgid is set
+Without setgid, it would show rwx
+
+🔷 4️⃣ How to Set Setgid
+Syntax (Symbolic method)
+chmod g+s filename_or_directory
+g+s → add setgid
+Symbolic method preserves existing permissions ✅
+
+Example:
+sudo chmod g+s /project
+Now /project is a setgid directory
+New files created inside will inherit the group developers
+
+Remove Setgid
+chmod g-s filename_or_directory
+
+Numeric Method
+First digit controls special permissions:
+4 → setuid
+2 → setgid
+1 → sticky bit
+
+Example:
+Current permissions of directory: rwxr-xr-x → 755
+Add setgid: 2 + 755 → 2755
+chmod 2755 /project
+
+Check:
+ls -ld /project
+drwxrwsr-x 2 john developers 4096 Mar 23 12:00 /project
+
+What is Sticky Bit?
+
+Sticky bit is a special permission used only on directories (mostly).
+It prevents users from deleting or renaming files they don’t own, even if they have write permission to the directory.
+
+Think of it like a “locked playground”:
+Everyone can play/write, but only the owner of a toy (file) can take it away.
+
+🔷 2️⃣ Why Sticky Bit is Used
+Shared directories where multiple users can create files
+Prevents accidental or malicious deletion of other users’ files
+Common in /tmp, /var/tmp, or team project directories
+
+🔷 3️⃣ How to Check Sticky Bit
+Use ls -ld:
+ls -ld /tmp
+Example output:
+drwxrwxrwt 10 root root 4096 Mar 23 12:00 /tmp
+Notice:
+t at the end of permissions → sticky bit is set
+Normal permissions: drwxrwxrw- → sticky bit adds t at the end
+
+🔷 4️⃣ How to Set Sticky Bit
+Symbolic Method
+chmod +t /directory
+Example:
+sudo chmod +t /shared
+ls -ld /shared
+drwxrwxrwt 2 john developers 4096 Mar 23 12:00 /shared
+✅ Now, only file owners can delete their own files in /shared.
+
+Remove Sticky Bit
+chmod -t /directory
+
+Numeric Method
+Sticky bit = 1 in first digit of numeric mode
+Example:
+chmod 1777 /shared
+1 → sticky bit
+7 → owner rwx
+7 → group rwx
+7 → others rwx
+Check with ls -ld /shared → drwxrwxrwt
+
+🔷 5️⃣ Practical Use Cases
+/tmp Directory
+Shared by all users
+Sticky bit ensures you cannot delete others’ temp files
+
+Shared Project Directory
+sudo mkdir /project
+sudo chmod 1770 /project
+1 → sticky bit
+770 → owner & group full access, others none
+Team members can create files, but only owners can delete their own files
+
+Combining with Setgid
+Sticky bit + setgid → consistent group ownership + secure deletion
+sudo chmod 1770 /project
+sudo chmod g+s /project
+New files inherit group
+Only owners can delete their files
+
+Step 1: Default File Creation
+In Linux:
+When you create a new file, the system starts with default permissions:
+Files: 666 → rw-rw-rw-
+Directories: 777 → rwxrwxrwx
+Note: Files do not get execute (x) by default.
+1️⃣ What is umask?
+umask stands for User File Creation Mask.
+It defines the default permissions for new files and directories when they are created.
+Think of it as a “permission filter”: it removes permissions from the default set.
+🔷 2️⃣ How umask Works
+Default permissions before umask:
+Type	Default Permission
+File	666 → rw-rw-rw-
+Directory	777 → rwxrwxrwx
+umask subtracts permissions from these defaults.
+
+Formula:
+
+Default permission – umask = final permission
+Example:
+umask 022
+Default file permission: 666 → rw-rw-rw-
+Subtract umask 022:
+Owner: 6 – 0 = 6 → rw-
+Group: 6 – 2 = 4 → r--
+Others: 6 – 2 = 4 → r--
+✅ New file permissions: rw-r--r--
+Default directory permission: 777 → rwxrwxrwx
+Subtract umask 022 → rwxr-xr-x
+🔷 3️⃣ Check Current umask
+umask
+
+Output example:
+
+0022
+🔷 4️⃣ Set Temporary umask
+umask 007
+New files → owner full, group full, others none
+New directories → owner rwx, group rwx, others none
+🔷 5️⃣ Permanent umask
+Set umask in shell configuration files:
+Shell	File
+Bash	~/.bashrc or ~/.bash_profile
+Zsh	~/.zshrc
+
+Example:
+
+echo "umask 027" >> ~/.bashrc
+source ~/.bashrc
+Now default file creation uses this mask every login
+🔷 6️⃣ Numeric vs Symbolic
+Numeric: umask 022
+Symbolic: umask u=rwx,g=rx,o=
+
+1️⃣ What are ACLs?
+
+ACLs (Access Control Lists) are an advanced way to manage file and directory permissions in Linux.
+They allow you to give different permissions to multiple users or groups on a single file or directory.
+Traditional permissions (owner, group, others) are limited, but ACLs are more flexible.
+
+Example:
+Normal permission: rw-r--r-- → owner can read/write, group can read, others can read
+ACL: user:alice:rw- → now Alice can also read/write even if she’s not the owner or in the group
+
+🔷 2️⃣ Why Use ACLs?
+When multiple users need different levels of access to a file or directory
+When group-based permissions are not enough
+Fine-grained access control without changing ownership
+
+Use Cases:
+Project directories shared among multiple users
+Restrict access to sensitive files for certain users
+Allow temporary access to a file for a user without changing group ownership
+
+🔷 3️⃣ Check if a File/Directory Supports ACL
+Most modern Linux systems support ACL by default. You can check with:
+mount | grep acl
+Or check a file:
+getfacl filename
+
+🔷 4️⃣ Viewing ACLs
+Command: getfacl
+getfacl file.txt
+
+Example Output:
+# file: file.txt
+# owner: john
+# group: developers
+user::rw-
+user:alice:r--
+group::r--
+mask::rw-
+other::r--
+user:alice:r-- → Alice has read permission
+mask → maximum permissions allowed for users/groups other than owner
+other → everyone else
+
+🔷 5️⃣ Setting ACLs
+Add permission for a specific user
+setfacl -m u:alice:rw file.txt
+-m → modify
+u:alice:rw → give Alice read/write access
+
+Add permission for a group
+setfacl -m g:qa:r file.txt
+g:qa:r → group qa gets read permission
+
+Remove ACL entry
+setfacl -x u:alice file.txt
+Removes Alice’s ACL permissions
+
+Set default ACL for directories
+So all new files inherit ACL:
+setfacl -d -m u:alice:rw /project
+-d → default ACL for new files
+All new files created in /project → Alice automatically gets read/write
+
+🔷 6️⃣ Recursive ACLs
+Apply ACLs to all files and subdirectories:
+setfacl -R -m u:alice:rw /project
+-R → recursivel
+
+What is a Hard Link?
+A hard link is another name for the same file data on disk.
+In Linux, a file is stored using something called an inode (which holds the actual data). A hard link just creates another filename pointing to the same inode.
+👉 So both names are equal — there is no “original” vs “copy.”
+🛠️ How to Create a Hard Link
+Use the ln command:
+ln file1.txt file2.txt
+Now:
+file1.txt and file2.txt are hard links to the same file
+🔍 How to Check It
+ls -li
+You’ll see:
+Same inode number
+Link count increases (e.g., 2 instead of 1)
+⚙️ How to Use a Hard Link
+You use it just like a normal file:
+echo "Hello" >> file1.txt
+cat file2.txt
+👉 Output will show "Hello" because both are the same data.
+You can:
+Read from either
+Write to either
+Delete either (data still exists if one link remains)
+📦 Real-Life Uses
+Hard links are used when you want:
+1. Backup without duplication
+Create “copies” of files without using extra disk space
+2. File versioning
+Keep multiple names for the same file state
+3. System efficiency
+Linux sometimes uses hard links internally to save space
+❓ Does It Use Extra Space?
+👉 No (almost zero extra space)
+It does NOT duplicate file data
+Only a tiny amount of space is used for the new filename entry
+✔ Example:
+1 GB file → create 5 hard links → still ~1 GB total (not 5 GB)
+⚠️ What Happens When You Delete Files?
+Case 1: Delete one link
+rm file1.txt
+👉 File still exists via file2.txt
+Case 2: Delete all links
+rm file2.txt
+👉 Now data is actually deleted
+
+What is a Soft Link (Symbolic Link)?
+A soft link (symlink) is like a shortcut that points to another file or directory.
+👉 It does not store the data, it stores the path to the original file.
+🛠️ How to Create a Soft Link
+Use ln -s:
+ln -s original.txt symlink.txt
+Now:
+symlink.txt → points to original.txt
+🔍 How to Identify a Soft Link
+ls -l
+Output looks like:
+symlink.txt -> original.txt
+👉 Key signs:
+Starts with l (like lrwxrwxrwx)
+Shows -> pointing to target
+⚙️ Why Are Soft Links Used?
+1. Shortcut / Easy access
+Access long paths quickly
+2. Link directories
+Unlike hard links, symlinks can point to folders
+3. Cross-filesystem linking
+Works across different disks/partitions
+4. System management
+Linux uses them for paths like /bin, /lib, etc.
+📦 Do Soft Links Use Extra Space?
+👉 Yes, but very little
+They store only the file path
+Size is usually just a few bytes
+✔ Example:
+1 GB file → symlink → only a few bytes extra
+❓ What Happens If File Is Deleted?
+Case 1: Delete original file
+rm original.txt
+👉 Result:
+symlink.txt becomes broken (dangling link)
+cat symlink.txt
+❌ Error: No such file
+Case 2: Delete symlink
+rm symlink.txt
+👉 Result:
+Original file is NOT affected
+
+What is an Inode?
+An inode (index node) is a data structure in Linux that stores information about a file.
+👉 It does NOT store the file name or actual data, but it stores metadata like:
+File size
+Permissions (read/write/execute)
+Owner (user & group)
+Timestamps (created, modified, accessed)
+Number of links
+Pointer to actual data blocks
+📦 Simple Idea
+Filename → points to → inode
+inode → points to → actual data on disk
+👉 So:
+File name is just a label, inode is the real identity of the file
+🔍 How to View Inodes
+1. Show inode numbers
+ls -li
+Example output:
+123456 -rw-r--r-- 2 user user 100 Mar 24 file1.txt
+123456 -rw-r--r-- 2 user user 100 Mar 24 file2.txt
+👉 Both files have same inode → they are hard links
+2. Detailed inode info
+stat file1.txt
+Shows:
+inode number
+size
+permissions
+timestamps
+⚙️ How Inodes Are Used
+1. File identification
+Linux uses inode number to identify files internally
+2. Hard links
+Multiple filenames → same inode
+That’s why hard links share data
+3. File deletion
+File is deleted only when inode link count = 0
+🧪 Example to Understand
+echo "Hello" > file1.txt
+ln file1.txt file2.txt
+ls -li
+👉 Output:
+Same inode number
+Link count = 2
+Now delete one:
+rm file1.txt
+👉 inode still exists → data still accessible via file2.txt
+
+1. Understanding Users in RHEL
+In Linux, every person or service that can access the system has a user account.
+Each user has a username and user ID (UID).
+There is also a special user called root, which has full administrative privileges.
+You can list users in RHEL by checking /etc/passwd:
+cat /etc/passwd
+2. Basic Command to Switch Users: su
+The su command (short for substitute user or switch user) allows you to switch from your current user to another user account.
+Syntax:
+su [options] [username]
+If no username is provided, su defaults to root.
+You will be prompted for the password of the user you are switching to.
+Examples:
+Switch to root user:
+su -
+- ensures you get root’s environment variables, not just access.
+You’ll be asked for the root password.
+Switch to another user, e.g., john:
+su - john
+You’ll need to know john’s password.
+The - ensures you load the new user’s environment.
+Switch without loading environment:
+su john
+This keeps your current environment variables.
+Useful if you just want access but not the full login environment.
+3. Switching Users with sudo
+On RHEL, direct root login may be disabled for security. Instead, sudo is used to execute commands as another user.
+Syntax:
+sudo -i          # Switch to root with full environment
+sudo -u username command   # Run command as another user
+Examples:
+Switch to root:
+sudo -i
+You’ll enter your own password, not root’s.
+Run a command as another user:
+sudo -u john whoami
+This executes whoami as user john.
+Useful for scripts or single commands without fully logging in.
+4. Check Current User
+Sometimes you want to verify which user you are:
+whoami
+or
+id
+whoami → shows current username
+id → shows UID, GID, and groups
+
+1. What an Environment Includes
+An environment typically contains:
+Environment variables – key-value pairs that control behavior of programs.
+Examples:
+PATH → directories where the system looks for commands.
+HOME → your home directory.
+USER → your username.
+LANG → language/locale settings.
+Shell settings – configuration like prompt style, aliases, history settings.
+Program-specific settings – some applications read environment variables to decide how to behave.
+2. Why Environment Matters
+When you switch users, the environment determines things like:
+Which PATH directories are used for commands.
+Which default editor opens when you type nano or vi.
+Which language or locale is active.
+Example:
+echo $PATH
+Shows directories the shell searches for commands.
+If you switch users with su -, the PATH is updated to the new user’s environment.
+If you switch without -, the PATH may remain as your old user, causing confusion.
+3. Checking Your Environment
+You can see all environment variables using:
+printenv
+or
+env
+Example output:
+USER=alice
+HOME=/home/alice
+PATH=/usr/local/bin:/usr/bin:/bin
+LANG=en_US.UTF-8
+4. Environment Files
+Each user has configuration files that set up the environment when they log in:
+~/.bash_profile → runs when you log in via terminal.
+~/.bashrc → runs for interactive shells.
+/etc/profile → system-wide environment settings.
+These files define things like aliases, prompt, PATH, and other variables.
+
+1. Foreground Process
+Definition:
+A foreground process is a process that runs directly in the terminal you started it from and blocks the terminal until it finishes. You cannot use that terminal for anything else until the process completes.
+How to identify:
+Usually, you just start a command, and it runs directly.
+You can see it with the ps command:
+ps -f
+In top, it will show up with the terminal associated in the TTY column.
+How to run a program as foreground:
+Simply type the command normally:
+gedit filename.txt
+The terminal waits until you close gedit before returning to the prompt.
+Meaning in practice:
+Useful when you want to interactively work with the program.
+Example: editing a file, running a script, compiling code.
+2. Background Process
+Definition:
+A background process runs independently of the terminal. You can continue using the terminal while the process runs.
+How to identify:
+Use jobs to list jobs in the current terminal.
+jobs
+Use ps or top to see all running processes:
+ps -ef | grep process_name
+In top, the TTY column might show ? if it’s fully detached.
+How to run a program in the background:
+Add & at the end of the command:
+sleep 60 &
+You can move a running foreground process to background:
+Press Ctrl+Z to pause it.
+Then use bg to resume it in the background:
+bg %1
+Meaning in practice:
+Useful for long-running tasks like downloading files, running scripts, or compiling code without blocking the terminal.
+3. Daemon
+Definition:
+A daemon is a background service that usually starts automatically and does not interact with any terminal. Examples include web servers, database servers, cron jobs, and SSH daemons.
+How to identify:
+Usually runs with root or service-specific users.
+ps -ef | grep daemon_name
+systemctl status service_name (preferred in RHEL 7+)
+systemctl status httpd
+How to run a daemon/service:
+Start using systemctl:
+sudo systemctl start httpd
+Enable to start at boot:
+sudo systemctl enable httpd
+Stop or check status:
+sudo systemctl stop httpd
+sudo systemctl status httpd
+Meaning in practice:
+Daemons run silently in the background and provide system services.
+They are crucial for servers and automated tasks.
+No terminal interaction is required or expected.
+
+1. Running (R)
+Definition: The process is actively executing on the CPU or ready to run.
+How to identify:
+ps aux
+Look at the STAT column — R means running.
+In top, running processes usually appear at the top of the list.
+Example:
+top
+firefox actively using CPU → Running (R)
+Meaning in practice:
+The process is doing work right now.
+Multiple processes may be ready to run; the OS schedules them on the CPU.
+2. Sleeping (S)
+Definition: The process is waiting for an event — usually input/output (I/O) like disk, network, or keyboard input.
+How to identify:
+ps aux
+STAT column shows S → sleeping (interruptible)
+STAT = D → uninterruptible sleep (usually waiting for disk or I/O)
+Example:
+sleep 60
+The sleep process is in sleeping state until time is up.
+Meaning in practice:
+Sleeping processes don’t use CPU until the event occurs.
+Most processes spend a lot of time sleeping, waiting for user input or data.
+3. Stopped (T)
+Definition: The process has been paused — usually by a signal (like Ctrl+Z) or via kill -STOP.
+How to identify:
+ps aux
+STAT = T → stopped
+Example:
+sleep 100
+# Press Ctrl+Z
+Process stops → you can see it in jobs:
+jobs
+[1]+  Stopped  sleep 100
+Meaning in practice:
+Useful for temporarily pausing a process.
+You can resume it with:
+bg   # continue in background
+fg   # continue in foreground
+4. Zombie (Z)
+Definition: The process has finished execution, but its parent process hasn’t read its exit status.
+How to identify:
+ps aux
+STAT = Z → zombie
+Often shows <defunct> in the process name.
+Example:
+# A child process exits, parent doesn't call wait()
+ps aux | grep defunct
+Meaning in practice:
+Zombies don’t use CPU or memory for execution.
+They occupy a process table entry.
+Usually removed when the parent exits or reaps the child.
+Large numbers of zombies can indicate a poorly written program.
+
+
+Using ps Command
+The ps command shows running processes and who owns them.
+Command:
+ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.1  22592  4092 ?        Ss   10:00   0:02 /usr/lib/systemd/systemd
+alice     2345  0.1  1.2  50000 12000 pts/0    S    10:05   0:01 bash
+bob       3456  5.0  2.0 200000 50000 pts/1    R    10:06   0:10 firefox
+
+1. Viewing Processes
+ps command – static snapshot of processes:
+ps aux      # all processes with details
+ps -u alice # processes for user alice
+ps -ef      # full-format for all processes
+top / htop – real-time monitoring:
+top         # live CPU/memory view
+top -u alice # live view for a specific user
+htop        # interactive, can kill/sort/filter
+2. Stopping and Suspending Processes
+Ctrl + Z – stop the foreground process and put it in stopped state:
+sleep 100
+# Press Ctrl+Z
+[1]+  Stopped  sleep 100
+jobs – list your stopped or background jobs:
+jobs
+kill -STOP <PID> – stop any process (sends STOP signal):
+kill -STOP 2345
+3. Moving Processes to Background
+When you start a process in foreground, you can move it to background:
+Using & when starting:
+sleep 100 &
+Move a stopped job to background:
+bg %1   # resumes job 1 in background
+Check background jobs:
+jobs
+4. Bringing Processes to Foreground
+Bring a background or stopped job back to foreground:
+fg %1   # brings job 1 to foreground
+Useful if you want to interact with it again.
+5. Killing Processes
+Normal users can kill their own processes:
+kill <PID>       # sends SIGTERM (polite)
+kill -9 <PID>    # sends SIGKILL (force)
+Root or sudo users can kill anyone’s process:
+sudo kill -9 <PID>
+sudo pkill chrome # kills all chrome processes
+Using top or htop to kill:
+top → press k → enter PID → signal
+htop → select process → F9 → choose signal
+
+What %1, %2 mean
+%1, %2, etc., are job identifiers in the shell.
+Each job you start in the current terminal session gets a job number, starting from 1.
+They are not PIDs — they are just references used by the shell to manage jobs.
+2. How jobs get numbered
+Start a process in background:
+sleep 100 &
+Output:
+[1] 2345
+[1] → job number 1
+2345 → PID
+Start another process:
+sleep 200 &
+Output:
+[2] 2346
+[2] → job number 2
+3. See current jobs
+jobs
+
+Output:
+
+[1]-  Running                 sleep 100 &
+[2]+  Running                 sleep 200 &
+[1]- → job 1, last job marked -
+[2]+ → job 2, last job marked + (default for fg or bg)
+
+sleep 100 &
+sleep 200 &
+jobs
+fg %1      # brings first sleep to foreground
+bg %2      # resumes second sleep in background
+kill %1    # kills the first job
+
+1. Where you see + and -
+When you run:
+jobs
+You might see output like this:
+[1]-  Running    sleep 100 &
+[2]+  Running    sleep 200 &
+[1]- → job 1, marked -
+[2]+ → job 2, marked +
+2. What + and - mean
++ (plus) → default job
+This is the most recent job.
+Commands like fg or bg without any number will operate on this job.
+- (minus) → previous job
+This is the second most recent job.
+Can be used explicitly with %<job number> if needed.
+Other jobs → have no symbol; only + and - are specially marked.
+3. Examples
+sleep 100 &
+sleep 200 &
+sleep 300 &
+jobs
+Output might be:
+[1]-  Running    sleep 100 &
+[2]+  Running    sleep 200 &
+[3]   Running    sleep 300 &
+fg → brings job 2 (the + job) to foreground
+fg %1 → brings job 1 to foreground
+fg %- → brings job 1 (the - job) to foreground
+bg → resumes job 2 in background by default
+
+1. What is top?
+top is a real-time, interactive process monitoring tool in Linux.
+Shows:
+Running processes
+CPU usage
+Memory usage
+Process states
+Users owning processes
+top - 10:20:30 up 2:00,  3 users,  load average: 0.15, 0.10, 0.05
+Tasks: 120 total,   2 running, 118 sleeping, 0 stopped, 0 zombie
+%Cpu(s): 10.0 us,  2.0 sy,  0.0 ni, 88.0 id,  0.0 wa, 0.0 hi, 0.0 si, 0.0 st
+MiB Mem : 16000 total,  4000 free,  9000 used,  3000 buff/cache
+MiB Swap: 2000 total,  2000 free,     0 used.  5000 avail Mem
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 2345 alice     20   0  500000 12000  8000 S   5.0  0.1   0:10.01 bash
+ 2389 bob       20   0 2000000 50000 30000 R  10.0  0.3   0:30.50 firefox
+Understanding the Columns
+Column	Meaning
+PID	Process ID
+USER	Owner of the process
+PR	Priority of the process
+NI	Nice value (affects scheduling priority)
+VIRT	Virtual memory used (MB/KB)
+RES	Resident memory (physical RAM)
+SHR	Shared memory used
+S	Process state (R = running, S = sleeping, Z = zombie, T = stopped)
+%CPU	CPU usage of process
+%MEM	Memory usage of process
+TIME+	Total CPU time used by process
+COMMAND	Program/command name
+4. Interactive Commands in top
+While top is running, you can control what you see:
+Key	Function
+h	Help
+q	Quit top
+k	Kill a process (prompts for PID and signal)
+r	Renice a process (change priority)
+u	Filter by user (e.g., show only processes for alice)
+M	Sort by memory usage
+P	Sort by CPU usage
+T	Sort by total time used
+c	Toggle full command line display
+Example:
+Press u, then type bob → see only processes owned by user bob.
+Press M → processes sorted by memory usage (largest at top).
+Press k, type 2389, enter signal 15 → politely kill Firefox.
+5. Interpreting top
+High %CPU → process is using a lot of CPU (could slow system)
+High %MEM → process is using a lot of RAM
+S state → sleeping (waiting), normal
+R state → running, actively using CPU
+Z state → zombie, parent hasn’t collected exit status
+System summary at top:
+Load average → system load for last 1, 5, 15 minutes
+Tasks → total, running, sleeping, stopped, zombies
+CPU usage → % user, % system, % idle
+Memory usage → total, free, used, buffers/cache
+6. Examples
+View processes of a specific user:
+top -u alice
+Kill a process directly from top:
+Press k → type PID → press Enter → choose signal → Enter
+Sort processes by memory usage:
+Press M while in top
+Sort processes by CPU usage:
+Press P while in top
+
+
+1. pgrep
+Purpose: Find PID(s) of processes by name or other attributes.
+Syntax:
+pgrep <process_name>
+Example:
+pgrep firefox
+Output:
+2389
+2390
+Returns all PIDs of processes whose name matches firefox.
+Advanced options:
+-u <username> → processes of a specific user
+pgrep -u alice firefox
+-l → show PID and command name
+pgrep -l firefox
+Output:
+2389 firefox
+2390 firefox
+Notes:
+Matches any process whose name contains the string.
+Works for multiple instances of a program.
+2. pidof
+Purpose: Return the PID(s) of a program by name.
+Syntax:
+pidof <process_name>
+Example:
+pidof firefox
+Output:
+2389 2390
+Notes:
+Returns only exact matches of the program name.
+Does not have as many filtering options as pgrep.
+Useful for scripts where you need PID(s) quickly.
+
+1. What are signals?
+A signal is a software message sent to a process to notify it of an event or command.
+Signals can ask a process to stop, continue, terminate, or handle a custom action.
+Every process has a PID, and you can send signals to it using kill, pkill, or killall.
+2. Commonly Used Signals
+Signal	Number	Purpose
+SIGTERM	15	Terminate politely. The process can catch it and clean up before exiting. (default for kill <PID>).
+SIGKILL	9	Force kill. Cannot be caught or ignored. Process stops immediately (kill -9 <PID>).
+SIGSTOP	19	Pause the process. Cannot be ignored. (kill -STOP <PID>).
+SIGCONT	18	Resume a stopped process. (kill -CONT <PID>).
+SIGHUP	1	Hang up. Often tells daemons to reload configuration.
+SIGINT	2	Interrupt (Ctrl+C in terminal).
+SIGTSTP	20	Stop typed at terminal (Ctrl+Z).
+3. Sending signals
+Using kill:
+kill -SIGTERM 2345   # politely terminate PID 2345
+kill -9 2345         # force kill PID 2345
+kill -SIGSTOP 2345   # stop/pause PID 2345
+kill -SIGCONT 2345   # resume PID 2345
+Using pkill by process name:
+pkill -SIGTERM firefox   # politely terminate all Firefox processes
+pkill -9 firefox         # force kill all Firefox processes
+Using killall by process name:
+killall -9 firefox
+4. How signals relate to process states
+Signal	Effect on STAT column in ps or top
+SIGSTOP	S or T → process becomes stopped
+SIGCONT	T → process resumes → R or S (running or sleeping)
+SIGTERM	Process begins termination, removed from table after cleanup
+SIGKILL	Process terminates immediately, removed from table
+SIGINT	Foreground process stopped by Ctrl+C
+5. Interactive terminal shortcuts (signals)
+Key	Signal	Description
+Ctrl+C	SIGINT	Stop foreground process
+Ctrl+Z	SIGTSTP	Pause (stop) foreground process
+fg / bg	SIGCONT	Resume stopped process
+
+What is "nice"?
+nice is used to start a process with a specific priority.
+Linux processes have a priority called “nice value”:
+Range: -20 (highest priority) → 19 (lowest priority)
+Default nice value = 0
+Higher nice value → process is “nicer” to others, uses less CPU
+Lower nice value → process is more aggressive, gets more CPU
+Syntax:
+nice -n <nice_value> <command>
+Example:
+nice -n 10 sleep 1000
+Starts sleep 1000 with nice value 10 (lower priority than default).
+Check nice value in top or ps aux under the NI column.
+2. What is "renice"?
+renice changes the priority of a running process.
+Can only increase priority (lower nice value) if you are root. Normal users can lower priority only.
+Syntax:
+renice <new_nice_value> -p <PID>
+Example:
+renice 15 -p 2345
+Changes the nice value of PID 2345 to 15 (lower priority, more “nice”).
+Multiple PIDs:
+renice 5 -p 2345 -p 2389
+Can also renice all processes of a user:
+renice 10 -u alice
+3. Checking nice values
+In top:
+Look at NI column → shows nice value
+In ps:
+ps -o pid,user,ni,cmd -p 2345
+
+1. When a process started
+a) Using ps
+ps -p <PID> -o pid,lstart,etime,stat,cmd
+Columns explained:
+lstart → exact start date and time of the process
+etime → elapsed time since the process started ([[dd-]hh:]mm:ss)
+stat → process state (R, S, T, Z…)
+cmd → command name
+
+Example:
+
+ps -p 2345 -o pid,lstart,etime,stat,cmd
+
+Output:
+
+  PID                  LSTART     ELAPSED   STAT CMD
+ 2345  Wed Mar 24 10:15:00  02:30:15  S     firefox
+Process started 10:15 AM, has been running 2 hours 30 minutes.
+S → sleeping (waiting), not stopped.
+b) Using top
+Open top:
+top
+Press c → see full command
+Press F → select START column → shows process start time
+Press M or P to sort by memory or CPU to find heavy processes
+2. How long a process ran
+Already shown in ps -o etime → elapsed time
+In top, see TIME+ column → total CPU time used by the process
+
+Difference:
+
+etime → wall-clock time since start
+TIME+ → CPU time actually used
+3. When a process stopped and why
+a) Process state in ps / top
+Look at STAT column:
+| STAT | Meaning |
+|------|---------|
+| R | Running |
+| S | Sleeping (waiting for input/event) |
+| T | Stopped (by signal, e.g., Ctrl+Z or kill -STOP) |
+| Z | Zombie (finished but parent hasn’t collected exit status) |
+| ? | No terminal associated |
+Example:
+ps -p 2345 -o pid,stat,cmd
+
+Output:
+
+PID STAT CMD
+2345 T   sleep 100
+T → process stopped by signal
+Could be Ctrl+Z (terminal stop) or kill -STOP <PID>
+b) Reason for stop
+Signals explain why a process stopped:
+Ctrl+C → SIGINT
+Ctrl+Z → SIGTSTP
+kill -STOP → SIGSTOP
+kill -9 → SIGKILL → process terminated immediately
+You can check exit status of a completed process:
+echo $?
+Only works in the same shell for foreground processes.
+4. Using /proc for detailed info
+For a running process:
+cat /proc/<PID>/stat
+Fields include:
+Start time (in ticks since boot) → can convert to human-readable
+Process state
+Parent PID
+For stopped processes, the STAT column tells reason (T = stopped, Z = zombie).
+
+a) CPU & Process Monitoring
+top            # real-time process & CPU/memory view
+htop           # interactive, colorful version of top
+ps aux         # snapshot of all processes
+mpstat -P ALL  # CPU usage per core
+b) Memory Monitoring
+free -m        # free, used, cached memory in MB
+vmstat 1       # memory, CPU, swap, IO stats updated every 1 second
+c) Disk Monitoring
+df -h          # disk space usage per partition
+du -sh /path   # disk usage of a folder
+iostat -x 1    # detailed disk I/O stats
+iotop          # real-time I/O per process
+d) Network Monitoring
+ifconfig / ip a     # network interfaces and IPs
+netstat -tulnp      # listening ports and processes
+ss -tulnp           # modern replacement for netstat
+iftop               # real-time bandwidth per connection
+e) System Load & Uptime
+uptime              # shows load average over 1, 5, 15 mins
+w                   # who is logged in + what they are doing
+
+vmstat (Virtual Memory Statistics)
+Purpose: Monitor CPU, memory, swap, and system activity in real time.
+Command syntax:
+vmstat [delay [count]]
+delay → refresh interval in seconds
+count → number of updates
+Example:
+vmstat 2 5
+Updates every 2 seconds, 5 times.
+Output Columns:
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+Column	Meaning
+r	Running processes (R state)
+b	Blocked processes (waiting for I/O)
+swpd	Virtual memory used (swap)
+free	Free RAM
+buff	Memory used as buffers
+cache	Memory used as cache
+si	Swap in (from disk to RAM)
+so	Swap out (from RAM to disk)
+bi	Blocks received from disk (read)
+bo	Blocks sent to disk (write)
+in	Interrupts per second
+cs	Context switches per second
+us	CPU time in user mode (%)
+sy	CPU time in system/kernel mode (%)
+id	Idle CPU (%)
+wa	CPU waiting for I/O (%)
+st	Stolen CPU time (virtualized environment)
+Example Interpretation:
+vmstat 2 5
+ r  b   swpd   free  buff  cache   si   so    bi   bo   in   cs us sy id wa st
+ 1  0      0  4000  1000  5000    0    0     0    5  100  200 10 5 85 0 0
+1 process is running, 0 blocked
+4000 MB free RAM, 0 swap activity
+CPU 10% user, 5% system, 85% idle → system not busy
+2. iostat (Input/Output Statistics)
+Purpose: Monitor disk I/O and CPU usage
+Command syntax:
+iostat [options] [interval [count]]
+interval → refresh interval in seconds
+count → number of updates
+Example:
+iostat -x 2 5
+Extended stats (-x), refresh every 2 seconds, 5 times
+Important Columns in iostat -x
+Column	Meaning
+Device	Disk/partition name
+r/s	Reads per second
+w/s	Writes per second
+rkB/s	Read KB per second
+wkB/s	Written KB per second
+rrqm/s	Merged read requests per second
+wrqm/s	Merged write requests per second
+%util	% of time device was busy
+await	Average wait time for I/O requests (ms)
+svctm	Average service time for I/O requests (ms)
+Example Interpretation:
+iostat -x 2 5
+Device r/s w/s rkB/s wkB/s rrqm/s wrqm/s  %util  await svctm
+sda     5   10   200  500    0     2     15     2.0  0.5
+Disk sda did 5 reads/sec, 10 writes/sec
+200 KB read/sec, 500 KB written/sec
+Disk busy 15% of the time
+Average wait 2 ms, service time 0.5 ms → healthy disk usage
+
+1. What is ulimit?
+ulimit stands for user limits.
+It controls how much system resources a process (or user) can use.
+These limits help prevent a single user or process from overloading the system.
+Types of resources controlled by ulimit:
+Maximum number of open files
+Maximum processes a user can create
+Maximum memory usage
+Maximum CPU time
+Maximum file size
+2. View current limits
+ulimit -a
+Example output:
+core file size          (blocks, -c) 0
+data seg size           (kbytes, -d) unlimited
+scheduling priority             (-e) 0
+file size               (blocks, -f) unlimited
+pending signals                 (-i) 63631
+max locked memory       (kbytes, -l) 64
+max memory size         (kbytes, -m) unlimited
+open files                      (-n) 1024
+pipe size            (512 bytes, -p) 8
+stack size              (kbytes, -s) 8192
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) 63631
+virtual memory          (kbytes, -v) unlimited
+file locks                      (-x) unlimited
+Important ones to note:
+-n → max open files
+-u → max user processes
+-t → max CPU time
+-v → max virtual memory
+3. Set a new limit
+Temporarily (for current shell session):
+ulimit -n 2048      # max open files = 2048
+ulimit -u 500       # max processes = 500
+Permanently (system-wide or per user):
+Edit /etc/security/limits.conf or a file in /etc/security/limits.d/
+Example /etc/security/limits.conf:
+alice   hard   nofile  4096
+alice   soft   nofile  2048
+soft limit → default limit, can be increased by user up to hard limit
+hard limit → maximum allowed, requires root to increase
+
+What is lsblk?
+lsblk = list block devices
+Shows all storage devices (HDDs, SSDs, USB drives) and their partitions in a tree format.
+Does not show files, only block devices and how they are connected.
+2. Basic Usage
+lsblk
+Example output:
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0  100G  0 disk 
+├─sda1   8:1    0   50G  0 part /
+├─sda2   8:2    0   49G  0 part /home
+└─sda3   8:3    0    1G  0 part [SWAP]
+sdb      8:16   0  200G  0 disk
+└─sdb1   8:17   0  200G  0 part /data
+NAME → device name (sda, sdb, sda1…)
+MAJ:MIN → kernel major:minor numbers
+RM → removable (1 = yes, 0 = no)
+SIZE → size of disk/partition
+RO → read-only (1 = yes, 0 = no)
+TYPE → disk, part (partition), lvm, etc.
+MOUNTPOINT → where it is mounted in the filesystem
+3. Useful Options
+Option	Meaning
+-f	Show filesystem info (type, label, UUID)
+-o	Specify columns to display
+-a	Show all devices (including empty)
+-J	Output in JSON (for scripts)
+Examples:
+lsblk -f
+Output shows filesystem type (ext4, xfs, etc.), UUID, and label:
+NAME   FSTYPE LABEL UUID                                 MOUNTPOINT
+sda                                                       
+├─sda1 ext4   root  1234-ABCD                            /
+├─sda2 ext4   home  5678-EFGH                            /home
+└─sda3 swap        9012-IJKL                            [SWAP]
+lsblk -o NAME,SIZE,TYPE,MOUNTPOINT
+Custom columns → cleaner output
+4. Practical Uses
+Check disks and partitions
+lsblk
+Check mounted partitions and filesystem types
+lsblk -f
+Verify new disks after attaching
+lsblk -a
+Find which disk a mount point is on
+df -hT /home
+lsblk
+
+df – Disk Free
+Purpose: Shows disk space usage per filesystem/partition.
+Focuses on overall space (mounted filesystems).
+Basic Usage
+df
+Shows output like:
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/sda2      51475072 26214400 25260672  51% /
+tmpfs           4042000       0  4042000   0% /dev/shm
+/dev/sdb1     209715200 104857600 104857600  50% /data
+Columns explained:
+Filesystem → disk or partition name
+1K-blocks → total size
+Used → space used
+Available → free space left
+Use% → percentage used
+Mounted on → mount point
+Common Options
+Option	Purpose
+-h	Human-readable (MB/GB)
+-T	Show filesystem type
+-i	Show inode usage
+
+Example:
+
+df -hT
+2. du – Disk Usage
+Purpose: Shows space used by files and directories.
+Focuses on individual directories/files, not the whole filesystem.
+Basic Usage
+du /home
+Output (size in KB) for each subdirectory:
+/home/user1 20480
+/home/user1/docs 10240
+/home/user1/downloads 10240
+Common Options
+Option	Purpose
+-h	Human-readable (MB/GB)
+-s	Summary only (total size of directory)
+--max-depth=N	Limit recursion depth to N levels
+
+Example:
+
+du -sh /home/user1
+
+Output:
+
+20M    /home/user1
+
+blkid
+Output example:
+/dev/sda1: UUID="3f2b1c4e-1d8b-4b3b-8f9c-2d5a7b2c1a2f" TYPE="xfs" PARTUUID="0001"
+/dev/sda2: UUID="7c5d8e6f-2b3c-4a7f-9c1d-3e2b4c5a6f7d" TYPE="swap" PARTUUID="0002"
+/dev/sda1 – device name
+UUID – universally unique identifier for the filesystem
+TYPE – filesystem type (xfs, ext4, swap, etc.)
+PARTUUID – partition identifier (useful for GPT partitions)
+2. Display Information for a Specific Device
+blkid /dev/sdb1
+3. Show Only Specific Attributes
+You can use -o to format output:
+blkid -o value -s UUID /dev/sda1
+-s specifies which attribute to show (UUID, TYPE, LABEL)
+4. Using blkid in Scripts
+blkid is often used in scripts to dynamically find disks:
+DEVICE=$(blkid -L DATA)   # Find device by label "DATA"
+5. Update the blkid Cache
+RHEL maintains a cache in /etc/blkid.tab (older) or /run/blkid/blkid.tab (newer). To update:
+blkid -c /dev/null
+-c specifies a cache file; /dev/null forces a fresh scan
+
+dmesg
+Displays the entire kernel ring buffer (all recent messages from the kernel).
+Useful for debugging hardware issues, driver problems, or boot issues.
+Example output:
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.003456] ACPI: RSDP 0x00000000000F0420 000024 (v02 HPQOEM)
+[    1.234567] usb 1-1.2: new high-speed USB device number 3 using xhci_hcd
+The numbers in brackets are timestamps (seconds since kernel start).
+2. Common Options
+Option	Description
+-T	Show human-readable timestamps instead of seconds since boot
+-k	Show only kernel messages (default)
+-n <level>	Set the log level to display (0=emerg, 7=debug)
+-c	Clear the kernel ring buffer after printing
+--level=<level>	Filter messages by log level (err, warn, info, etc.)
+Example:
+dmesg -T | grep usb
+Shows all USB-related kernel messages with human-readable timestamps.
+3. Use Cases
+Check hardware detection
+New disks, USB drives, network cards, etc.
+dmesg | grep -i sda
+Debug driver issues
+If a driver fails to load, dmesg will often show errors.
+View boot messages
+Especially if system boots too quickly for you to read GRUB/kernel logs.
+Monitor kernel events in real-time
+dmesg -w
+-w makes dmesg wait and print new messages as they appear.
+4. Relationship to blkid and disks
+When you plug in a new disk or partition:
+dmesg will log messages like:
+[  12.345678] sd 2:0:0:0: [sdb] 976762584 512-byte logical blocks: (500 GB/465 GiB)
+[  12.345689] sd 2:0:0:0: [sdb] Write Protect is off
+[  12.345690] sd 2:0:0:0: [sdb] Attached SCSI disk
+This helps confirm that the kernel detected the device before you use blkid to check UUIDs or labels.
+
+lshw
+Displays a full tree of hardware information.
+Output can be very long, so it’s common to pipe it to less:
+lshw | less
+2. Display Specific Information
+CPU info
+lshw -class processor
+Memory info
+lshw -class memory
+Disk info
+lshw -class disk
+Network interfaces
+lshw -class network
+3. Human-readable Output
+lshw -short
+Shows a concise overview of all hardware in a table format:
+H/W path       Device      Class          Description
+======================================================
+/0             localhost  system         Your Server
+/0/0           cpu0       processor      Intel(R) Xeon(R)
+/0/1           memory     memory         16GiB System Memory
+/0/100         eth0       network        Intel 82574L Gigabit
+4. Output to a File
+HTML (nice for documentation):
+lshw -html > hardware.html
+XML (for scripts or automation):
+lshw -xml > hardware.xml
+5. Requires Root for Full Info
+Running as non-root may hide details like serial numbers, bus addresses, and firmware info.
+sudo lshw
+6. Common Use Cases
+Inventory hardware for auditing.
+Check RAM and CPU details before upgrades.
+Identify network cards and disk controllers for driver installation.
+Troubleshoot hardware issues (e.g., missing disks or unrecognized NICs).
+
+The lsscsi command in RHEL (Red Hat Enterprise Linux) is used to list SCSI devices (disks, tapes, CD-ROMs, and other storage devices) detected by the kernel. It’s particularly useful for understanding how storage devices are attached to the system, especially in SAN or enterprise environments.
+1. Basic Usage
+lsscsi
+Example output:
+[0:0:0:0]    disk    ATA      Samsung SSD 860  1B6Q  /dev/sda
+[1:0:0:0]    disk    ATA      WDC WD10EZEX-08 01.0  /dev/sdb
+[2:0:0:0]    cd/dvd  HL-DT-ST DVDRAM GH24NSB0  A105  /dev/sr0
+Columns explained:
+[H:C:I:L] → Host:Channel:ID:LUN (SCSI addressing)
+disk or cd/dvd → device type
+Vendor & Model → physical hardware details
+/dev/sdX → Linux device node
+2. Show Detailed Information
+lsscsi -v
+Displays verbose info including device speed, transport, and more.
+3. Show Only Device Types
+Disks only
+lsscsi -t
+CD/DVD devices
+lsscsi -g
+4. Why lsscsi is Useful
+Identify physical devices before using blkid to check filesystems.
+Verify SCSI addressing in multi-disk servers or SANs.
+Check CD/DVD or tape devices for backup purposes.
+Cross-check kernel detection (compare with dmesg).
+
+The badblocks command in RHEL (Red Hat Enterprise Linux) scans a storage device for bad sectors (blocks that cannot reliably hold data). It’s useful for checking disk health before formatting, mounting, or putting a drive into production.
+
+1. Basic Usage
+badblocks /dev/sdb
+- Scans /dev/sdb for read-only errors.
+- Outputs block numbers of any bad sectors found.
+
+2. Read-Only vs. Read-Write Testing
+Read-only (safe, non-destructive):
+badblocks -v /dev/sdb
+- -v → verbose mode
+- Does not modify data.
+
+Read-write (destructive, erases data):
+badblocks -wsv /dev/sdb
+- -w → write-mode
+- -s → show progress
+- -v → verbose
+- Warning: destroys all existing data.
+
+3. Specify Block Size
+badblocks -b 4096 -v /dev/sdb
+- -b specifies block size (common: 512 bytes or 4096 bytes)
+- Useful for non-standard filesystem block sizes.
+
+4. Integrating with Filesystems
+Step 1: Generate bad blocks list
+badblocks -v /dev/sdb > badblocks.txt
+
+Step 2: Pass it to e2fsck
+e2fsck -l badblocks.txt /dev/sdb1
+- Marks bad blocks so the OS avoids using them.
+
+5. Common Options
+-v → verbose mode  
+-n → non-destructive read-write test  
+-w → destructive read-write test  
+-b <size> → set block size in bytes  
+-s → show progress  
+-o <file> → save output (list of bad blocks)  
+
+6. Why Use badblocks
+- Check new drives before use to avoid data loss.
+- Diagnose failing disks; track bad sectors over time.
+- Integrate with filesystems to mark bad blocks.
+- Useful for disk maintenance, especially for older HDDs.
+
+The dd command in RHEL (Red Hat Enterprise Linux) is a low-level tool for copying and converting data between files, partitions, or entire disks. It works block by block, making it ideal for disk cloning, backups, wiping drives, and creating bootable USBs.
+
+⚠️ Caution: Mistakes with if= (input) or of= (output) can irreversibly erase data.
+
+1. Basic Syntax
+dd if=<source> of=<destination> [options]
+- if= → input file/device
+- of= → output file/device
+
+Example:
+dd if=/dev/sda of=/dev/sdb bs=4M status=progress
+- Clones /dev/sda to /dev/sdb
+- bs=4M → block size of 4 MB (faster)
+- status=progress → shows real-time progress
+
+2. Common Uses
+a) Backup a Disk:
+dd if=/dev/sda of=/backup/sda.img bs=4M status=progress
+- Creates a disk image of /dev/sda
+
+b) Restore a Disk Image:
+dd if=/backup/sda.img of=/dev/sda bs=4M status=progress
+
+c) Wipe a Disk (Zero-fill):
+dd if=/dev/zero of=/dev/sdb bs=1M status=progress
+- Overwrites entire disk with zeros
+- Useful for reusing or securely erasing disks
+
+d) Create a Bootable USB:
+dd if=/path/to/linux.iso of=/dev/sdc bs=4M status=progress
+sync
+- sync ensures all data is written to the USB
+
+3. Monitoring Progress
+- Modern dd: status=progress
+- Older versions: send SIGUSR1 to the dd process:
+  kill -USR1 $(pidof dd)
+
+4. Common Options
+- bs=<size> → block size (e.g., 1M, 4M)  
+- count=<num> → number of blocks to copy  
+- skip=<num> → skip blocks from input  
+- seek=<num> → skip blocks on output  
+- conv=<conversion> → data conversion (e.g., sync, noerror)  
+- status=progress → show progress while copying  
+
+5. How dd Relates to Other Disk Tools
+- dmesg → confirm disk exists  
+- lsscsi / lshw → verify correct device/hardware  
+- blkid → check filesystem UUIDs before overwriting  
+- badblocks → optionally scan disk for bad sectors before cloning or wiping
+
+In RHEL (Red Hat Enterprise Linux), the partprobe command is used to inform the kernel of partition table changes on a disk without rebooting. This is especially useful after creating, deleting, or resizing partitions with tools like fdisk, parted, or gdisk.
+1. Basic Usage
+sudo partprobe
+Updates the kernel’s partition table information for all disks.
+After this, the system recognizes any new or modified partitions immediately.
+Check new partitions:
+lsblk
+2. Scan a Specific Device
+sudo partprobe /dev/sdb
+Only updates the kernel about /dev/sdb instead of all disks.
+3. When to Use partprobe
+After creating new partitions with fdisk/parted:
+sudo fdisk /dev/sdb
+# create partition
+sudo partprobe /dev/sdb
+After deleting or resizing partitions so the kernel sees the changes immediately.
+Before mounting new partitions without rebooting.
+4. Difference from partx
+partx adds or removes individual partitions to the kernel.
+partprobe informs the kernel of all partition table changes.
+Both avoid the need to reboot after modifying partitions.
+5. Common Workflow
+Create a new partition:
+sudo fdisk /dev/sdb
+Tell the kernel about the new table:
+sudo partprobe /dev/sdb
+Verify:
+lsblk
+blkid
+Format and mount:
+sudo mkfs.ext4 /dev/sdb1
+sudo mount /dev/sdb1 /mnt
+💡 Tip: If partprobe fails or doesn’t update the kernel, you can use:
+sudo partx -a /dev/sdb
+or, as a last resort, reboot the system.
+
+Step 1: Plug in Disk & Verify Detection
+After inserting the disk, first check if the system detected it.
+Check kernel messages:
+dmesg | tail -20
+👉 Look for something like:
+sd 2:0:0:0: [sdb] Attached SCSI disk
+List disks:
+lsblk
+Example:
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0   50G  0 disk
+├─sda1   8:1    0   50G  0 part /
+sdb      8:16   0  100G  0 disk   <-- NEW DISK
+👉 Important:
+Your existing disk is usually sda
+New disk will likely be sdb, sdc, etc.
+⚠️ Be 100% sure which disk is new — this is critical.
+✅ Step 2: Check Disk Details
+sudo fdisk -l
+This confirms:
+Disk size
+Existing partitions (if any)
+✅ Step 3: Create Partition
+Now we create a partition on the new disk.
+sudo fdisk /dev/sdb
+Inside fdisk, press:
+Key	Action
+n	new partition
+p	primary
+Enter	accept defaults
+w	write changes
+✅ Step 4: Inform Kernel (No Reboot)
+sudo partprobe /dev/sdb
+Verify:
+lsblk
+Now you should see:
+sdb
+└─sdb1
+✅ Step 5: Create Filesystem
+Format the partition (most common: XFS in RHEL):
+sudo mkfs.xfs /dev/sdb1
+(Or ext4 if needed)
+sudo mkfs.ext4 /dev/sdb1
+✅ Step 6: Verify Filesystem
+blkid /dev/sdb1
+Example output:
+/dev/sdb1: UUID="abc123..." TYPE="xfs"
+👉 Save this UUID (important for mounting).
+✅ Step 7: Create Mount Point
+sudo mkdir /data
+✅ Step 8: Mount the Disk
+sudo mount /dev/sdb1 /data
+Verify:
+df -TH
+You should see /data mounted.
+✅ Step 9: Make Mount Permanent
+Edit fstab:
+sudo vi /etc/fstab
+Add this line:
+UUID=abc123...   /data   xfs   defaults   0 0
+👉 Replace abc123... with your actual UUID.
+✅ Step 10: Test fstab (VERY IMPORTANT)
+sudo umount /data
+sudo mount -a
+If no error → ✅ correct configuration
+
+What is fdisk?
+fdisk is a command-line partitioning tool used to:
+Create partitions
+Delete partitions
+View partition tables
+Modify disk layout
+👉 It works mainly with MBR partition tables (for GPT, parted is more modern, but fdisk is still widely used).
+🎯 Scenario: You Have a New Disk
+Let’s assume:
+New disk: /dev/sdb
+Size: 20 GB
+Goal:
+Create 2 partitions
+/dev/sdb1 → 10 GB
+/dev/sdb2 → 10 GB
+Format and mount them
+✅ Step 1: Verify Disk
+lsblk
+Example:
+sda   50G  (OS disk)
+sdb   20G  (NEW disk)
+✅ Step 2: Start fdisk
+sudo fdisk /dev/sdb
+You’ll enter interactive mode.
+🧩 Inside fdisk (IMPORTANT COMMANDS)
+Press m anytime to see help.
+Key	Meaning
+n	Create new partition
+p	Print partition table
+d	Delete partition
+w	Write changes (SAVE)
+q	Quit without saving
+✅ Step 3: Create First Partition (10 GB)
+Inside fdisk:
+Command (m for help): n
+Partition type: p (primary)
+Partition number: 1
+First sector: (press Enter)
+Last sector: +10G
+✅ Step 4: Create Second Partition (Remaining 10 GB)
+Command (m for help): n
+Partition number: 2
+First sector: (Enter)
+Last sector: (Enter → uses remaining space)
+✅ Step 5: Verify Partitions
+Command (m for help): p
+Output:
+Device      Size
+/dev/sdb1   10G
+/dev/sdb2   10G
+✅ Step 6: Save Changes
+Command (m for help): w
+👉 This writes partition table to disk.
+✅ Step 7: Inform Kernel
+sudo partprobe /dev/sdb
+✅ Step 8: Verify Again
+lsblk
+Now:
+sdb
+├─sdb1 10G
+└─sdb2 10G
+✅ Step 9: Create Filesystems
+sudo mkfs.xfs /dev/sdb1
+sudo mkfs.xfs /dev/sdb2
+✅ Step 10: Create Mount Points
+sudo mkdir /data1
+sudo mkdir /data2
+✅ Step 11: Mount Partitions
+sudo mount /dev/sdb1 /data1
+sudo mount /dev/sdb2 /data2
+✅ Step 12: Verify Usage
+df -TH
+Output:
+/dev/sdb1   10G   mounted on /data1
+/dev/sdb2   10G   mounted on /data2
+✅ Step 13: Make Permanent (fstab)
+Get UUID:
+blkid
+Edit:
+sudo vi /etc/fstab
+Add:
+UUID=xxx   /data1   xfs   defaults   0 0
+UUID=yyy   /data2   xfs   defaults   0 0
+✅ Step 14: Test
+sudo umount /data1
+sudo umount /data2
+sudo mount -a
+
+Step 1: Check Current Disk & Partition
+lsblk
+
+Example output:
+
+NAME   SIZE MOUNTPOINT
+sdb    20G
+└─sdb1 10G /data
+/dev/sdb1 is 10G
+Disk has 10G free unallocated space
+
+Check filesystem type:
+
+df -TH /data
+
+Output shows type (xfs) and usage.
+
+🧭 Step 2: Check Partition Table
+sudo fdisk -l /dev/sdb
+
+Look for /dev/sdb1 start sector and available free space.
+
+🧭 Step 3: Resize Partition
+
+⚠️ Important: XFS cannot shrink, but it can grow.
+
+Option A: If using a simple partition (XFS)
+Delete partition but keep start sector
+sudo fdisk /dev/sdb
+Press p → view partitions
+Press d → delete /dev/sdb1
+Press n → create new partition with same start sector
+Press Enter for last sector → use all remaining space
+Press w → write changes
+Update kernel:
+sudo partprobe /dev/sdb
+🧭 Step 4: Resize Filesystem
+
+For XFS:
+
+sudo xfs_growfs /data
+Mount point /data is enough
+XFS will now use all available partition space
+
+For EXT4 (if used):
+
+sudo resize2fs /dev/sdb1
+🧭 Step 5: Verify New Size
+df -TH /data
+
+Example output:
+
+Filesystem   Type  Size  Used Avail Use% Mounted on
+/dev/sdb1    xfs   20G   10G  10G  50% /data
+Now /data reflects new size
+🧭 Step 6: Make it Persistent
+No changes needed in /etc/fstab if mount point is unchanged
+If using UUID (recommended), verify:
+blkid /dev/sdb1
+Compare with /etc/fstab:
+cat /etc/fstab
+It should look like:
+UUID=<uuid> /data xfs defaults 0 0
+If correct → done ✅
+Optional: test fstab:
+sudo umount /data
+sudo mount -a
+If no errors → permanent and safe
+
+Scenario
+Partition: /dev/sdb1
+Filesystem: EXT4
+Current size: 20 GB
+Goal: shrink to 10 GB
+✅ Step 1: Check Disk and Filesystem
+lsblk
+df -TH /data
+sudo e2fsck -f /dev/sdb1
+e2fsck -f ensures filesystem consistency before resizing
+✅ Step 2: Unmount the Partition
+sudo umount /data
+Must be unmounted to shrink EXT4
+✅ Step 3: Shrink the Filesystem
+sudo resize2fs /dev/sdb1 10G
+Shrinks filesystem to 10 GB
+Always shrink filesystem first, then partition
+✅ Step 4: Shrink the Partition Using fdisk
+sudo fdisk /dev/sdb
+Inside fdisk:
+p → print partition table
+d → delete partition 1
+n → create new partition
+Make it primary, start at same start sector, end at smaller size (10 GB)
+w → write changes
+⚠️ Start sector must be the same. Otherwise, all data is lost.
+✅ Step 5: Verify Partition Table
+sudo partprobe /dev/sdb
+lsblk
+Ensure /dev/sdb1 is now 10 GB
+Check filesystem size:
+sudo e2fsck -f /dev/sdb1
+✅ Step 6: Mount and Verify
+sudo mount /dev/sdb1 /data
+df -TH /data
+Confirm size is now 10 GB
+✅ Step 7: Persistent Mount
+Check /etc/fstab:
+blkid /dev/sdb1
+cat /etc/fstab
+Make sure UUID matches and mount point is /data
+Test:
+sudo umount /data
+sudo mount -a
+
+What is tune2fs?
+tune2fs is a Linux command used to view and modify parameters of ext2/ext3/ext4 filesystems.
+Think of it as a filesystem configuration tool.
+You can:
+Check filesystem info
+Enable/disable journaling
+Set mount options
+Adjust filesystem features
+It works on the filesystem itself, not on the raw disk.
+🔹 Common Uses
+View filesystem details
+sudo tune2fs -l /dev/sdb1
+-l lists all filesystem info:
+UUID
+Block size
+Journaling status
+Mount count, etc.
+Enable journaling
+sudo tune2fs -j /dev/sdb1
+Adds a journal (converts ext2 → ext3/ext4)
+Disable journaling
+sudo tune2fs -O ^has_journal /dev/sdb1
+Removes journaling feature (ext3/ext4 only)
+Change filesystem label
+sudo tune2fs -L DataDisk /dev/sdb1
+Set maximum mount count before fsck
+sudo tune2fs -c 20 /dev/sdb1
+Forces fsck after 20 mounts
+Set time interval between automatic fsck
+sudo tune2fs -i 30d /dev/sdb1
+Forces fsck every 30 days
+🔹 Why It’s Important
+Lets admins inspect and tweak filesystem features without formatting
+Useful for maintaining filesystem health
+Works best for ext2/ext3/ext4 (does not work for XFS, Btrfs, or FAT)
+🔹 Example: Check Journaling
+sudo tune2fs -l /dev/sdb1 | grep -i journal
+Output might be:
+Journal inode: 8
+Journal backup: inode 8
+Confirms that journaling is active
+If you see nothing → filesystem has no journal
+🔹 Admin Tip
+tune2fs is safe for reading info
+Modifying features (like removing journaling) can be risky, always backup first
+
+
+What is fsck?
+fsck stands for File System Consistency Check.
+It is a Linux command used to check and repair filesystems.
+Think of it as a “filesystem doctor”: it scans the disk for errors and fixes inconsistencies.
+Commonly used after crashes, power failures, or improper shutdowns.
+🔹 What fsck Does
+Checks metadata and data structures of a filesystem
+Fixes:
+Corrupted inodes
+Lost blocks
+Wrong directory entries
+Bad links
+Prevents filesystem corruption from spreading
+🔹 Basic Usage
+1. Check a partition
+sudo fsck /dev/sdb1
+Scans /dev/sdb1 and reports problems
+Usually asks for confirmation before fixing
+2. Automatically fix errors
+sudo fsck -y /dev/sdb1
+-y automatically answers “yes” to repair prompts
+3. Force check even if marked clean
+sudo fsck -f /dev/sdb1
+4. Check multiple filesystems
+sudo fsck -A
+Reads /etc/fstab and checks all filesystems listed
+🔹 Key Notes
+Must unmount the filesystem before running fsck (except root in special mode)
+Running on a mounted filesystem can corrupt data
+🔹 When to Use fsck
+After system crash or power failure
+When dmesg or journalctl shows filesystem errors
+Before shrinking partitions (always run fsck first!)
+When filesystem behaves strangely (e.g., files disappearing)
+
+What is parted?
+parted is a command-line tool for creating, modifying, and managing disk partitions.
+Unlike fdisk, it works well with large disks (>2TB) and GPT partition tables.
+Can create, delete, resize partitions, and check their alignment.
+🔹 Basic Workflow with parted
+Start parted on a disk
+View current partition table
+Create a new partition table (optional, wipes disk)
+Create, resize, or delete partitions
+Verify changes
+🧩 Example Scenario
+Disk: /dev/sdb
+Size: 20 GB
+Goal: create two partitions
+/dev/sdb1 → 10 GB
+/dev/sdb2 → 10 GB
+✅ Step 1: Start parted
+sudo parted /dev/sdb
+You’ll enter interactive mode:
+(parted)
+✅ Step 2: View Current Partition Table
+(parted) print
+Example output:
+Model: ATA VBOX HARDDISK (scsi)
+Disk /dev/sdb: 20GB
+Partition Table: gpt
+If no partitions → disk is clean
+If you want to wipe the disk and start fresh:
+(parted) mklabel gpt
+gpt = modern partition table (use msdos for old MBR style)
+✅ Step 3: Create First Partition (10 GB)
+(parted) mkpart primary ext4 0% 50%
+Explanation:
+primary = primary partition
+ext4 = intended filesystem type (just for info)
+0% 50% = starts at beginning, ends at 50% of disk → 10 GB
+✅ Step 4: Create Second Partition (Remaining 10 GB)
+(parted) mkpart primary ext4 50% 100%
+Starts at 50% of disk → ends at 100% → second 10 GB
+✅ Step 5: Verify Partitions
+(parted) print
+Example output:
+Number  Start  End    Size   Type     File system
+ 1      0.00GB 10.0GB 10.0GB primary ext4
+ 2     10.0GB 20.0GB 10.0GB primary ext4
+Confirms partition creation is correct
+✅ Step 6: Exit parted
+(parted) quit
+✅ Step 7: Inform Kernel & Verify
+sudo partprobe /dev/sdb
+lsblk
+Expected output:
+sdb
+├─sdb1 10G
+└─sdb2 10G
+Shows that partitions exist and kernel recognizes them
+✅ Step 8: Format Partitions
+sudo mkfs.ext4 /dev/sdb1
+sudo mkfs.ext4 /dev/sdb2
+✅ Step 9: Mount Partitions
+sudo mkdir /data1 /data2
+sudo mount /dev/sdb1 /data1
+sudo mount /dev/sdb2 /data2
+df -TH
+/data1 and /data2 now use the new partitions
+
+Using % vs Absolute Sizes in parted
+1️⃣ Using % (Percentage)
+You define partition relative to the total disk size.
+Example: on a 20 GB disk:
+(parted) mkpart primary ext4 0% 50%
+Starts at 0% → ends at 50% → 10 GB
+Then:
+(parted) mkpart primary ext4 50% 100%
+Remaining 50% → 10 GB
+✅ Pros:
+Works even if disk size changes slightly
+Easier to split disk evenly
+❌ Cons:
+Less precise if you need exact sizes in GB
+2️⃣ Using Absolute Sizes
+You can also use exact sizes, like 10GB, 5GB, etc.:
+(parted) mkpart primary ext4 0GB 10GB
+(parted) mkpart primary ext4 10GB 20GB
+✅ Pros:
+Exact size control
+Clear if you need specific partitions for applications
+❌ Cons:
+Need to know disk size in advance
+Not flexible if disk size changes
+
+Understanding Partition Size in fdisk
+
+When creating a partition in fdisk, you decide the start and end sectors. You can specify the size in different ways:
+
+1️⃣ Using Default Start / End
+When creating a new partition:
+sudo fdisk /dev/sdb
+n → create new partition
+p → primary partition
+Partition number → 1
+First sector → press Enter to accept default (usually first free sector)
+Last sector → press Enter to use all remaining space
+
+✅ Pros: Easy, uses all free space
+❌ Cons: No custom sizing
+
+2️⃣ Specifying Size in Sectors
+You can enter the exact sector number for start and end:
+First sector (2048-41943039, default 2048): 2048
+Last sector (2048-41943039, default 41943039): 10240000
+fdisk shows sector numbers
+1 sector = 512 bytes (usually)
+Very precise, but you must calculate size in sectors
+3️⃣ Using Size with + Symbol
+Simplest custom size method in fdisk:
+Last sector (2048-41943039, default 41943039): +10G
+This creates a partition 10 GB in size, starting from the start sector
+Supported suffixes:
+K = kilobytes
+M = megabytes
+G = gigabytes
+T = terabytes
+
+Example:
+
+n → primary → 1 → Enter → +5G
+Creates 5 GB partition
+Very convenient
+4️⃣ Using + with Relative Positioning
+Can create multiple partitions sequentially:
+First partition: +5G
+Second partition: +10G
+Remaining space: press Enter
+Each partition starts after the previous
+✅ Step 5: Verify the Partition
+
+After creating:
+
+p  # in fdisk to print partition table
+
+Example:
+
+Device     Boot  Start     End     Sectors  Size Id Type
+/dev/sdb1         2048   10485759 10483712  5G 83 Linux
+/dev/sdb2     10485760  31457279 20971520 10G 83 Linux
+Confirms sizes match your inputs
+✅ Step 6: Write Changes
+w
+Saves partition table
+Kernel sees changes
+
+
+Deleting a Partition in parted
+parted lets you create, resize, and delete partitions interactively. Deleting a partition removes it from the partition table, and all data on that partition will be lost, so backup first!
+🔹 Step 1: Start parted on Your Disk
+Example: disk /dev/sdb
+sudo parted /dev/sdb
+You’ll see:
+(parted)
+🔹 Step 2: View Current Partitions
+(parted) print
+Example output:
+Model: ATA VBOX HARDDISK (scsi)
+Disk /dev/sdb: 20GB
+Partition Table: gpt
+Number  Start  End    Size   Type     File system
+ 1      0.00GB 10.0GB 10.0GB primary ext4
+ 2     10.0GB 20.0GB 10.0GB primary ext4
+Here we have two partitions: /dev/sdb1 and /dev/sdb2
+🔹 Step 3: Delete the Partition
+Syntax:
+(parted) rm <partition_number>
+Example: delete /dev/sdb2
+(parted) rm 2
+Partition 2 is now removed from the table
+Data on it is lost, so make sure it’s backed up
+🔹 Step 4: Verify Changes
+(parted) print
+Example output:
+Number  Start  End    Size   Type     File system
+ 1      0.00GB 10.0GB 10.0GB primary ext4
+Partition 2 no longer exists
+🔹 Step 5: Exit parted
+(parted) quit
+🔹 Step 6: Inform Kernel
+sudo partprobe /dev/sdb
+lsblk
+Kernel now recognizes the updated partition table
+/dev/sdb2 is gone from lsblk
+
+What is LVM?
+LVM (Logical Volume Manager) is a system that lets you manage disk storage flexibly.
+👉 Instead of using fixed partitions (like /dev/sda1), LVM allows:
+Resize storage easily
+Combine multiple disks
+Take snapshots
+Extend or shrink volumes
+👉 Think of it like:
+Traditional partition = rigid box
+LVM = flexible storage pool
+⚙️ Why Use LVM?
+Without LVM:
+Hard to resize partitions
+Disk space is fixed
+With LVM:
+Increase/decrease size anytime
+Add new disks without downtime
+Better storage management
+🏗️ LVM Structure (VERY IMPORTANT)
+LVM has 3 layers:
+1️⃣ Physical Volume (PV)
+Actual disk or partition
+Example:
+/dev/sda
+/dev/sdb1
+👉 Command:
+pvcreate /dev/sdb1
+2️⃣ Volume Group (VG)
+Pool of storage created by combining PVs
+👉 Example:
+Combine /dev/sdb1 + /dev/sdc1 → VG
+👉 Command:
+vgcreate my_vg /dev/sdb1 /dev/sdc1
+👉 Think:
+VG = storage pool
+3️⃣ Logical Volume (LV)
+Virtual partition created from VG
+This is what you actually use and mount
+👉 Example:
+/dev/my_vg/my_lv
+👉 Command:
+lvcreate -L 5G -n my_lv my_vg
+👉 Think:
+LV = usable partition
+[ Disk /dev/sdb1 ]   [ Disk /dev/sdc1 ]
+          ↓                    ↓
+        (PV)                (PV)
+             \            /
+              \          /
+             [ Volume Group (VG) ]
+                      ↓
+        -------------------------
+        |           |           |
+      (LV1)       (LV2)       (LV3)
+
+How LVM Works (Step-by-Step)
+Create Physical Volume
+Create Volume Group
+Create Logical Volume
+Format filesystem (ext4, xfs)
+Mount it
+
+Step 0: Verify Disks (Production Safety Step)
+🔹 Why?
+Always confirm disks before touching them — avoids data loss.
+🔹 Command:
+lsblk
+🔹 What to check:
+/dev/sdb → 30G
+/dev/sdc → 40G
+Ensure no important data
+🧹 Step 1: Clean Disks (Very Important in Production)
+🔹 Why?
+Old signatures (RAID/LVM/filesystem) can break setup.
+🔹 Syntax:
+wipefs -a <device>
+🔹 Command:
+wipefs -a /dev/sdb
+wipefs -a /dev/sdc
+🧩 Step 2: Create Physical Volumes (PV)
+🔹 Why?
+LVM cannot use raw disks directly → must convert into PV.
+🔹 Syntax:
+pvcreate <device>
+🔹 Command:
+pvcreate /dev/sdb
+pvcreate /dev/sdc
+🔹 Verify:
+pvdisplay
+👉 Now both disks are LVM-ready.
+🏗️ Step 3: Create Volume Group (VG)
+🔹 Why?
+Combine both disks into one storage pool
+👉 Total space = 30 + 40 = 70 GB
+🔹 Syntax:
+vgcreate <vg_name> <pv1> <pv2>
+🔹 Command:
+vgcreate prod_vg /dev/sdb /dev/sdc
+🔹 Verify:
+vgdisplay
+👉 Now we have a pool: prod_vg (70 GB)
+📦 Step 4: Create Logical Volume (LV)
+🔹 Why?
+This is the usable storage (like a partition)
+🔹 Syntax:
+lvcreate -L <size> -n <lv_name> <vg_name>
+🔹 Example (create 50GB LV):
+lvcreate -L 50G -n app_lv prod_vg
+👉 Remaining free space in VG = 20GB
+🔹 Verify:
+lvdisplay
+🧾 Step 5: Create Filesystem
+🔹 Why?
+Without filesystem → OS cannot store files
+🔹 Syntax:
+mkfs.<fstype> <lv_path>
+🔹 Command:
+mkfs.ext4 /dev/prod_vg/app_lv
+👉 You can also use XFS (common in RHEL):
+mkfs.xfs /dev/prod_vg/app_lv
+📂 Step 6: Create Mount Point
+🔹 Why?
+Directory where storage will be attached
+🔹 Command:
+mkdir /app_data
+🔗 Step 7: Mount Logical Volume
+🔹 Why?
+Make storage accessible to system
+🔹 Syntax:
+mount <device> <mount_point>
+🔹 Command:
+mount /dev/prod_vg/app_lv /app_data
+🔹 Verify:
+df -h
+🔁 Step 8: Permanent Mount (Critical in Production)
+🔹 Why?
+Mount should persist after reboot
+🔹 Edit:
+vi /etc/fstab
+🔹 Entry:
+/dev/prod_vg/app_lv   /app_data   ext4   defaults   0 0
+👉 Test:
+mount -a
+⚡ Production-Level Operations
+🔼 Extend Logical Volume
+🔹 Why?
+Application needs more storage
+🔹 Syntax:
+lvextend -L +<size> <lv_path>
+🔹 Command:
+lvextend -L +10G /dev/prod_vg/app_lv
+🔹 Resize filesystem:
+👉 For ext4:
+resize2fs /dev/prod_vg/app_lv
+👉 For XFS:
+xfs_growfs /app_data
+➕ Add New Disk to VG
+🔹 Why?
+Scale storage without downtime
+pvcreate /dev/sdd
+vgextend prod_vg /dev/sdd
+📸 Create Snapshot (Backup Safety)
+🔹 Why?
+Backup before risky operations
+🔹 Syntax:
+lvcreate -L <size> -s -n <snap_name> <lv_path>
+🔹 Command:
+lvcreate -L 5G -s -n app_snap /dev/prod_vg/app_lv
+
+What is /dev/prod_vg/app_lv?
+This is the device path of your Logical Volume (LV).
+prod_vg → Volume Group name
+app_lv → Logical Volume name
+👉 Together:
+/dev/<VG_NAME>/<LV_NAME>
+So:
+/dev/prod_vg/app_lv
+means:
+“Logical volume app_lv inside volume group prod_vg”
+📍 Is this path default?
+✅ YES — it is automatically created by LVM
+When you run:
+lvcreate -L 50G -n app_lv prod_vg
+👉 LVM automatically creates:
+/dev/prod_vg/app_lv
+You do not manually create this path.
+🔗 What actually happens internally?
+LVM creates device mappings in:
+/dev/mapper/
+Example:
+/dev/mapper/prod_vg-app_lv
+👉 And then creates a friendly symlink:
+/dev/prod_vg/app_lv → /dev/mapper/prod_vg-app_lv
+🔍 How to check this path?
+1. Using lvs
+lvs
+Output:
+LV     VG      Attr       LSize
+app_lv prod_vg -wi-a----- 50.00g
+2. Using lvdisplay
+lvdisplay
+You will see:
+LV Path                /dev/prod_vg/app_lv
+3. Using ls
+ls /dev/prod_vg/
+Output:
+app_lv
+🧩 Important Concept
+👉 This path behaves like a real disk partition
+You can:
+mkfs.ext4 /dev/prod_vg/app_lv
+mount /dev/prod_vg/app_lv /mnt
+⚠️ Naming Rule
+If you create:
+vgcreate data_vg /dev/sdb
+lvcreate -n backup_lv -L 10G data_vg
+👉 Path becomes:
+/dev/data_vg/backup_lv
+So it's always:
+/dev/<VG>/<LV>
+🧠 Easy Way to Remember
+VG = folder
+LV = file
+👉 So:
+/dev/prod_vg/app_lv
+= like:
+folder/file
+🚨 Production Tip
+Instead of using this path in /etc/fstab, better use UUID:
+blkid /dev/prod_vg/app_lv
+Then:
+UUID=xxxxx /app_data ext4 defaults 0 0
+👉 More stable than device names
+
+Step 1: Identify your LVM logical volume
+Suppose you created:
+Volume Group: prod_vg
+Logical Volume: app_lv
+Mount point: /app_data
+The device path is:
+/dev/prod_vg/app_lv
+🧩 Step 2: Find the UUID (recommended)
+Using UUID in /etc/fstab is safer than /dev/prod_vg/app_lv because device names may change on reboot.
+blkid /dev/prod_vg/app_lv
+Example output:
+/dev/prod_vg/app_lv: UUID="f2d3b7e5-1234-4a5b-9a2c-1a2b3c4d5e6f" TYPE="ext4"
+🧩 Step 3: Edit /etc/fstab
+Open /etc/fstab:
+vi /etc/fstab
+Add this entry:
+Option 1: Using UUID (recommended)
+UUID=f2d3b7e5-1234-4a5b-9a2c-1a2b3c4d5e6f   /app_data   ext4   defaults   0 0
+Option 2: Using device path (less preferred)
+/dev/prod_vg/app_lv   /app_data   ext4   defaults   0 0
+
+When deleting an LVM, you must remove in reverse order:
+Logical Volume (LV) → because it depends on VG
+Volume Group (VG) → because it depends on PV
+Physical Volume (PV) → so disk is clean
+After that, the disk can be moved to another system.
+⚠️ Warning: All data will be lost. Backup anything important.
+🔹 Step 0: Unmount the Logical Volume
+If the LV is mounted, unmount it first.
+umount /app_data
+Check if unmounted:
+mount | grep app_data
+🔹 Step 1: Remove the Logical Volume (LV)
+Why?
+LV is the “usable partition”. Must be removed first.
+Syntax:
+lvremove <lv_path>
+Command:
+lvremove /dev/prod_vg/app_lv
+Confirm prompt with y
+Verify:
+lvs
+LV should be gone.
+🔹 Step 2: Remove the Volume Group (VG)
+Why?
+VG is the “storage pool” combining PVs. Cannot remove if LV exists.
+Syntax:
+vgremove <vg_name>
+Command:
+vgremove prod_vg
+Verify:
+vgs
+VG should be gone.
+🔹 Step 3: Remove Physical Volume (PV)
+Why?
+PV is the disk metadata. Removing it makes disk “clean” and usable elsewhere.
+Syntax:
+pvremove <device>
+Command:
+pvremove /dev/sdb
+pvremove /dev/sdc
+Verify:
+pvs
+Disks should no longer show as PV.
+🔹 Step 4: (Optional) Wipe Disk Signatures
+Extra safe in production before giving disk to another PC:
+wipefs -a /dev/sdb
+wipefs -a /dev/sdc
+Or zero out MBR/GPT if required:
+dd if=/dev/zero of=/dev/sdb bs=512 count=2048
+dd if=/dev/zero of=/dev/sdc bs=512 count=2048
+Now the disks are completely clean and can be used anywhere.
+🔹 Step 5: Verification
+lsblk
+Disks /dev/sdb and /dev/sdc appear as raw, no partitions, no LVM.
+
+Scenario
+Volume Group: prod_vg
+Logical Volume: app_lv
+Current LV size: 50 GB
+Volume Group free space: 20 GB
+Mount point: /app_data
+Filesystem type: ext4
+Goal: Extend LV by 10 GB, so new total size = 60 GB.
+🔹 Step 0: Check Current Status
+Before doing anything, always check current LV, VG, PV:
+lvs
+vgs
+pvs
+df -h | grep /app_data
+Output might look like:
+LV     VG      LSize  ...
+app_lv prod_vg 50.00g
+vgs shows free PE (Physical Extents)
+df -h shows current filesystem usage
+✅ This is critical in production — never extend blindly.
+🔹 Step 1: Extend the Logical Volume (LV)
+Why?
+LV is the virtual “partition”. Must extend before filesystem.
+Syntax:
+lvextend -L +<size> <lv_path>
+Command:
+lvextend -L +10G /dev/prod_vg/app_lv
++10G → adds 10 GB to existing LV
+LV path: /dev/prod_vg/app_lv (automatically created by LVM)
+🔹 Step 2: Extend the Filesystem
+After LV extension, the filesystem still thinks it’s 50 GB.
+Must resize filesystem to use extra space.
+🔹 For ext4:
+resize2fs /dev/prod_vg/app_lv
+Automatically expands filesystem to fill LV
+🔹 For XFS (default in RHEL 7+):
+xfs_growfs /app_data
+XFS grows while mounted → production-friendly
+🔹 Step 3: Verify
+df -h | grep /app_data
+lvs
+Filesystem now shows 60 GB total space
+LV shows 60 GB size
+Application can use new space immediately
+🔹 Step 4: Optional — Extend LV Using New Disk
+If the VG has no free space, add a disk first:
+pvcreate /dev/sdd
+vgextend prod_vg /dev/sdd
+Then extend LV as above.
+This is real production scenario: adding new storage without downtime
+🔹 Production Tips
+Always check VG free space before extending:
+vgs
+For ext4, you can extend while mounted, but safer to unmount in critical apps.
+For XFS, filesystem must be mounted.
+Use lvdisplay and df -h to verify each step.
+
+We’ll assume:
+
+Existing VG: prod_vg
+LV: app_lv
+Mount point: /app_data
+New disk: /dev/sdd (40 GB)
+Filesystem type: ext4
+🧠 Step 0: Check Current Status
+vgs
+lvs
+pvs
+df -h | grep /app_data
+Check VG free space (Free PE)
+Check LV size and mount point usage
+
+Suppose VG shows 0 free space, LV is 50 GB, and filesystem is ext4.
+
+🔹 Step 1: Prepare the New Disk
+Why?
+
+Disk must be LVM-ready before adding to VG.
+
+Command:
+pvcreate /dev/sdd
+Writes LVM metadata on /dev/sdd
+Verify:
+pvs
+
+You should see /dev/sdd as LVM PV, unassigned to any VG yet.
+
+🔹 Step 2: Extend the Volume Group (VG)
+Why?
+
+VG is the storage pool; must include new disk to extend LV.
+
+Command:
+vgextend prod_vg /dev/sdd
+Adds new disk to prod_vg
+Verify:
+vgs
+Free PE should now include the space from /dev/sdd (≈ 40 GB)
+🔹 Step 3: Extend the Logical Volume (LV)
+Why?
+
+Now that VG has free space, we can extend LV.
+
+Command (increase by 30 GB from new disk):
+lvextend -L +30G /dev/prod_vg/app_lv
++30G → add 30 GB to existing LV
+LV path: /dev/prod_vg/app_lv
+Verify:
+lvs
+🔹 Step 4: Resize the Filesystem
+
+After LV extension, filesystem still thinks it’s old size. Must resize.
+
+For ext4:
+resize2fs /dev/prod_vg/app_lv
+For XFS:
+xfs_growfs /app_data
+Filesystem now uses full LV size
+No data lost, can do online if filesystem supports it (XFS/ext4 mounted)
+🔹 Step 5: Verify Everything
+df -h | grep /app_data
+lvs
+vgs
+pvs
+df -h → filesystem shows new size (50 + 30 = 80 GB)
+lvs → LV shows 80 GB
+vgs → Free PE reduced accordingly
+pvs → shows /dev/sdd as part of VG
+
+We’ll assume:
+Volume Group: prod_vg
+Logical Volume: app_lv
+Mount point: /app_data
+Filesystem type: ext4
+Current LV size: 50 GB
+Goal: shrink LV to 30 GB
+⚠️ Important Safety Notes
+Always backup data before shrinking.
+Do not shrink a mounted LV unless filesystem supports online shrink (ext4 does not).
+For XFS — cannot shrink XFS. Only ext4/ext3 can be shrunk.
+🔹 Step 0: Check Current Status
+df -h | grep /app_data
+lvs
+vgs
+Check used space — must be less than target size.
+Example: app_lv 50 GB, only 20 GB used → safe to shrink to 30 GB.
+🔹 Step 1: Unmount the Logical Volume
+umount /app_data
+Verify:
+mount | grep /app_data
+Must not appear → LV is unmounted.
+🔹 Step 2: Check and Shrink the Filesystem
+Shrink filesystem before shrinking LV, otherwise you can corrupt data.
+2a: Check filesystem
+e2fsck -f /dev/prod_vg/app_lv
+Forces check for consistency
+2b: Shrink filesystem
+resize2fs /dev/prod_vg/app_lv 30G
+30G → new size for filesystem
+Filesystem shrunk safely
+🔹 Step 3: Shrink the Logical Volume
+lvreduce -L 30G /dev/prod_vg/app_lv
+Confirms shrink if prompted
+30G → new LV size
+Must match or be slightly larger than filesystem
+🔹 Step 4: Mount the Logical Volume
+mount /dev/prod_vg/app_lv /app_data
+Verify:
+df -h | grep /app_data
+lvs
+LV and filesystem now 30 GB
+
+lvs – Logical Volume Summary
+✅ Purpose
+Shows all Logical Volumes (LVs) on the system in a compact table format
+Quick way to see LV name, VG, size, attributes
+🔹 Syntax
+lvs [options]
+🔹 Example
+lvs
+🔹 Sample Output
+LV      VG       Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+app_lv  prod_vg  -wi-ao---- 50.00g
+🔹 What It Tells
+LV → Logical Volume name
+VG → Volume Group the LV belongs to
+Attr → Attributes (writable, snapshot, etc.)
+LSize → LV size
+Quick way to see all logical volumes and their size.
+🧠 2️⃣ vgs – Volume Group Summary
+✅ Purpose
+Shows all Volume Groups (VGs)
+Quick overview of total size, free space, number of LVs/PVs
+🔹 Syntax
+vgs [options]
+🔹 Example
+vgs
+🔹 Sample Output
+VG       #PV #LV #SN Attr   VSize   VFree
+prod_vg   2   1   0 wz--n- 70.00g 20.00g
+🔹 What It Tells
+#PV → Number of physical volumes
+#LV → Number of logical volumes
+VSize → Total size of VG
+VFree → Free space available for new LV
+Attr → VG attributes
+Use this to check how much space you can extend LV.
+🧠 3️⃣ pvs – Physical Volume Summary
+✅ Purpose
+Shows all physical volumes (disks/partitions used by LVM)
+Quick way to see disk usage in VGs
+🔹 Syntax
+pvs [options]
+🔹 Example
+pvs
+🔹 Sample Output
+PV         VG       Fmt  Attr PSize   PFree
+/dev/sdb   prod_vg lvm2 a--  30.00g  0
+/dev/sdc   prod_vg lvm2 a--  40.00g 20.00g
+🔹 What It Tells
+PV → Disk or partition
+VG → Which volume group it belongs to
+PSize → Total PV size
+PFree → Free space in PV
+Fmt → Format (usually lvm2)
+Use this to see how disks are assigned in LVM.
+🧠 4️⃣ lvdisplay – Detailed Logical Volume Info
+✅ Purpose
+Shows detailed info about a specific LV
+More verbose than lvs
+🔹 Syntax
+lvdisplay [lv_path | lv_name]
+🔹 Example
+lvdisplay /dev/prod_vg/app_lv
+🔹 Sample Output
+  --- Logical volume ---
+  LV Name                /dev/prod_vg/app_lv
+  VG Name                prod_vg
+  LV UUID                abc123-xyz
+  LV Write Access        read/write
+  LV Creation host, time rhel8, 2026-03-25 12:00
+  LV Status              available
+  # open                 1
+  LV Size                50.00 GiB
+  Current LE             12800
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  Block device           253:0
+🔹 What It Tells
+Full metadata about the LV
+Size, attributes, number of segments, device number, creation date
+Useful for troubleshooting or scripts
+🧠 5️⃣ vgdisplay – Detailed Volume Group Info
+✅ Purpose
+Shows all details about a VG
+Verbose info: total space, free space, physical extents, PVs used
+🔹 Syntax
+vgdisplay [vg_name]
+🔹 Example
+vgdisplay prod_vg
+🔹 Sample Output
+  --- Volume group ---
+  VG Name               prod_vg
+  System ID             
+  Format                lvm2
+  Metadata Areas        2
+  Metadata Sequence No  3
+  VG Access             read/write
+  VG Status             resizable
+  MAX LV                0
+  Cur LV                1
+  Open LV               1
+  Max PV                0
+  Cur PV                2
+  Act PV                2
+  VG Size               70.00 GiB
+  PE Size               5.00 MiB
+  Total PE              14399
+  Alloc PE / Size       12800 / 50.00 GiB
+  Free  PE / Size       1599 / 7.81 GiB
+  VG UUID               xyz-abc
+🔹 What It Tells
+Number of PVs and LVs
+Total size (VG Size)
+Free space (Free PE / Size)
+Physical Extent size and allocation
+Useful for planning LV extensions
+🧠 6️⃣ pvdisplay – Detailed Physical Volume Info
+✅ Purpose
+Shows all metadata of a PV
+Includes VG it belongs to, size, PE, and allocation
+🔹 Syntax
+pvdisplay [pv_name]
+🔹 Example
+pvdisplay /dev/sdb
+🔹 Sample Output
+  --- Physical volume ---
+  PV Name               /dev/sdb
+  VG Name               prod_vg
+  PV Size               30.00 GiB / not usable 3.00 MiB
+  Allocatable           yes 
+  PE Size (KByte)       5120
+  Total PE              6144
+  Free PE               0
+  Allocated PE          6144
+  PV UUID               1234-5678
+🔹 What It Tells
+PV size, free space, allocated extents
+VG membership
+Metadata for troubleshooting
+
+🧠 Scenario
+Existing Volume Group: prod_vg
+LV: app_lv
+Mount point: /app_data
+Old disk: /dev/sdb (we want to replace)
+New disk: /dev/sdd (to migrate data to)
+Goal: Migrate all data off /dev/sdb to /dev/sdd without downtime (online migration possible)
+🔹 Step 0: Check Current Status
+vgs
+pvs
+lvs
+df -h | grep /app_data
+Confirm which PVs belong to prod_vg
+Confirm LV size and mount point
+Example:
+PV         VG       Fmt  Attr PSize   PFree
+/dev/sdb   prod_vg lvm2 a--  30.00g  0
+/dev/sdc   prod_vg lvm2 a--  40.00g 20.00g
+/dev/sdb is full, /dev/sdc has space
+✅ Important: Make sure new disk is at least the size of the used space on old disk.
+🔹 Step 1: Prepare the New Disk
+Why?
+New disk must be LVM-ready before migration.
+pvcreate /dev/sdd
+Initializes PV metadata on /dev/sdd
+Verify:
+pvs
+Output:
+PV         VG       Fmt  Attr PSize   PFree
+/dev/sdb   prod_vg lvm2 a--  30.00g  0
+/dev/sdc   prod_vg lvm2 a--  40.00g 20.00g
+/dev/sdd   ---      lvm2 ---  50.00g 50.00g
+🔹 Step 2: Add New Disk to the Volume Group
+vgextend prod_vg /dev/sdd
+Adds /dev/sdd to prod_vg
+Verify:
+vgs
+Free PE should now include /dev/sdd (≈50 GB)
+🔹 Step 3: Migrate Data From Old PV to New PV
+Why?
+pvmove copies all extents from old PV to new PV, without unmounting LV (online migration possible).
+pvmove /dev/sdb /dev/sdd
+Copies all data from /dev/sdb → /dev/sdd
+Output shows progress
+Can migrate online if filesystem is mounted
+Verify Migration
+pvs
+/dev/sdb should show PFree = 30G (all data moved)
+/dev/sdd now holds the data
+🔹 Step 4: Remove Old PV from Volume Group
+vgreduce prod_vg /dev/sdb
+Removes /dev/sdb from prod_vg
+Verify:
+vgs
+pvs
+/dev/sdb is now free and can be reused
+🔹 Step 5: Optional — Wipe Old Disk for Reuse
+pvremove /dev/sdb
+wipefs -a /dev/sdb
+Disk is completely clean
+Can be moved to another system or reused for LVM
+
+We assume:
+Source server: /dev/sdb is an LVM PV
+Volume Group: prod_vg
+Logical Volume: app_lv
+Filesystem: ext4
+Destination server: new RHEL machine with free disk /dev/sdb
+Goal: Move the LVM disk and make it usable on the new machine with minimal risk.
+🧠 Step 0: Prepare and Backup
+Check LV, VG, PV info on source:
+vgs
+lvs
+pvs
+df -h | grep /app_data
+Confirm LV size, filesystem, VG name, and PV name
+Backup critical data (always!). Even if migration is “safe,” accidents can happen.
+🔹 Step 1: Ensure PV is movable / clean
+On source server, optional but recommended:
+# Move any other LVs off the disk if necessary
+pvmove /dev/sdb
+Verify PV usage:
+pvs
+PFree should indicate free if disk is ready to move
+🔹 Step 2: Export the Volume Group Metadata
+Helps the new machine recognize the VG exactly as on source.
+vgcfgbackup prod_vg
+Saves metadata in /etc/lvm/backup/prod_vg
+You can copy this file if needed, but normally LVM reads disk metadata automatically
+🔹 Step 3: Shutdown or Unmount LV (optional but safer)
+umount /app_data
+Stop any services using LV
+Can sometimes migrate “hot” if using pvmove online, but safer to unmount
+🔹 Step 4: Move the Disk Physically
+Shutdown source machine (or unmount and remove disk if hot-swap capable)
+Attach /dev/sdb to destination RHEL machine
+🔹 Step 5: Scan LVM on Destination
+On the destination:
+pvscan
+vgscan
+lvscan
+LVM reads metadata on disk and detects:
+PV         VG       LV
+/dev/sdb   prod_vg  app_lv
+This works because LVM stores metadata on the PV itself, no special export needed.
+🔹 Step 6: Activate VG and LV
+vgchange -ay prod_vg
+Activates Volume Group
+LV is now available
+lvdisplay /dev/prod_vg/app_lv
+Check LV size, path, UUID
+🔹 Step 7: Mount the LV
+mkdir -p /app_data
+mount /dev/prod_vg/app_lv /app_data
+Verify:
+df -h | grep /app_data
+Data should be intact
+🔹 Step 8: Optional – Add to /etc/fstab
+Get LV UUID:
+blkid /dev/prod_vg/app_lv
+Add to /etc/fstab:
+UUID=<LV_UUID> /app_data ext4 defaults 0 0
+Ensures auto-mount on reboot
+
+Step 1: Check the disks
+Assume the disks are /dev/sdb and /dev/sdc.
+lsblk
+Step 2: Create partitions
+We’ll create Linux LVM partitions on each disk. Using fdisk:
+sudo fdisk /dev/sdb
+Inside fdisk:
+n → new partition
+p → primary
+1 → partition number
+Press Enter to accept defaults (full disk)
+t → change partition type
+8e → Linux LVM
+w → write changes
+Repeat the same steps for /dev/sdc.
+Step 3: Create physical volumes (PVs)
+sudo pvcreate /dev/sdb1 /dev/sdc1
+This marks the partitions as LVM-ready.
+Step 4: Create a volume group (VG)
+sudo vgcreate vg_data /dev/sdb1 /dev/sdc1
+Here vg_data is your volume group name.
+Step 5: Create a logical volume (LV)
+For example, a 50G LV:
+sudo lvcreate -L 50G -n lv_storage vg_data
+lv_storage is the LV name.
+This is still raw storage, no filesystem yet.
+Step 6: Create a filesystem
+This is where you specify the filesystem type. Common choices: ext4, xfs (RHEL default is xfs).
+sudo mkfs.xfs /dev/vg_data/lv_storage
+Here xfs is the filesystem type. You could also do mkfs.ext4 /dev/vg_data/lv_storage.
+Step 7: Mount the LV
+sudo mkdir /mnt/data
+sudo mount /dev/vg_data/lv_storage /mnt/data
+Now you can use /mnt/data to store files.
+
+Scenario: Move an LVM disk from PC1 to PC2
+PC1: Original machine with an LVM disk (/dev/sdb)
+PC2: New machine where you want to use the disk
+We will assume the disk already has an LVM setup (VG and LVs) and data.
+Step 1: Prepare on PC1
+Goal: Ensure the disk is ready to move.
+Check the disk and LVM:
+lsblk
+pvdisplay
+vgdisplay
+lvdisplay
+Deactivate the VG before moving (optional but safer):
+vgchange -an <VG_name>
+-a n → deactivate
+This ensures no writes happen while moving the disk.
+Physically remove the disk (or shut down the machine if hot-swapping isn’t supported).
+Step 2: Prepare PC2
+Goal: Detect the disk and import its LVM.
+Connect the disk to PC2 (SATA, SCSI, USB, etc.)
+Check that the disk is recognized:
+lsblk
+fdisk -l
+You should see the disk (e.g., /dev/sdb) and its partitions (e.g., /dev/sdb1)
+Step 3: Scan for PVs on PC2
+pvscan
+Example output:
+PV /dev/sdb1   VG vg_data   lvm2 [50.00 GiB / 0 free]
+Important: Do not run pvcreate — that will erase data.
+Step 4: Scan for VGs
+vgscan
+This detects the VG (vg_data) that came with the disk.
+If a VG with the same name already exists on PC2:
+Rename the imported VG:
+vgrename vg_data vg_data_new
+Step 5: Activate the VG
+vgchange -ay vg_data_new
+-a y → activate
+Now all LVs inside the VG are active.
+Step 6: Check LVs
+lvscan
+You will see the logical volumes, e.g.:
+ACTIVE '/dev/vg_data_new/lv_storage' [50.00 GiB] inherit
+Step 7: Mount LVs
+Create a mount point:
+mkdir /mnt/imported_lv
+Mount the LV:
+mount /dev/vg_data_new/lv_storage /mnt/imported_lv
+Check contents:
+ls /mnt/imported_lv
+df -h /mnt/imported_lv
+Step 8: Optional – Add Imported Disk to Existing VG
+If you want to extend an existing VG on PC2 with this disk:
+vgextend existing_vg /dev/sdb1
+Now you can create new LVs or extend current LVs.
+
+pvscan – Scan Physical Volumes
+pvscan
+Sample output:
+  PV /dev/sdb1   VG vg_data   lvm2 [50.00 GiB / 0 free]
+  PV /dev/sdc1   VG vg_data   lvm2 [50.00 GiB / 0 free]
+  Total: 2 [100.00 GiB] / in use: 2 [100.00 GiB] / in no VG: 0 [0 ]
+Explanation:
+/dev/sdb1 and /dev/sdc1 are physical volumes (PVs)
+Both belong to the volume group vg_data
+Shows total size and free space on PVs
+2. vgscan – Scan Volume Groups
+vgscan
+Sample output:
+  Reading all physical volumes.  This may take a while...
+  Found volume group "vg_data" using metadata type lvm2
+Explanation:
+LVM scanned the system and found the volume group (VG) named vg_data
+Updates LVM metadata cache so LVs can be recognized
+3. lvscan – Scan Logical Volumes
+lvscan
+Sample output:
+  ACTIVE            '/dev/vg_data/lv_storage' [100.00 GiB] inherit
+Explanation:
+The LV /dev/vg_data/lv_storage is active
+Shows size and status (ACTIVE or INACTIVE)
+You can now mount it or use it for filesystem operations
+
+What is Swap Space?
+Swap space is disk space used as virtual memory when RAM is full.
+Acts as a backup memory for the system.
+Helps prevent out-of-memory (OOM) errors.
+Slower than RAM, so it’s mainly for emergency memory.
+Swap can be:
+Swap partition → a dedicated partition on disk.
+Swap file → a regular file on the filesystem used as swap.
+
+
+Step 1: Check Swap Status
+swapon --show
+Sample output:
+NAME      TYPE  SIZE  USED  PRIO
+/dev/sdb  partition  8G   0B   -2
+Confirms swap is on the whole disk /dev/sdb
+🔹 Step 2: Disable Swap
+swapoff /dev/sdb
+Must disable swap before modifying disk
+Verify:
+swapon --show
+free -h
+/dev/sdb should no longer appear
+🔹 Step 3: Remove Swap from /etc/fstab
+nano /etc/fstab
+Delete any line referencing /dev/sdb as swap
+Example line to delete:
+/dev/sdb swap swap defaults 0 0
+🔹 Step 4: Clear Swap Signature (Optional but Recommended)
+mkswap -f /dev/sdb
+Removes the swap signature so the disk is recognized as “clean” by Linux
+You can now create partitions or use for LVM
+🔹 Step 5: Reuse Disk
+Option A: Create Regular Partitions
+fdisk /dev/sdb
+Delete old swap (if any)
+Create new partition(s)
+Format:
+mkfs.ext4 /dev/sdb1   # or mkfs.xfs
+Mount:
+mkdir -p /mnt/data
+mount /dev/sdb1 /mnt/data
+Add to /etc/fstab for persistence:
+/dev/sdb1 /mnt/data ext4 defaults 0 0
+
+1️⃣ What is Swappiness?
+Swappiness is a kernel parameter that controls how aggressively Linux uses swap space.
+Value range: 0–100
+Value	Meaning
+0	Avoid using swap as much as possible, prefer RAM
+60	Default on most Linux systems, balanced RAM vs swap usage
+100	Swap is used very aggressively, even if RAM is free
+High swappiness → system swaps out memory pages early → more disk I/O
+Low swappiness → system keeps data in RAM → less swap usage, better performance
+Check Current Swappiness
+cat /proc/sys/vm/swappiness
+Typical default = 60
+🧠 4️⃣ Change Swappiness Temporarily
+sysctl vm.swappiness=10
+Immediately changes kernel behavior
+Will reset after reboot
+🧠 5️⃣ Change Swappiness Permanently
+Edit /etc/sysctl.conf:
+nano /etc/sysctl.conf
+Add or modify line:
+vm.swappiness=10
+Apply immediately:
+sysctl -p
+
+Initial Setup (Example Scenario)
+Disk: /dev/sdb1
+Mount point: /data
+Filesystem: ext4
+🧠 3️⃣ Step-by-Step Setup
+🔹 Step 1: Install quota tools
+yum install quota -y
+👉 Installs commands like:
+edquota
+quota
+quotacheck
+repquota
+🔹 Step 2: Enable quota in /etc/fstab
+nano /etc/fstab
+Add or modify:
+/dev/sdb1   /data   ext4   defaults,usrquota,grpquota   0 0
+✅ Why?
+usrquota → enable user quota
+grpquota → enable group quota
+🔹 Step 3: Remount filesystem
+mount -o remount /data
+👉 Activates quota options without reboot
+🔹 Step 4: Create quota database files
+quotacheck -cug /data
+Breakdown:
+-c → create files
+-u → user quota
+-g → group quota
+📁 Files Created (VERY IMPORTANT)
+Inside /data:
+ls -lh /data
+You will see:
+aquota.user
+aquota.group
+🧠 What are these files?
+File	Purpose
+aquota.user	Stores user quota limits & usage
+aquota.group	Stores group quota limits & usage
+👉 These are binary system files (do NOT edit manually)
+🔹 Step 5: Turn ON quota
+quotaon /data
+Verify:
+quotaon -p /data
+🧠 4️⃣ Set Limits
+🔹 Step 6: Set quota for a user
+edquota user1
+You’ll see:
+Disk quotas for user user1:
+Filesystem  blocks  soft  hard  inodes  soft  hard
+/dev/sdb1      0     10000  12000   0     0     0
+👉 Modify:
+soft = warning limit
+hard = max limit
+Example:
+Limit	Value
+Soft	100 MB → 100000 KB
+Hard	120 MB → 120000 KB
+🔹 Step 7: Set group quota
+edquota -g devteam
+🔹 Step 8: Set grace period
+edquota -t
+Example:
+7days
+👉 User can exceed soft limit for 7 days
+🧠 5️⃣ Verify Quota
+Check user usage:
+quota user1
+Check all users:
+repquota /data
+
+Types of Limits in Disk Quota
+
+There are 2 main types of limits:
+
+🔹 1️⃣ Soft Limit
+
+👉 This is a warning limit
+
+User can exceed it temporarily
+System gives warning
+Controlled by grace period
+Example
+Soft limit = 100 MB
+User uses 105 MB
+
+👉 Result:
+
+⚠ Warning shown
+Still allowed to write data
+🔹 2️⃣ Hard Limit
+
+👉 This is a strict limit
+
+User cannot exceed it
+No grace allowed
+Example
+Hard limit = 120 MB
+User reaches 120 MB
+
+👉 Result:
+
+❌ Cannot create/write files anymore
+🧠 3️⃣ Grace Period (Connected to Soft Limit)
+Time allowed to stay above soft limit
+
+Example:
+
+edquota -t
+
+Set:
+
+7days
+
+👉 Meaning:
+
+User can exceed soft limit for 7 days
+After that → it becomes like hard limit
+🧠 4️⃣ Two Types of Resources Limited
+
+Quota limits apply to:
+
+🔸 A. Block Limits (Disk Space)
+
+👉 Controls size of data (MB/GB)
+
+blocks  soft  hard
+
+Example:
+
+Soft = 100 MB
+Hard = 120 MB
+🔸 B. Inode Limits (Number of Files)
+
+👉 Controls number of files
+
+inodes  soft  hard
+
+Example:
+
+Soft = 1000 files
+Hard = 1200 files
+
+1️⃣ About XFS Quotas
+XFS has built-in quota support
+Quotas can be set per user, per group, or project
+Project quotas are special — can apply limits to directories, unlike EXT4
+🧠 2️⃣ Requirements
+Filesystem: XFS
+Quota tools installed:
+yum install xfsprogs -y
+Filesystem must be mounted with quota options
+🧠 3️⃣ Step 1: Mount XFS with Quota Enabled
+Edit /etc/fstab:
+/dev/sdb1  /data  xfs  defaults,uquota,gquota,pquota 0 0
+Explanation:
+Option	Meaning
+uquota	user quota
+gquota	group quota
+pquota	project quota (directory quota)
+Then remount:
+mount -o remount /data
+🧠 4️⃣ Step 2: Initialize Quotas
+For XFS, use xfs_quota:
+xfs_quota -x -c 'report -h' /data
+-x → expert mode
+-c → run command
+🧠 5️⃣ Step 3: Set User or Group Quota
+User Quota Example:
+xfs_quota -x -c 'limit bsoft=100m bhard=120m user1' /data
+Group Quota Example:
+xfs_quota -x -c 'limit bsoft=500m bhard=600m devteam' /data
+Explanation:
+Parameter	Meaning
+bsoft	soft block limit
+bhard	hard block limit
+user1/devteam	user or group name
+🧠 6️⃣ Step 4: Project Quota (Directory Quota)
+Create a project:
+echo "/data/projects project1" >> /etc/projects
+echo "project1:1001" >> /etc/projid
+/etc/projects → map directory to project
+/etc/projid → assign project ID
+Set quota for project:
+xfs_quota -x -c 'project -s -b bhard=10g bsoft=8g project1' /data
+bsoft=8g → soft limit
+bhard=10g → hard limit
+Check quota:
+xfs_quota -x -c 'report -h' /data
+🧠 7️⃣ Step 5: Verify Quotas
+xfs_quota -x -c 'report -h' /data
+Example output:
+Project       Used    Soft    Hard
+project1      2G      8G      10G
+
+1️⃣ Check Quota Status
+xfs_quota -x -c 'report -h' /mountpoint
+-x → expert mode (required for setting limits)
+-c 'command' → run a command
+report -h → human-readable quota report
+Example:
+xfs_quota -x -c 'report -h' /data
+🧠 2️⃣ Set User Quota
+xfs_quota -x -c 'limit bsoft=<soft limit> bhard=<hard limit> <username>' /mountpoint
+bsoft → soft block limit (disk space)
+bhard → hard block limit
+<username> → user name
+Example:
+xfs_quota -x -c 'limit bsoft=100m bhard=120m user1' /data
+🧠 3️⃣ Set Group Quota
+xfs_quota -x -c 'limit bsoft=<soft limit> bhard=<hard limit> <groupname>' /mountpoint
+Example:
+xfs_quota -x -c 'limit bsoft=500m bhard=600m devteam' /data
+🧠 4️⃣ Set Project Quota (Directory Quota)
+Step 1: Map directory to project
+echo "/path/to/directory projectname" >> /etc/projects
+echo "projectname:<projectID>" >> /etc/projid
+Example:
+echo "/data/projects project1" >> /etc/projects
+echo "project1:1001" >> /etc/projid
+Step 2: Assign quota to project
+xfs_quota -x -c 'project -s -b bhard=<hard> bsoft=<soft> <projectname>' /mountpoint
+Example:
+xfs_quota -x -c 'project -s -b bhard=10g bsoft=8g project1' /data
+🧠 5️⃣ Check Specific User/Group/Project Quota
+xfs_quota -x -c 'report -h' /data
+xfs_quota -x -c 'report -u' /data    # user report
+xfs_quota -x -c 'report -g' /data    # group report
+xfs_quota -x -c 'report -p' /data    # project report
+🧠 6️⃣ Turn Quota On/Off (Optional)
+XFS quotas are enabled at mount, but can be toggled:
+xfs_quota -x -c 'quotaon /data'
+xfs_quota -x -c 'quotaoff /data'
+
+What Are Targets in RHEL (Systemd)?
+Targets = “modern runlevels” in systemd-based Linux (RHEL 7/8/9)
+They define a state of the system, telling which services should start at boot or when switching modes.
+Think of a target as a preset system mode, not just “restart” — it tells Linux: “Start these services and stop everything else.”
+
+🧠 2️⃣ Examples of Targets
+Target Name       What It Means                             Equivalent Runlevel
+poweroff.target   Shut down system                          0
+reboot.target     Reboot system                              6
+rescue.target     Single-user maintenance mode               1
+emergency.target  Minimal mode for critical repair           N/A
+multi-user.target Multi-user CLI system (network, no GUI)   3
+graphical.target  Multi-user system with GUI                 5
+
+🧠 3️⃣ Why Targets Exist
+Control Services → Only the services needed for that target start. Example: rescue.target → only root and essential services start.
+Flexible Boot Modes → Boot into CLI, GUI, single-user, or emergency mode.
+Replace old runlevels → Use descriptive names instead of numbers (0-6).
+Switch Mode Without Reboot → Move the system into another mode while running.
+
+🧠 4️⃣ How Targets Are Used
+🔹 Check Current Target
+systemctl get-default
+Example output: graphical.target
+
+🔹 Change Default Target (Permanent)
+sudo systemctl set-default multi-user.target
+System will boot into CLI mode instead of GUI
+
+🔹 Switch Target Temporarily (Current Session)
+sudo systemctl isolate rescue.target
+System switches immediately to single-user mode (does not persist after reboot)
+
+🔹 Reboot or Power Off Using Target
+sudo systemctl isolate reboot.target
+sudo systemctl isolate poweroff.target
+System switches into reboot/shutdown mode
