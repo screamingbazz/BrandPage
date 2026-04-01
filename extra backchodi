@@ -1,0 +1,1553 @@
+Scenario
+Symptom: You power on your RHEL system and see:
+GRUB rescue>
+This means GRUB cannot find its configuration or boot files.
+🔹 Step 1: Boot from live media
+Get a RHEL installation ISO or any Linux live CD/USB.
+Boot your computer from this media.
+Choose “Try / Rescue” mode (doesn’t install, just runs a live system).
+🔹 Step 2: Identify your system partitions
+Once in the live environment, open a terminal.
+Run:
+lsblk
+This lists all disks and partitions.
+Find the root partition (where / is installed), e.g., /dev/sda2.
+Find the boot partition (if separate), e.g., /dev/sda1.
+You can also check:
+fdisk -l
+🔹 Step 3: Mount your system partitions
+# Replace sda2 with your root partition
+mount /dev/sda2 /mnt
+If you have a separate boot partition:
+mount /dev/sda1 /mnt/boot
+🔹 Step 4: Change root into your system
+chroot /mnt
+Now the terminal acts as if you’re inside your installed system.
+Any GRUB commands you run now affect your real RHEL installation.
+🔹 Step 5: Reinstall GRUB
+For BIOS systems (legacy boot):
+grub2-install /dev/sda
+For UEFI systems:
+grub2-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=redhat --recheck
+/dev/sda = the disk (not partition) where bootloader goes.
+🔹 Step 6: Rebuild GRUB configuration
+grub2-mkconfig -o /boot/grub2/grub.cfg   # BIOS
+grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg  # UEFI
+This generates a new GRUB menu based on your installed kernels.
+🔹 Step 7: Exit chroot and reboot
+exit
+umount /mnt/boot
+umount /mnt
+reboot
+Remove the live media
+Your system should now boot normally
+🔹 Step 8: Check boot
+If it works → success!
+If still not → check:
+Disk UUIDs in /etc/fstab
+Kernel files in /boot
+Correct BIOS/UEFI boot mode
+✅ Tip for beginners:
+Always keep at least one older kernel and backup GRUB config:
+cp /boot/grub2/grub.cfg /boot/grub2/grub.cfg.bak
+
+How to boot into an old kernel on RHEL if, for example, your new kernel or its initramfs is broken. I’ll explain why each step matters and its effect.
+
+Step 1: Reboot your system
+sudo reboot
+Reason: You need to restart to access the GRUB menu where you can choose a different kernel.
+Effect: System shuts down all running processes and starts the bootloader (GRUB).
+
+Step 2: Access the GRUB menu
+On BIOS systems: press and hold Shift during boot.
+On UEFI systems: press Esc repeatedly just after the BIOS/UEFI screen.
+Reason: By default, GRUB may auto-boot the default kernel, so you must interrupt it to choose another.
+Effect: You see the GRUB boot menu listing all installed kernels and recovery options.
+
+Step 3: Identify older kernels
+In the GRUB menu, you’ll see something like:
+Red Hat Enterprise Linux (4.18.0-505.el8.x86_64)
+Red Hat Enterprise Linux (4.18.0-425.el8.x86_64)
+Red Hat Enterprise Linux (4.18.0-240.el8.x86_64)
+The top entry is usually the latest kernel (possibly broken). Older kernels are listed below.
+Reason: You need a kernel with a working initramfs to boot successfully.
+Effect: You know which kernel is safe to boot.
+
+Step 4: Select the old kernel
+Use arrow keys to highlight the old kernel you want. Press Enter.
+Reason: Selecting an older kernel tells GRUB to load its vmlinuz (kernel image) and its associated initramfs instead of the default one.
+Effect: System loads the chosen kernel along with its initramfs, bypassing the broken one.
+
+Step 5: Boot into the old kernel
+System will continue booting normally using the old kernel.
+Reason: You need a running system to repair the new kernel or initramfs.
+Effect: You now have a working Linux environment even if the new kernel is unusable.
+
+Step 6: Verify which kernel is running
+uname -r
+Example output: 4.18.0-425.el8.x86_64
+Reason: Confirm you are running the older kernel.
+Effect: Now you can safely regenerate initramfs for the broken kernel or remove it if needed.
+
+Step 7: Repair the broken kernel (Optional)
+Once booted: sudo dracut -f /boot/initramfs-4.18.0-505.el8.x86_64.img 4.18.0-505.el8.x86_64
+Reason: Recreate the missing initramfs so the new kernel can boot again.
+
+Step 1: Boot into Rescue/Live CD
+Boot from a RHEL installation DVD or USB.
+Choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+Once in the shell, we will identify partitions.
+Step 2: List all disks and partitions
+
+Use:
+
+lsblk -f
+
+What it does:
+
+Lists all block devices, their mount points, filesystem types, and labels.
+
+Example output:
+
+NAME           FSTYPE      LABEL      MOUNTPOINT
+sda
+├─sda1         vfat        EFI       /boot/efi
+├─sda2         xfs        boot       /boot
+└─sda3         xfs                  /
+sdb
+└─sdb1         xfs                  /data
+
+How to read it:
+
+/ → root filesystem (sda3 in this example)
+/boot → boot partition (sda2)
+/boot/efi → EFI System Partition (sda1) for UEFI systems
+
+On BIOS systems, you usually only have /boot and / (no /boot/efi).
+
+Step 3: Mount the root filesystem
+mkdir /mnt/sysimage
+mount /dev/sda3 /mnt/sysimage
+
+Explanation:
+
+/dev/sda3 → root partition from lsblk.
+Mounting it under /mnt/sysimage lets us chroot into it.
+
+Effect:
+
+Your installed Linux system files are now accessible at /mnt/sysimage.
+Step 4: Mount the boot partition
+BIOS system (legacy)
+mount /dev/sda2 /mnt/sysimage/boot
+
+Explanation:
+
+/dev/sda2 → /boot partition.
+Needed because GRUB2 stores its core files there.
+
+Effect:
+
+The bootloader files can now be recreated in /boot.
+UEFI system
+mount /dev/sda1 /mnt/sysimage/boot/efi
+
+Explanation:
+
+/dev/sda1 → EFI System Partition (FAT32).
+Required for UEFI firmware to find GRUB2.
+
+Effect:
+
+GRUB2 can be installed into EFI and the system will boot via UEFI.
+Step 5: Optional: Verify mounts
+ls /mnt/sysimage
+
+You should see:
+
+bin, etc, home, var → root filesystem
+boot (or boot/efi) → partition mounted correctly
+Step 6: Summary of Example Mappings
+System Type	Device	Mount Point in Rescue	Notes
+BIOS	/dev/sda3	/mnt/sysimage	root /
+BIOS	/dev/sda2	/mnt/sysimage/boot	bootloader files
+UEFI	/dev/sda3	/mnt/sysimage	root /
+UEFI	/dev/sda2	/mnt/sysimage/boot	kernel/initramfs files
+UEFI	/dev/sda1	/mnt/sysimage/boot/efi	EFI System Partition, GRUB2 binaries
+
+Step 1: Boot into Rescue/Live CD
+Boot from a RHEL installation DVD or USB.
+Choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+Once in the shell, we will identify partitions.
+
+Step 2: List all disks and partitions
+Use:
+lsblk -f
+What it does: Lists all block devices, their mount points, filesystem types, and labels.
+Example output:
+NAME           FSTYPE      LABEL      MOUNTPOINT
+sda
+├─sda1         vfat        EFI       /boot/efi
+├─sda2         xfs        boot       /boot
+└─sda3         xfs                  /
+sdb
+└─sdb1         xfs                  /data
+How to read it: 
+/ → root filesystem (sda3 in this example)
+/boot → boot partition (sda2)
+/boot/efi → EFI System Partition (sda1) for UEFI systems
+On BIOS systems, you usually only have /boot and / (no /boot/efi).
+
+Step 3: Mount the root filesystem
+mkdir /mnt/sysimage
+mount /dev/sda3 /mnt/sysimage
+Explanation: /dev/sda3 → root partition from lsblk. Mounting it under /mnt/sysimage lets us chroot into it.
+Effect: Your installed Linux system files are now accessible at /mnt/sysimage.
+
+Step 4: Mount the boot partition
+BIOS system (legacy)
+mount /dev/sda2 /mnt/sysimage/boot
+Explanation: /dev/sda2 → /boot partition. Needed because GRUB2 stores its core files there.
+Effect: The bootloader files can now be recreated in /boot.
+
+UEFI system
+mount /dev/sda1 /mnt/sysimage/boot/efi
+Explanation: /dev/sda1 → EFI System Partition (FAT32). Required for UEFI firmware to find GRUB2.
+Effect: GRUB2 can be installed into EFI and the system will boot via UEFI.
+
+Step 5: Optional: Verify mounts
+ls /mnt/sysimage
+You should see:
+bin, etc, home, var → root filesystem
+boot (or boot/efi) → partition mounted correctly
+
+Step 6: Summary of Example Mappings
+System Type	Device	Mount Point in Rescue	Notes
+BIOS	/dev/sda3	/mnt/sysimage	root /
+BIOS	/dev/sda2	/mnt/sysimage/boot	bootloader files
+UEFI	/dev/sda3	/mnt/sysimage	root /
+UEFI	/dev/sda2	/mnt/sysimage/boot	kernel/initramfs files
+UEFI	/dev/sda1	/mnt/sysimage/boot/efi	EFI System Partition, GRUB2 binaries
+
+Step 1: Boot from a Rescue or Live CD/USB
+Use a RHEL/CentOS/AlmaLinux/Rocky Linux bootable media.
+Boot and choose “Troubleshooting → Rescue a Red Hat Enterprise Linux system”.
+Reason: Your system cannot boot without vmlinuz. You need an external environment to repair the system.
+Effect: You get a minimal Linux shell with access to your filesystem.
+
+Step 2: Identify and mount your root and boot partitions
+List partitions:
+lsblk -f
+Look for:
+/ → root partition
+/boot → boot partition (where vmlinuz lives)
+/boot/efi → EFI partition (for UEFI systems)
+Example output:
+NAME           FSTYPE      LABEL      MOUNTPOINT
+sda
+├─sda1         vfat        EFI       /boot/efi
+├─sda2         xfs        boot       /boot
+└─sda3         xfs                  /
+Mount partitions:
+mkdir /mnt/sysimage
+mount /dev/sda3 /mnt/sysimage          # root partition
+mount /dev/sda2 /mnt/sysimage/boot     # boot partition (where vmlinuz was)
+UEFI only:
+mount /dev/sda1 /mnt/sysimage/boot/efi
+Reason: You need access to /boot to restore vmlinuz and /boot/efi for UEFI bootloader.
+Effect: Your broken system is now accessible at /mnt/sysimage.
+
+Step 3: Chroot into your installed system
+chroot /mnt/sysimage
+Reason: Makes the rescue environment act as if you booted normally. All commands now affect your real system.
+Effect: You can reinstall kernels and rebuild initramfs.
+
+Step 4: Reinstall the kernel package
+Step 4a: List installed kernel packages
+rpm -qa | grep kernel
+Example output:
+kernel-4.18.0-505.el8.x86_64
+kernel-core-4.18.0-505.el8.x86_64
+kernel-core contains the actual vmlinuz file.
+Step 4b: Reinstall the kernel package
+yum reinstall kernel-core-4.18.0-505.el8.x86_64
+Explanation: yum reinstall fetches the kernel RPM from configured repos and restores vmlinuz and modules. If no network, download RPM manually and run: rpm -Uvh --force kernel-core-4.18.0-505.el8.x86_64.rpm
+Effect: /boot/vmlinuz-4.18.0-505.el8.x86_64 is restored.
+
+Step 5: Rebuild initramfs
+dracut -f /boot/initramfs-4.18.0-505.el8.x86_64.img 4.18.0-505.el8.x86_64
+Reason: vmlinuz alone isn’t enough; the system also needs initramfs to load drivers before mounting /.
+Effect: Your kernel and initramfs are ready for boot.
+
+Step 6: Update GRUB configuration
+BIOS systems:
+grub2-mkconfig -o /boot/grub2/grub.cfg
+UEFI systems:
+grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
+Reason: GRUB must know which kernels are available and where to find them.
+Effect: Bootloader menu updated with restored kernel.
+
+Step 7: Exit chroot and reboot
+exit
+reboot
+Remove live/rescue media.
+Effect: System boots normally with the restored vmlinuz.
+
+Step 1: Verify the repository is recognized by DNF
+dnf repolist
+
+Explanation:
+
+Lists all enabled repositories.
+You should see something like:
+repo id      repo name                           status
+localrepo    Local RHEL Repository               1234
+
+Reason:
+Confirms DNF knows about your local repo.
+
+Effect:
+You know DNF can see the repository and its metadata.
+
+Step 2: List available packages from the local repo only
+dnf --disablerepo="*" --enablerepo=localrepo list available
+
+Explanation:
+
+--disablerepo="*" disables all other repositories.
+--enablerepo=localrepo enables only your local repository.
+
+Reason:
+Ensures DNF can read packages from your local repo, not the internet.
+
+Effect:
+You see a list of packages available in /opt/localrepo.
+
+✅ If you see packages listed, the repository is working correctly.
+
+Step 3: Try installing a package from the local repo
+
+Pick a package you know exists in the repository, e.g., vim:
+
+sudo dnf install vim --disablerepo="*" --enablerepo=localrepo
+
+Reason:
+Tests that DNF can actually install packages from the local repo.
+
+Effect:
+
+If the install succeeds, your repository is fully functional.
+If it fails, check:
+Correct path in baseurl (file:///opt/localrepo)
+Metadata exists (repodata/ folder)
+Permissions allow read access
+Step 4: Check dependencies
+
+Sometimes packages depend on others. Test installing a package with dependencies:
+
+sudo dnf install httpd --disablerepo="*" --enablerepo=localrepo
+
+Reason:
+Ensures your local repository contains all necessary packages to resolve dependencies.
+
+Effect:
+If DNF can resolve and install dependencies, your local repository is comprehensive.
+
+Step 5: Refresh metadata (optional)
+sudo dnf clean all
+sudo dnf makecache
+
+Reason:
+Ensures any recent changes (e.g., added packages) are reflected.
+
+Effect:
+DNF sees the latest package list from your local repository.
+
+Step 6: Check repository with dnf info
+dnf info vim --disablerepo="*" --enablerepo=localrepo
+
+Explanation:
+
+Displays package information (version, release, size, repo).
+
+Reason:
+Quickly confirms DNF can read package metadata from your local repo.
+
+Effect:
+If it shows Repo: localrepo, the repo is working perfectly.
+
+Step 1: Verify the repository is recognized by DNF
+dnf repolist
+Explanation: Lists all enabled repositories.
+You should see something like:
+repo id      repo name                           status
+localrepo    Local RHEL Repository               1234
+Reason: Confirms DNF knows about your local repo.
+Effect: You know DNF can see the repository and its metadata.
+
+Step 2: List available packages from the local repo only
+dnf --disablerepo="*" --enablerepo=localrepo list available
+Explanation: --disablerepo="*" disables all other repositories. --enablerepo=localrepo enables only your local repository.
+Reason: Ensures DNF can read packages from your local repo, not the internet.
+Effect: You see a list of packages available in /opt/localrepo.
+✅ If you see packages listed, the repository is working correctly.
+
+Step 3: Try installing a package from the local repo
+Pick a package you know exists in the repository, e.g., vim:
+sudo dnf install vim --disablerepo="*" --enablerepo=localrepo
+Reason: Tests that DNF can actually install packages from the local repo.
+Effect: If the install succeeds, your repository is fully functional. If it fails, check: Correct path in baseurl (file:///opt/localrepo), Metadata exists (repodata/ folder), Permissions allow read access.
+
+Step 4: Check dependencies
+Sometimes packages depend on others. Test installing a package with dependencies:
+sudo dnf install httpd --disablerepo="*" --enablerepo=localrepo
+Reason: Ensures your local repository contains all necessary packages to resolve dependencies.
+Effect: If DNF can resolve and install dependencies, your local repository is comprehensive.
+
+Step 5: Refresh metadata (optional)
+sudo dnf clean all
+sudo dnf makecache
+Reason: Ensures any recent changes (e.g., added packages) are reflected.
+Effect: DNF sees the latest package list from your local repository.
+
+Step 6: Check repository with dnf info
+dnf info vim --disablerepo="*" --enablerepo=localrepo
+Explanation: Displays package information (version, release, size, repo).
+Reason: Quickly confirms DNF can read package metadata from your local repo.
+Effect: If it shows Repo: localrepo, the repo is working perfectly.
+
+Step 1: Know the IPs and subnet masks
+Example:
+IP1: 192.168.1.10
+IP2: 192.168.1.20
+Subnet mask for both: 255.255.255.0
+Note: If the subnet masks differ, use each IP’s mask when calculating its network address.
+
+Step 2: Convert the IP and subnet mask to binary
+192.168.1.10 → 11000000.10101000.00000001.00001010
+192.168.1.20 → 11000000.10101000.00000001.00010100
+255.255.255.0 → 11111111.11111111.11111111.00000000
+
+Step 3: Perform a bitwise AND between IP and subnet mask
+IP1 AND mask:
+11000000.10101000.00000001.00001010
+AND
+11111111.11111111.11111111.00000000
+= 11000000.10101000.00000001.00000000 → 192.168.1.0
+IP2 AND mask:
+11000000.10101000.00000001.00010100
+AND
+11111111.11111111.11111111.00000000
+= 11000000.10101000.00000001.00000000 → 192.168.1.0
+
+Step 4: Compare the network addresses
+Network address of IP1 = 192.168.1.0
+Network address of IP2 = 192.168.1.0
+✅ Same network → same subnet
+
+Step 5: Quick shortcut (decimal method)
+If subnet mask is 255.255.255.0, just compare the first three octets:
+192.168.1.10 → 192.168.1
+192.168.1.20 → 192.168.1
+Same first three octets → same subnet
+
+Step 1: Understand the subnet mask
+Subnet mask: 255.255.254.0
+In binary:
+255 → 11111111
+255 → 11111111
+254 → 11111110
+0   → 00000000
+So /23 (23 bits for the network, 9 bits for hosts)
+Each subnet spans 512 IP addresses (2^9), so the third octet may “combine” two numbers.
+
+Step 2: Pick two example IPs
+IP1: 192.168.0.10
+IP2: 192.168.1.20
+Subnet mask: 255.255.254.0
+
+Step 3: Find network address
+Bitwise AND between IP and mask.
+
+IP1: 192.168.0.10
+192 → 11000000
+168 → 10101000
+0   → 00000000
+10  → 00001010
+Mask: 255.255.254.0
+255 → 11111111
+255 → 11111111
+254 → 11111110
+0   → 00000000
+Bitwise AND:
+11000000.10101000.00000000.00001010
+AND
+11111111.11111111.11111110.00000000
+=
+11000000.10101000.00000000.00000000
+→ Network address = 192.168.0.0
+
+IP2: 192.168.1.20
+192 → 11000000
+168 → 10101000
+1   → 00000001
+20  → 00010100
+Bitwise AND with mask:
+11000000.10101000.00000001.00010100
+AND
+11111111.11111111.11111110.00000000
+=
+11000000.10101000.00000000.00000000
+→ Network address = 192.168.0.0
+
+✅ Both have the same network → same subnet
+
+1️⃣ Network Address
+The network address identifies the subnet a device belongs to.
+Formula: Network Address = IP Address AND Subnet Mask
+AND = bitwise AND: only 1 AND 1 = 1, everything else = 0
+
+Example:
+IP: 192.168.1.10
+Subnet mask: 255.255.255.0
+
+Step 1: Convert to binary
+IP:   192.168.1.10 → 11000000.10101000.00000001.00001010
+Mask: 255.255.255.0 → 11111111.11111111.11111111.00000000
+
+Step 2: Bitwise AND
+11000000.10101000.00000001.00001010
+AND
+11111111.11111111.11111111.00000000
+=
+11000000.10101000.00000001.00000000
+
+Step 3: Convert back to decimal
+11000000.10101000.00000001.00000000 → 192.168.1.0
+✅ Network address = 192.168.1.0
+
+2️⃣ Broadcast Address
+The broadcast address is the last IP in the subnet—used to send messages to all devices in that subnet.
+Formula: Broadcast Address = Network Address OR (~Subnet Mask)
+~Subnet Mask = invert all bits
+OR = bitwise OR: 1 OR 0 = 1
+
+Step 1: Invert subnet mask
+Subnet mask: 255.255.255.0 → 11111111.11111111.11111111.00000000
+Inverted (~mask): 0.0.0.255 → 00000000.00000000.00000000.11111111
+
+Step 2: OR with network address
+Network: 192.168.1.0 → 11000000.10101000.00000001.00000000
+OR
+Inverted: 00000000.00000000.00000000.11111111
+=
+11000000.10101000.00000001.11111111
+
+Step 3: Convert back to decimal
+11000000.10101000.00000001.11111111 → 192.168.1.255
+✅ Broadcast address = 192.168.1.255
+
+1️⃣ Start with the subnet mask
+/22 subnet mask = 255.255.252.0
+Binary of third octet (first two are full 255):
+252 → 11111100
+Network bits in third octet = first 6 bits (1s)
+Host bits in third octet = last 2 bits (0s)
+Host bits in changing octet determine the subnet block size
+
+2️⃣ Calculate the block size
+Block Size = 256 − Subnet Mask value in that octet
+Third octet mask = 252
+256 − 252 = 4
+Block size = 4 → amount the network address increments for each subnet in that octet
+
+3️⃣ How this leads to multiples
+First subnet starts at 0
+Next subnet = 0 + block size = 4
+Next = 4 + block size = 8
+Next = 8 + block size = 12
+And so on…
+✅ /22 subnets in third octet increment in multiples of 4: 0, 4, 8, 12, …
+
+4️⃣ Example applied to 192.168.5.10
+Third octet = 5
+Block size = 4 → multiples of 4: 0, 4, 8, …
+Largest multiple ≤ 5 → 4
+Network address = 192.168.4.0
+Broadcast = last IP in that block → 192.168.7.255
+
+✅ Shortcut Summary
+Look at subnet mask → find octet where subnet bits end / host bits start
+Block size = 256 − mask value in that octet
+Network addresses = multiples of block size in that octet
+For any IP, nearest multiple ≤ IP’s value = network address
+Broadcast = network + block size − 1
+
+1️⃣ Recall the network address
+IP = 192.168.5.10
+/22 subnet → block size = 4
+Network address = 192.168.4.0
+This block covers third octet values 4, 5, 6, 7
+
+2️⃣ Understand the broadcast address
+Broadcast = last IP in the subnet block
+For /22, block spans 4 third-octet values because block size = 4
+
+3️⃣ Shortcut to calculate broadcast address
+Network third octet = 4
+Add (block size − 1) → 4 + (4 − 1) = 7
+Set fourth octet to 255
+✅ Broadcast address = 192.168.7.255
+
+4️⃣ Usable IPs
+First usable = network + 1 → 192.168.4.1
+Last usable = broadcast − 1 → 192.168.7.254
+All devices in this subnet use IPs 192.168.4.1 → 192.168.7.254
+
+5️⃣ Quick mental picture
+Network = start of block → 192.168.4.0
+Broadcast = end of block → 192.168.7.255
+Block size = third octet increment = 4 → spans 4,5,6,7
+Shortcut formula: broadcast = network third octet + block size − 1, fourth octet = 255
+
+Step 1: Know your IP and subnet mask
+IP = 192.168.5.10
+Subnet mask = /20 → 255.255.240.0
+
+Step 2: Determine which octet changes
+Subnet mask in binary: 255.255.240.0 → 11111111.11111111.11110000.00000000
+Network bits = 20, Host bits = 12
+Changing octet = third octet (because first two octets are fully 255)
+
+Block size formula:
+Block size = 256 − value of subnet mask in changing octet
+Third octet mask = 240 → 256 − 240 = 16
+✅ Network addresses increment in multiples of 16: 0, 16, 32, 48, … 240
+
+Step 3: Find the network address
+IP’s third octet = 5
+Nearest multiple of 16 ≤ 5 → 0
+✅ Network address = 192.168.0.0
+Subnet spans third octet 0 → 15
+
+Step 4: Find the broadcast address
+Last third octet = network third octet + block size − 1 → 0 + 16 − 1 = 15
+Fourth octet = 255 (all host bits set to 1)
+✅ Broadcast address = 192.168.15.255
+
+Step 5: Determine usable IP range
+First usable = network + 1 → 192.168.0.1
+Last usable = broadcast − 1 → 192.168.15.254
+
+Step 1: Know your IP and subnet mask
+IP = 192.168.5.10
+Subnet mask = /24 → 255.255.255.0
+
+Step 2: Identify the changing octet
+Subnet mask binary: 255.255.255.0 → 11111111.11111111.11111111.00000000
+Network bits = 24, Host bits = 8
+Changing octet = fourth octet (host octet)
+Block size = 256 − mask in changing octet → 256 − 255 = 1
+✅ Network addresses increment by 1 in the fourth octet
+
+Step 3: Find the network address
+IP = 192.168.5.10
+Network address = same first 3 octets, last octet = 0
+✅ Network address = 192.168.5.0
+
+Step 4: Find the broadcast address
+Last IP of subnet block
+Fourth octet max = 255 (all host bits 1)
+✅ Broadcast address = 192.168.5.255
+
+Step 5: Determine usable IP range
+First usable = network + 1 → 192.168.5.1
+Last usable = broadcast − 1 → 192.168.5.254
+
+Step 1: Know your IP and subnet mask
+IP = 192.168.5.10
+Subnet mask = /16 → 255.255.0.0
+
+Step 2: Identify the changing octets
+Subnet mask binary: 255.255.0.0 → 11111111.11111111.00000000.00000000
+Network bits = 16, Host bits = 16
+Changing octets = third and fourth octets (host bits)
+✅ Subnet is large, covering all IPs where first two octets are fixed
+
+Step 3: Find the network address
+IP = 192.168.5.10
+Network = first two octets same, last two octets = 0.0
+✅ Network address = 192.168.0.0
+
+Step 4: Find the broadcast address
+Broadcast = last IP in the subnet block
+/16 → last two octets = host bits → max = 255.255
+✅ Broadcast address = 192.168.255.255
+
+Step 5: Usable IP range
+First usable = network + 1 → 192.168.0.1
+Last usable = broadcast − 1 → 192.168.255.254
+
+Step 1: Understand /24
+/24 means 24 network bits and the remaining 8 bits are host bits.
+Subnet mask in binary:
+11111111.11111111.11111111.00000000
+Convert to decimal:
+255.255.255.0
+Host bits = 32 − 24 = 8 → 2^8 − 2 = 254 usable hosts
+Step 2: Find block size
+The last significant octet is the fourth octet (0 in 255.255.255.0)
+Block size = 256 − 0? Actually, for /24, the block size = 256 − 255 = 1? Wait, let's clarify carefully:
+
+The fourth octet is for hosts. So each network increments by 1 in the third octet? Actually:
+
+For /24, the third octet is fixed per network.
+Fourth octet changes from 0 → 255 for hosts.
+
+So block size in fourth octet = 256 − 0? → 256
+
+Yes, this is consistent: each /24 network has 256 addresses (0–255), with 254 usable.
+
+Step 3: Find the network address
+
+Suppose the IP is 192.168.12.34 /24.
+
+First three octets = network → 192.168.12
+Fourth octet = 0 → network starts at 192.168.12.0
+
+✅ Network address = 192.168.12.0
+
+Step 4: Find the broadcast address
+For /24, broadcast = network + all host bits set to 1 → fourth octet = 255
+
+✅ Broadcast address = 192.168.12.255
+
+
+Step 1: Understand /13
+A /13 subnet mask means the first 13 bits of the IP address are the network bits, and the remaining 19 bits are host bits.
+Total bits in IPv4 = 32
+Network bits = 13
+Host bits = 32 − 13 = 19
+
+Subnet mask in decimal:
+/13 → 11111111.11111000.00000000.00000000
+
+Split into octets:
+1st octet: 11111111 = 255
+2nd octet: 11111000 = 248
+3rd octet: 00000000 = 0
+4th octet: 00000000 = 0
+
+So /13 = 255.248.0.0
+
+Step 2: Find the block size
+The block size is used to find the network address.
+Block size = 256 − value of the last significant subnet octet
+Here, the last significant octet is the second octet (248)
+Block size = 256 − 248 = 8
+
+This means the second octet increases in steps of 8:
+0, 8, 16, 24, 32, … 248
+
+Step 3: Find the network address
+Suppose your IP is 10.22.15.200 (you can replace it with any IP).
+First octet = 10 → stays the same
+Second octet = 22 → find the nearest multiple of 8 less than or equal to 22 → 16
+
+So the network address is:
+10.16.0.0
+
+Step 4: Find the broadcast address
+The broadcast address has all host bits set to 1.
+Block size = 8 → next network would start at 24
+Broadcast = one less than the next network
+Broadcast = 10.23.255.255
+
+Explanation:
+Network = 10.16.0.0
+Next network = 10.24.0.0
+Broadcast = 1 less than 10.24.0.0 → 10.23.255.255
+
+Step 1: Understand /26
+/26 means 26 network bits and 6 host bits (because 32 − 26 = 6).
+
+Subnet mask in binary:
+11111111.11111111.11111111.11000000
+
+Convert to decimal:
+255.255.255.192
+
+Number of hosts = 2^6 − 2 = 64 − 2 = 62 usable hosts
+
+Step 2: Find block size
+Last significant octet is the fourth octet (192).
+Block size = 256 − 192 = 64
+
+✅ This means each /26 network contains 64 IP addresses (0–63, 64–127, 128–191, 192–255).
+
+Step 3: Find the network address
+Suppose your IP is 192.168.1.70 /26.
+Check which block the IP falls into: multiples of 64 → 0, 64, 128, 192
+70 falls into the block starting at 64
+
+✅ Network address = 192.168.1.64
+
+Step 4: Find the broadcast address
+Broadcast = last IP of the block → 64 + 63 = 127
+
+✅ Broadcast address = 192.168.1.127
+
+🔹 Main Network Types
+1. NAT (Network Address Translation)
+✔ What it does:
+Shares your host computer’s internet
+VM gets a private IP
+✔ Features:
+Internet works automatically
+VM is hidden from other devices
+✔ Use:
+Best for basic internet access
+2. Bridged Network
+✔ What it does:
+VM connects directly to your real network
+Gets IP from router (like a real computer)
+✔ Features:
+Visible to other devices
+Can act like a separate machine
+✔ Use:
+When you want VM to behave like a real PC on LAN
+3. Host-Only Adapter
+✔ What it does:
+Network between host ↔ VM only
+✔ Features:
+No internet (unless configured manually)
+Private communication
+✔ Use:
+Testing, labs, secure environments
+4. Internal Network
+✔ What it does:
+Network between multiple VMs only
+✔ Features:
+Host cannot access
+Fully isolated
+✔ Use:
+Simulating real networks (labs)
+5. NAT Network (Advanced NAT)
+✔ What it does:
+Multiple VMs share NAT network
+✔ Features:
+VMs can talk to each other
+Still have internet access
+✔ Use:
+Multi-VM setups with internet
+
+1. Linux Network Configuration Files
+
+1. /etc/network/interfaces  
+Used in Debian/Ubuntu (older versions)  
+Defines static or dynamic IP settings  
+
+Example:  
+auto eth0
+iface eth0 inet static
+    address 192.168.1.10
+    netmask 255.255.255.0
+    gateway 192.168.1.1
+
+2. /etc/resolv.conf  
+Used for DNS configuration  
+Contains nameservers  
+
+Example:  
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+
+3. /etc/hosts  
+Maps IP addresses to hostnames locally  
+Useful for testing without DNS  
+
+Example:  
+127.0.0.1   localhost
+192.168.1.100 myserver.local
+
+4. /etc/sysconfig/network-scripts/ifcfg- (RHEL/CentOS)*  
+Each NIC has a file: ifcfg-eth0, ifcfg-eth1  
+Contains IP, netmask, gateway, DNS  
+
+Example:  
+DEVICE=eth0
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=192.168.1.10
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+
+5. /etc/NetworkManager/system-connections/  
+Used by NetworkManager  
+Stores all network connections in individual files  
+Can be edited with nmcli or manually  
+
+Example:  
+/etc/NetworkManager/system-connections/HomeWiFi
+
+Contains:  
+[connection]  
+id=HomeWiFi  
+uuid=...  
+type=wifi  
+autoconnect=true  
+
+[wifi]  
+ssid=HomeWiFi  
+
+[ipv4]  
+method=auto
+
+1. Interface Configuration Files
+Location: /etc/sysconfig/network-scripts/
+Files: ifcfg-<interface_name> (e.g., ifcfg-eth0, ifcfg-enp0s3)
+Purpose: Configure network interfaces. Typical parameters include:
+DEVICE – Name of the interface (e.g., eth0)
+BOOTPROTO – Method for obtaining IP (static or dhcp)
+ONBOOT – Whether interface starts at boot (yes/no)
+IPADDR, NETMASK, GATEWAY – Static IP settings
+
+Example:
+DEVICE=eth0
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=192.168.1.10
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+
+2. Global Network Settings
+File: /etc/sysconfig/network
+Purpose: General network settings, including hostname and default gateway.
+Key parameters:
+NETWORKING=yes – Enable networking
+HOSTNAME=<hostname> – Set system hostname
+GATEWAY=<gateway_ip> – Default gateway
+
+3. DNS Resolver Settings
+File: /etc/resolv.conf
+Purpose: Configure DNS servers and search domains.
+
+Example:
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+search example.com
+
+4. Hosts File
+File: /etc/hosts
+Purpose: Map IP addresses to hostnames locally (bypassing DNS)
+
+Example:
+127.0.0.1   localhost
+192.168.1.10   server1.example.com server1
+
+5. Routing Table
+File: /etc/sysconfig/network-scripts/route-<interface_name>
+Purpose: Configure static routes for specific interfaces.
+
+Example:
+192.168.2.0/24 via 192.168.1.1 dev eth0
+
+6. NetworkManager Settings (RHEL 7/8/9)
+Configuration files: /etc/NetworkManager/NetworkManager.conf
+Purpose: Control NetworkManager daemon behavior (for both GUI and CLI network management)
+
+7. Firewall Configuration
+Files for firewalld: /etc/firewalld/
+Files for iptables: /etc/sysconfig/iptables (older RHEL versions)
+Purpose: Define rules for network traffic filtering, NAT, and port forwarding
+
+8. Additional Utility Files
+/etc/nsswitch.conf – Determines lookup order for hostname resolution (files, DNS, LDAP, etc.)
+/etc/hostname – Stores the system hostname (RHEL 7+ uses this with hostnamectl)
+
+3. Check Routing Table
+Command: `ip route show`
+
+👉 Shows:
+- Default gateway
+- Network routes
+
+4. Test Connectivity (Ping)
+Commands:
+- `ping google.com`
+- `ping 8.8.8.8`
+
+👉 Used to check:
+- Network connectivity
+- DNS working or not
+
+5. Check DNS Resolution
+Commands:
+- `nslookup google.com`
+- `dig google.com`
+
+👉 Confirms DNS is resolving domain names
+
+6. Check Open Ports / Listening Services
+Command: `ss -tulnp`
+
+👉 Shows:
+- Open ports
+- Running services
+- Listening sockets  
+*(Modern replacement for netstat)*
+
+7. Trace Network Path
+Command: `traceroute google.com`
+
+👉 Shows:
+- Path packets take
+- Where delay or failure occurs
+
+8. Check Network Connectivity (Advanced)
+Command: `curl http://example.com`
+
+👉 Tests:
+- HTTP/HTTPS connectivity
+- API/server response
+
+9. Check ARP Table
+Command: `ip neigh`
+
+👉 Shows:
+- IP ↔ MAC address mapping
+
+10. Restart Network Service
+Command: `systemctl restart NetworkManager`
+
+👉 Used when:
+- Network changes not applied
+- Interface issues
+
+11. Check Interface Statistics
+Command: `ip -s link`
+
+👉 Shows:
+- Packet loss
+- Errors
+- RX/TX stats
+
+12. Check Hostname and Network Info
+Commands:
+- `hostname`
+- `hostname -I`
+
+ip link show
+
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+    link/ether 08:00:27:6d:8c:5e brd ff:ff:ff:ff:ff:ff
+3: enp0s8: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/ether 08:00:27:1e:2b:45 brd ff:ff:ff:ff:ff:ff
+
+Interface Index and Name
+
+1: lo:
+2: enp0s3:
+
+- 1 and 2 are interface indices (internal to the kernel)
+- lo is the loopback interface
+- enp0s3 is a physical (or virtual) network interface
+
+Flags <...>
+Common flags:
+- UP → Interface is enabled
+- LOWER_UP → Physical link is active
+- BROADCAST → Supports broadcast
+- MULTICAST → Supports multicast traffic
+- LOOPBACK → Loopback interface
+
+MTU – Maximum Transmission Unit (packet size limit)
+Example: mtu 1500
+
+qdisc – Queueing discipline (how packets are scheduled)
+Example: qdisc fq_codel
+
+state – Interface state
+Common states: UP, DOWN, UNKNOWN
+
+MAC Address / Link Type
+
+link/ether 08:00:27:6d:8c:5e brd ff:ff:ff:ff:ff:ff
+- link/ether → Ethernet interface
+- 08:00:27:6d:8c:5e → MAC address
+- brd ff:ff:ff:ff:ff:ff → Broadcast address
+
+Using `ip link show`
+
+Look at the flags and state fields:
+
+- LOWER_UP → The physical layer is active (cable plugged in, switch port connected)  
+- Absence of LOWER_UP or NO-CARRIER → No physical connection
+
+Examples:
+
+1. 2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> ... state UP  
+   - LOWER_UP → Interface is physically connected  
+   - UP → Interface is administratively enabled
+
+2. 3: enp0s8: <BROADCAST,MULTICAST,UP> ... state DOWN  
+   - No LOWER_UP → Cable not connected or link down
+
+Step 0: Preparation
+Before you touch configuration files:
+Know your network details
+IPv4: IP address, netmask, gateway, DNS
+IPv6: IP address/prefix, gateway, DNS
+Interface name (find it with ip link show)
+Ensure you have root privileges
+Most network changes require sudo or root access.
+Backup existing configs
+sudo cp /etc/sysconfig/network-scripts/ifcfg-enp0s3 /etc/sysconfig/network-scripts/ifcfg-enp0s3.bak
+Step 1: Identify the interface
+ip link show
+Example output:
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> ...
+Here, interface name is enp0s3.
+Step 2: Edit the interface file
+RHEL stores interface configs in:
+/etc/sysconfig/network-scripts/ifcfg-<interface_name>
+sudo vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+Step 2a: Static IPv4 configuration
+Example:
+DEVICE=enp0s3
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=192.168.1.100
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+DNS1=8.8.8.8
+DNS2=8.8.4.4
+Explanation:
+BOOTPROTO=static → manual IP
+ONBOOT=yes → activate at boot
+IPADDR & NETMASK → your IPv4
+GATEWAY → default route
+DNS1 / DNS2 → resolvers
+Step 2b: Static IPv6 configuration
+Add these lines in the same file:
+IPV6INIT=yes
+IPV6ADDR=2001:db8:1::100/64
+IPV6_DEFAULTGW=2001:db8:1::1
+DNS1=2001:4860:4860::8888
+DNS2=2001:4860:4860::8844
+Explanation:
+IPV6INIT=yes → enable IPv6
+IPV6ADDR → static IPv6 with prefix length
+IPV6_DEFAULTGW → IPv6 gateway
+DNS1 / DNS2 → IPv6 DNS servers
+⚠️ Make sure IPv6 addresses don’t conflict with existing devices.
+Step 3: Enable and restart networking
+sudo nmcli connection reload
+sudo nmcli connection up enp0s3
+Or using the old network service (RHEL 7+ uses NetworkManager by default):
+sudo systemctl restart NetworkManager
+Step 4: Verify the configuration
+Check IP addresses:
+ip addr show enp0s3
+Check connectivity:
+ping 192.168.1.1      # IPv4 gateway
+ping6 2001:db8:1::1   # IPv6 gateway
+Check DNS resolution:
+ping google.com
+ping6 google.com
+Check default routes:
+ip route show
+ip -6 route show
+Step 5: Persist and finalize
+Configuration is already saved in /etc/sysconfig/network-scripts/ifcfg-enp0s3.
+Ensure firewall rules allow necessary traffic.
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --reload
+Document IP assignments for future reference.
+
+1️⃣ Make sure your DHCP server is running
+Check the DHCP service on your server:
+sudo systemctl status dhcpd
+Status should be active (running).
+The server config is usually in:
+/etc/dhcp/dhcpd.conf
+Make sure the subnet your client is on is included in the DHCP server config:
+subnet 192.168.1.0 netmask 255.255.255.0 {
+    range 192.168.1.100 192.168.1.200;
+    option routers 192.168.1.1;
+    option domain-name-servers 8.8.8.8, 8.8.4.4;
+}
+2️⃣ Configure the client to use DHCP
+On the client RHEL machine:
+Option A: Using nmcli (NetworkManager CLI)
+Set IPv4 to DHCP:
+sudo nmcli connection modify enp0s3 ipv4.method auto
+Optionally, enable DHCP for IPv6:
+sudo nmcli connection modify enp0s3 ipv6.method auto
+Bring the interface up:
+sudo nmcli connection up enp0s3
+Option B: Using interface config file
+Edit the interface file:
+sudo vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+Make sure it has:
+DEVICE=enp0s3
+BOOTPROTO=dhcp
+ONBOOT=yes
+Restart NetworkManager:
+sudo systemctl restart NetworkManager
+3️⃣ Verify DHCP IP
+Check which IP the client got from your DHCP server:
+ip addr show enp0s3
+You should see an IP in the range configured on the DHCP server, e.g., 192.168.1.100–200.
+Check the lease:
+sudo cat /var/lib/NetworkManager/dhclient-*.lease
+4️⃣ Test Connectivity
+Ping the default gateway (router):
+ping -c 3 192.168.1.1
+Ping the DHCP server itself:
+ping -c 3 <DHCP-server-IP>
+Ping an external IP to test Internet access (if allowed):
+ping -c 3 8.8.8.8
+5️⃣ What Happens Behind the Scenes
+The client broadcasts a DHCPDISCOVER message.
+The DHCP server responds with a DHCPOFFER including IP, subnet mask, gateway, and DNS.
+The client requests that IP using DHCPREQUEST.
+The server confirms with DHCPACK.
+The client configures its interface with the IP and other settings.
+
+Identify your interface
+First, find your network interface:
+ip link show
+Example output:
+1: lo: ...
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 ...
+Let’s assume your interface is enp0s3.
+2️⃣ Decide your static IP and network details
+You need:
+Parameter	Example Value	Notes
+IP Address	192.168.1.50	Must be unique in your LAN
+Subnet Mask	255.255.255.0	Usually /24 for small networks
+Gateway	192.168.1.1	Router or internet gateway
+DNS	8.8.8.8 (Google)	Needed for domain name resolution
+⚠️ Make sure this IP is not in the DHCP pool of any server/router to avoid conflicts.
+3️⃣ Configure static IP using NetworkManager (nmcli)
+Step 1: Set IPv4 manually
+sudo nmcli connection modify enp0s3 ipv4.addresses 192.168.1.50/24
+sudo nmcli connection modify enp0s3 ipv4.gateway 192.168.1.1
+sudo nmcli connection modify enp0s3 ipv4.dns "8.8.8.8 8.8.4.4"
+sudo nmcli connection modify enp0s3 ipv4.method manual
+What happens here:
+ipv4.addresses → Assigns your static IP and subnet.
+ipv4.gateway → Lets your server send packets to the internet.
+ipv4.dns → Lets your server resolve domain names like google.com.
+ipv4.method manual → Ensures DHCP is not used.
+Step 2: Bring the connection up
+sudo nmcli connection up enp0s3
+4️⃣ Configure static IP using ifcfg file (alternative)
+Edit /etc/sysconfig/network-scripts/ifcfg-enp0s3:
+DEVICE=enp0s3
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=192.168.1.50
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+DNS1=8.8.8.8
+DNS2=8.8.4.4
+Restart NetworkManager:
+sudo systemctl restart NetworkManager
+5️⃣ Verify configuration
+Check IP and interface status:
+ip addr show enp0s3
+Check routing:
+ip route show
+You should see:
+192.168.1.0/24 dev enp0s3 proto kernel scope link src 192.168.1.50
+default via 192.168.1.1 dev enp0s3
+6️⃣ Test connectivity
+Ping your gateway:
+ping -c 3 192.168.1.1
+Ping external IP (internet):
+ping -c 3 8.8.8.8
+Test DNS resolution:
+ping -c 3 google.com
+✅ If all succeed, your static IP is working with internet access.
+
+1. Installing an RPM package directly
+If you have downloaded .rpm files:
+sudo dnf install /path/to/package.rpm
+dnf will resolve dependencies automatically if possible.
+Example:
+sudo dnf install ~/Downloads/httpd-2.4.6-97.el8.x86_64.rpm
+2. Installing a package from the repository
+If you want dnf to fetch the package automatically from configured repos:
+sudo dnf install package_name
+Example:
+sudo dnf install vim
+3. Checking if a package is installed
+dnf list installed package_name
+Example:
+dnf list installed httpd
+Or to list all installed packages:
+dnf list installed
+4. Uninstalling (removing) a package
+sudo dnf remove package_name
+Example:
+sudo dnf remove httpd
+5. Updating a package
+To update a specific package:
+sudo dnf update package_name
+To update all packages:
+sudo dnf update
+To check if updates are available without installing:
+dnf check-update
+6. Checking available packages in repositories
+dnf list available
+Or for a specific package:
+dnf list available package_name
+7. Listing all packages in a repository
+dnf repository-packages <repoid> list
+Example: List packages in the AppStream repo:
+dnf repository-packages AppStream list
+1. List all enabled repositories
+dnf repolist
+This shows only enabled repositories.
+Output example:
+repo id               repo name                                  status
+AppStream             Red Hat Enterprise Linux 8 AppStream      2,345
+BaseOS                Red Hat Enterprise Linux 8 BaseOS         1,234
+2. List all repositories (enabled + disabled)
+dnf repolist all
+Output example:
+repo id               repo name                                  status
+AppStream             Red Hat Enterprise Linux 8 AppStream      enabled
+BaseOS                Red Hat Enterprise Linux 8 BaseOS         enabled
+ExtraRepo             Extra repository                           disabled
+Status can be enabled or disabled.
+3. Check repository details
+dnf repoinfo
+Gives more detailed info about each repo, including URLs, priorities, and whether it’s enabled.
+🔹 Quick Notes
+Repository configs are usually in /etc/yum.repos.d/.
+If you want to enable or disable a repo, you can use:
+sudo dnf config-manager --set-enabled <repoid>
+sudo dnf config-manager --set-disabled <repoid>
+1. Enable a repo using dnf config-manager
+sudo dnf config-manager --set-enabled <repoid>
+Replace <repoid> with the repository ID you want to enable.
+Example:
+sudo dnf config-manager --set-enabled AppStream
+After enabling, you can verify it:
+dnf repolist
+2. Enable a repo temporarily for one command
+If you don’t want to permanently enable it, you can do:
+sudo dnf --enablerepo=<repoid> install package_name
+Example:
+sudo dnf --enablerepo=ExtraRepo install vim
+This temporarily enables ExtraRepo just for this command.
+3. Enable a repo by editing the .repo file
+Repo configurations are in /etc/yum.repos.d/.
+Open the repo file:
+sudo nano /etc/yum.repos.d/ExtraRepo.repo
+Find the line:
+enabled=0
+Change it to:
+enabled=1
+Save and exit. Now the repo is enabled permanently.
+1. Disable using dnf config-manager
+sudo dnf config-manager --set-disabled <repoid>
+Replace <repoid> with the repository ID you want to disable.
+Example:
+sudo dnf config-manager --set-disabled AppStream
+Verify the change:
+dnf repolist
+The disabled repo will no longer appear in the list.
+2. Disable a repo temporarily for one command
+sudo dnf --disablerepo=<repoid> install package_name
+This only disables the repo for this single command.
+Example:
+sudo dnf --disablerepo=ExtraRepo install vim
+3. Disable by editing the .repo file
+Open the repo file:
+sudo nano /etc/yum.repos.d/ExtraRepo.repo
+Find the line:
+enabled=1
+Change it to:
+enabled=0
+Save and exit. The repo is now permanently disabled.
+3. Check package info and version
+dnf info <package_name>
+Example:
+dnf info httpd
+
+1. Check the status of a service
+sudo systemctl status <service_name>
+Example:
+sudo systemctl status httpd
+Shows whether the service is active, running, or failed.
+2. Start a service
+sudo systemctl start <service_name>
+Example:
+sudo systemctl start httpd
+Starts the service immediately, but it won’t start on boot unless enabled.
+3. Stop a service
+sudo systemctl stop <service_name>
+Example:
+sudo systemctl stop httpd
+4. Restart a service
+sudo systemctl restart <service_name>
+Stops and then starts the service. Useful if you changed configuration files.
+5. Reload a service
+sudo systemctl reload <service_name>
+Reloads configuration without stopping the service (if supported by the service).
+6. Enable a service to start at boot
+sudo systemctl enable <service_name>
+Example:
+sudo systemctl enable httpd
+7. Disable a service at boot
+sudo systemctl disable <service_name>
+Stops it from starting automatically, but it does not stop a running service.
+8. Check if a service is enabled
+systemctl is-enabled <service_name>
+Returns enabled or disabled.
+9. List all running services
+systemctl list-units --type=service --state=running
+10. List all services (active and inactive)
+systemctl list-unit-files --type=service
+Shows which services are enabled, disabled, static, or masked.
+11. Shutdown or reboot the system
+sudo systemctl reboot      # reboot system
+sudo systemctl poweroff    # shutdown system
+sudo systemctl halt        # stop all CPUs
+
+1. View the entire system log
+sudo journalctl
+Shows all logs collected by systemd since boot.
+Scroll with ↑/↓, exit with q.
+2. View the log for a specific service
+sudo journalctl -u <service_name>
+Example: Check logs for Apache (httpd):
+sudo journalctl -u httpd
+3. Show the logs in real time (like tail -f)
+sudo journalctl -f
+Or for a specific service:
+sudo journalctl -u httpd -f
+4. Show logs for the current boot only
+sudo journalctl -b
+Or for the previous boot:
+sudo journalctl -b -1
+5. Show logs within a time range
+sudo journalctl --since "YYYY-MM-DD HH:MM:SS" --until "YYYY-MM-DD HH:MM:SS"
+Example:
+sudo journalctl --since "2026-04-01 08:00" --until "2026-04-01 12:00"
+You can also use keywords like "yesterday" or "1 hour ago":
+sudo journalctl --since "yesterday"
+6. Show only errors or warnings
+sudo journalctl -p err       # only errors
+sudo journalctl -p warning   # warnings
+Priority levels (-p): emerg, alert, crit, err, warning, notice, info, debug.
+7. Limit the number of lines
+sudo journalctl -n 50
+Shows the last 50 lines of logs.
+Combine with -f for real-time monitoring:
+sudo journalctl -u httpd -n 50 -f
+8. Persistent logging
+By default, logs may be kept only in memory. To keep logs across reboots:
+sudo mkdir -p /var/log/journal
+sudo systemd-tmpfiles --create --prefix /var/log/journal
+sudo systemctl restart systemd-journald
+
+RHEL system uses LVM and the initramfs is deleted, the system won’t boot normally, because the initramfs is responsible for loading the LVM modules and mounting the root filesystem. You can still recover it using a rescue ISO, but the process is a bit different. Here’s a step-by-step guide:
+
+1. Boot From RHEL ISO in Rescue Mode
+Insert your RHEL installation ISO (or bootable USB) and choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+Choose “Skip mounting” when prompted — we will manually activate LVM volumes.
+2. Access the Rescue Shell
+You will get a bash shell (usually under /mnt/sysimage or just root of the live system).
+3. Scan and Activate LVM Volumes
+Make sure LVM tools are available (they should be on the rescue ISO):
+lvm pvscan       # Scan physical volumes
+lvm vgscan       # Scan volume groups
+lvm lvscan       # Scan logical volumes
+Activate the volume groups:
+vgchange -ay
+Now all your logical volumes should be available, e.g., /dev/mapper/rhel-root, /dev/mapper/rhel-swap.
+4. Mount the Root Filesystem
+Find your root logical volume (usually something like /dev/mapper/<VG>-root) using lvscan.
+Mount it manually:
+mkdir /mnt/sysimage
+mount /dev/mapper/rhel-root /mnt/sysimage
+If you have a separate /boot partition (non-LVM), mount it as well:
+mount /dev/sda1 /mnt/sysimage/boot   # Replace /dev/sda1 with your /boot
+5. Rebuild the Initramfs
+
+Now that your root is mounted and the LVM is active, rebuild initramfs:
+
+chroot /mnt/sysimage
+# Determine the kernel version
+ls /boot/vmlinuz-*
+
+# Rebuild initramfs for the kernel (example: 5.14.0-284.el9.x86_64)
+dracut -f /boot/initramfs-5.14.0-284.el9.x86_64.img 5.14.0-284.el9.x86_64
+-f forces overwrite if a file exists (though in your case it was deleted, so it just creates a new one).
+6. Reinstall GRUB (Optional but Recommended)
+
+If you suspect bootloader issues:
+
+grub2-install /dev/sda
+grub2-mkconfig -o /boot/grub2/grub.cfg
+7. Exit and Reboot
+exit          # Exit chroot
+umount -R /mnt/sysimage
+reboot
+Your system should now boot normally with LVM activated.
+
+
+
+
+1. Boot From RHEL ISO in Rescue Mode
+Insert your RHEL bootable USB or ISO.
+Choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+You can choose Auto-mount because there’s no LVM to detect. The rescue environment will usually mount your root filesystem automatically under /mnt/sysimage.
+If you prefer manual, you can also choose Skip mounting — either way works for standard partitions.
+2. Verify Mounted Root
+
+Check if your root partition is mounted:
+
+ls /mnt/sysimage
+
+You should see directories like:
+
+bin  boot  etc  home  lib  usr  var
+If you chose Skip mounting, manually mount your partitions:
+mkdir /mnt/sysimage
+mount /dev/sda2 /mnt/sysimage       # replace /dev/sda2 with your root partition
+mount /dev/sda1 /mnt/sysimage/boot  # replace /dev/sda1 with /boot if separate
+3. Chroot into Your System
+
+Enter your installed system:
+
+chroot /mnt/sysimage
+
+Now your shell behaves as if you booted into your installed system.
+
+4. Rebuild initramfs
+Identify your kernel version:
+ls /boot/vmlinuz-*
+
+Example output: vmlinuz-5.14.0-284.el9.x86_64
+
+Rebuild initramfs:
+dracut -f /boot/initramfs-5.14.0-284.el9.x86_64.img 5.14.0-284.el9.x86_64
+-f forces overwriting if needed.
+5. Reinstall GRUB (Optional but Safe)
+
+If you suspect bootloader issues:
+
+grub2-install /dev/sda          # replace /dev/sda with your boot disk
+grub2-mkconfig -o /boot/grub2/grub.cfg
+6. Exit and Reboot
+exit                  # exit chroot
+umount -R /mnt/sysimage
+reboot
