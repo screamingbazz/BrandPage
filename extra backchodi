@@ -1551,3 +1551,237 @@ grub2-mkconfig -o /boot/grub2/grub.cfg
 exit                  # exit chroot
 umount -R /mnt/sysimage
 reboot
+
+
+What You Need
+RHEL 9 ISO – Must match your system’s major version (e.g., RHEL 9.2 system → RHEL 9.2 ISO).
+Root or sudo access – Needed to install software and edit system files.
+ISO file locally – Either copied to your system, or a DVD/USB inserted.
+⚙️ Step 1: Create a mount point
+Command:
+sudo mkdir -p /mnt/rhel_iso
+Explanation:
+mkdir -p → Makes a directory (folder).
+/mnt/rhel_iso → Path where the ISO content will appear. Think of it as opening a folder to see the files inside your ISO.
+Check it exists:
+ls -ld /mnt/rhel_iso
+⚙️ Step 2: Mount the ISO
+Case A: ISO is a file on your disk
+sudo mount -o loop /path/to/rhel.iso /mnt/rhel_iso
+Replace /path/to/rhel.iso with the actual path.
+Example:
+sudo mount -o loop /home/user/Downloads/rhel-9.2-x86_64-dvd.iso /mnt/rhel_iso
+Case B: Using DVD/USB
+sudo mount /dev/cdrom /mnt/rhel_iso
+Explanation:
+-o loop → Treats the ISO file like a physical disk.
+After mounting, /mnt/rhel_iso will contain the ISO files, just like opening a USB stick.
+Check contents:
+ls /mnt/rhel_iso
+Expected output:
+BaseOS
+AppStream
+EFI
+images
+...
+BaseOS → Core system packages.
+AppStream → Optional applications and extra packages.
+⚙️ Step 3: Create a local repo file
+Open file for editing:
+sudo vi /etc/yum.repos.d/local.repo
+(Or use nano if you prefer)
+Paste this:
+[BaseOS]
+name=Local BaseOS Repo
+baseurl=file:///mnt/rhel_iso/BaseOS
+enabled=1
+gpgcheck=0
+[AppStream]
+name=Local AppStream Repo
+baseurl=file:///mnt/rhel_iso/AppStream
+enabled=1
+gpgcheck=0
+Explanation:
+[BaseOS] → Repo name.
+baseurl=file://... → Path to ISO folders.
+enabled=1 → Turns the repo on.
+gpgcheck=0 → Skips signature checking (safe for local ISO).
+⚙️ Step 4: Disable online repositories
+RHEL 9 uses dnf, not yum.
+Check enabled repos:
+dnf repolist
+Disable all repos (except local):
+sudo dnf config-manager --disable '*'
+sudo dnf config-manager --enable BaseOS AppStream
+If config-manager is missing:
+sudo dnf install dnf-plugins-core
+Manual alternative:
+Open any repo file in /etc/yum.repos.d/.
+Set enabled=0 for online repos.
+⚙️ Step 5: Clean and rebuild cache
+sudo dnf clean all
+sudo dnf makecache
+dnf repolist
+Explanation:
+Clears old metadata and rebuilds repo info from your ISO.
+dnf repolist should now only show BaseOS and AppStream as enabled.
+⚙️ Step 6: Test installing a package
+Try installing Apache:
+sudo dnf install httpd -y
+Check if installed:
+rpm -q httpd
+If it installs, your local repo is working perfectly.
+🔁 Optional: Auto-mount ISO on boot
+Edit /etc/fstab:
+sudo vi /etc/fstab
+Add:
+/home/user/Downloads/rhel-9.2-x86_64-dvd.iso /mnt/rhel_iso iso9660 loop 0 0
+Explanation:
+Automatically mounts ISO at /mnt/rhel_iso on system boot.
+Test mount without reboot:
+sudo mount -a
+ls /mnt/rhel_iso
+
+1️⃣ Download the updated ISO
+Go to the Red Hat Customer Portal.
+Download the latest RHEL 9 DVD ISO (e.g., RHEL 9.3 if you had 9.2 before).
+Save it to a location like /home/user/Downloads/.
+2️⃣ Replace the old ISO (or mount new ISO)
+You have two options:
+Option A: Replace ISO file
+sudo mv /home/user/Downloads/rhel-9.2-x86_64-dvd.iso /home/user/Downloads/rhel-9.2-backup.iso
+sudo mv /home/user/Downloads/rhel-9.3-x86_64-dvd.iso /home/user/Downloads/rhel-9.2-x86_64-dvd.iso
+(Keep the same filename if you used /etc/fstab auto-mount.)
+Option B: Mount new ISO manually
+sudo umount /mnt/rhel_iso
+sudo mount -o loop /home/user/Downloads/rhel-9.3-x86_64-dvd.iso /mnt/rhel_iso
+3️⃣ Clean DNF cache
+After replacing/mounting the new ISO, rebuild the package metadata:
+sudo dnf clean all
+sudo dnf makecache
+dnf repolist
+Check: You should see BaseOS and AppStream again.
+4️⃣ Update packages from local repo
+Now you can update your system with the new ISO:
+sudo dnf upgrade -y
+This upgrades packages using the new ISO only, without internet.
+
+Step 0: Check existing kernels
+uname -r
+rpm -q kernel
+Example output:
+kernel-5.14.0-362.el9.x86_64
+kernel-5.14.0-427.el9.x86_64
+uname -r → current running kernel
+rpm -q kernel → all installed kernels
+✅ Keep at least 1 older kernel as a fallback.
+1️⃣ Install the new kernel
+For example, install the latest available kernel via DNF:
+sudo dnf install kernel
+This will install a third kernel (say kernel-5.14.0-500.el9.x86_64)
+Older kernels are kept automatically
+/boot will now have three kernels
+2️⃣ List all kernels after install
+rpm -q kernel
+Example output:
+kernel-5.14.0-362.el9.x86_64
+kernel-5.14.0-427.el9.x86_64
+kernel-5.14.0-500.el9.x86_64
+3️⃣ Set the new kernel as default
+Use grubby, which works for both BIOS and UEFI systems:
+sudo grubby --set-default /boot/vmlinuz-5.14.0-500.el9.x86_64
+Verify the default:
+grubby --default-kernel
+✅ GRUB will now boot the new kernel by default.
+4️⃣ Reboot and verify
+sudo reboot
+uname -r
+Ensure it boots into the new kernel
+Older kernels are still present as fallbacks in GRUB menu
+5️⃣ Files involved (and what to edit)
+RHEL 9 uses BLS (Boot Loader Specification) and auto-generates GRUB configs.
+You almost never edit these manually, especially in production.
+File Role Edit or not?
+/boot/grub2/grub.cfg (BIOS) Main boot config ❌ Do not edit manually
+/boot/efi/EFI/redhat/grub.cfg (UEFI) UEFI boot config ❌ Do not edit manually
+/etc/default/grub Default GRUB settings (timeout, cmdline) ✔ Optional edits
+/boot/loader/entries/*.conf Per-kernel boot entries ❌ Auto-generated, usually no edits
+/boot/vmlinuz-* Kernel image ❌ Don’t delete manually
+/boot/initramfs-* Initramfs ❌ Don’t delete manually
+✅ Rule of thumb:
+Use dnf to install/remove kernels
+Use grubby to set default kernel
+Avoid manual editing of grub.cfg or bootloader files
+6️⃣ Keep older kernels safe
+RHEL 9 keeps older kernels unless you remove them.
+Optionally, configure a limit of kernels:
+sudo vi /etc/dnf/dnf.conf
+Add:
+installonly_limit=3
+This keeps 3 kernels automatically (current + 2 older).
+✅ Summary Workflow (Production-safe)
+Check current kernels:
+uname -r
+rpm -q kernel
+Install new kernel:
+sudo dnf install kernel
+Set new kernel as default:
+sudo grubby --set-default /boot/vmlinuz-<new-version>
+grubby --default-kernel  # verify
+Reboot and test:
+sudo reboot
+uname -r
+Keep old kernels for rollback (don’t remove until fully tested).
+
+Safety Principle First
+Never remove the kernel you are currently running (uname -r)
+Always keep at least 1 fallback kernel
+Check GRUB entries before removing
+1️⃣ Check which kernel is running
+uname -r
+Example output:
+5.14.0-427.el9.x86_64
+✅ Do not remove this kernel
+2️⃣ List all installed kernels
+rpm -q kernel
+Example output:
+kernel-5.14.0-362.el9.x86_64
+kernel-5.14.0-427.el9.x86_64
+kernel-5.14.0-500.el9.x86_64   <-- faulty
+Identify the faulty kernel (e.g., 5.14.0-500.el9.x86_64)
+Confirm at least one older kernel is working
+3️⃣ Check GRUB entries (optional but recommended)
+sudo grubby --info=ALL
+Example snippet:
+/boot/vmlinuz-5.14.0-362.el9.x86_64
+/boot/vmlinuz-5.14.0-427.el9.x86_64
+/boot/vmlinuz-5.14.0-500.el9.x86_64
+Confirm faulty kernel is listed
+Confirm older working kernels exist
+4️⃣ Remove the faulty kernel safely
+Use dnf remove with full package name:
+sudo dnf remove kernel-5.14.0-500.el9.x86_64
+dnf will remove:
+/boot/vmlinuz-5.14.0-500.el9.x86_64
+/boot/initramfs-5.14.0-500.el9.x86_64.img
+Related modules in /lib/modules/5.14.0-500.el9.x86_64
+It will not touch your running kernel
+5️⃣ Verify removal
+rpm -q kernel
+ls /boot/loader/entries/
+grubby --info=ALL
+The faulty kernel should no longer appear
+Older working kernels remain
+6️⃣ Optional: Ensure default kernel is correct
+If the faulty kernel was set as default, reset it:
+sudo grubby --set-default /boot/vmlinuz-5.14.0-427.el9.x86_64
+grubby --default-kernel  # verify
+7️⃣ Reboot and test
+sudo reboot
+uname -r
+System should boot into default working kernel
+GRUB menu shows only working kernels
+8️⃣ Optional Cleanup
+Remove unused packages and free space:
+sudo dnf autoremove
+Ensure /boot is tidy
