@@ -1,0 +1,881 @@
+Scenario
+Symptom: You power on your RHEL system and see:
+GRUB rescue>
+This means GRUB cannot find its configuration or boot files.
+🔹 Step 1: Boot from live media
+Get a RHEL installation ISO or any Linux live CD/USB.
+Boot your computer from this media.
+Choose “Try / Rescue” mode (doesn’t install, just runs a live system).
+🔹 Step 2: Identify your system partitions
+Once in the live environment, open a terminal.
+Run:
+lsblk
+This lists all disks and partitions.
+Find the root partition (where / is installed), e.g., /dev/sda2.
+Find the boot partition (if separate), e.g., /dev/sda1.
+You can also check:
+fdisk -l
+🔹 Step 3: Mount your system partitions
+# Replace sda2 with your root partition
+mount /dev/sda2 /mnt
+If you have a separate boot partition:
+mount /dev/sda1 /mnt/boot
+🔹 Step 4: Change root into your system
+chroot /mnt
+Now the terminal acts as if you’re inside your installed system.
+Any GRUB commands you run now affect your real RHEL installation.
+🔹 Step 5: Reinstall GRUB
+For BIOS systems (legacy boot):
+grub2-install /dev/sda
+For UEFI systems:
+grub2-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=redhat --recheck
+/dev/sda = the disk (not partition) where bootloader goes.
+🔹 Step 6: Rebuild GRUB configuration
+grub2-mkconfig -o /boot/grub2/grub.cfg   # BIOS
+grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg  # UEFI
+This generates a new GRUB menu based on your installed kernels.
+🔹 Step 7: Exit chroot and reboot
+exit
+umount /mnt/boot
+umount /mnt
+reboot
+Remove the live media
+Your system should now boot normally
+🔹 Step 8: Check boot
+If it works → success!
+If still not → check:
+Disk UUIDs in /etc/fstab
+Kernel files in /boot
+Correct BIOS/UEFI boot mode
+✅ Tip for beginners:
+Always keep at least one older kernel and backup GRUB config:
+cp /boot/grub2/grub.cfg /boot/grub2/grub.cfg.bak
+
+Scenario
+Symptom: System cannot find the OS.
+BIOS: corrupted MBR
+UEFI: corrupted GPT / EFI bootloader
+You might see:
+No bootable device found
+GRUB rescue>
+🔹 Step 1: Boot from rescue media
+Insert RHEL installation ISO or live Linux USB.
+Boot from it.
+Choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+Select “Continue” to mount your system (it usually mounts under /mnt/sysimage).
+🔹 Step 2: Switch to your installed system
+chroot /mnt/sysimage
+Now, commands affect your actual RHEL system.
+🔹 Step 3: Identify your disk layout
+lsblk
+Find your system disk, e.g., /dev/sda.
+Find boot partition if separate, e.g., /dev/sda1.
+Check if your system uses BIOS/UEFI:
+ls /sys/firmware/efi
+If the directory exists → UEFI, otherwise → BIOS.
+🔹 Step 4: Reinstall the bootloader
+🔹 A. BIOS system (MBR)
+grub2-install /dev/sda       # install to disk, not partition
+grub2-mkconfig -o /boot/grub2/grub.cfg
+🔹 B. UEFI system (GPT)
+Make sure the EFI partition is mounted (example /boot/efi):
+mount /dev/sda1 /boot/efi
+Install GRUB for UEFI:
+grub2-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=redhat --recheck
+grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
+--bootloader-id=redhat → this is the folder name under EFI. You can change it if desired.
+🔹 Step 5: Verify GRUB files
+ls /boot/grub2/       # BIOS
+ls /boot/efi/EFI/redhat/  # UEFI
+Check for files like grub.cfg and *.efi.
+🔹 Step 6: Exit and reboot
+exit
+umount /boot/efi    # if mounted
+umount /mnt/sysimage
+reboot
+Remove the live media.
+System should now boot normally.
+🔹 Step 7: Troubleshoot if still failing
+Check disk UUIDs in /etc/fstab.
+Make sure BIOS/UEFI boot mode matches installation mode.
+Run fsck if filesystem errors exist:
+fsck /dev/sda2
+✅ Tip:
+Always backup your bootloader before updates:
+cp -r /boot/grub2 /boot/grub2.bak
+
+How to boot into an old kernel on RHEL if, for example, your new kernel or its initramfs is broken. I’ll explain why each step matters and its effect.
+
+Step 1: Reboot your system
+sudo reboot
+Reason: You need to restart to access the GRUB menu where you can choose a different kernel.
+Effect: System shuts down all running processes and starts the bootloader (GRUB).
+
+Step 2: Access the GRUB menu
+On BIOS systems: press and hold Shift during boot.
+On UEFI systems: press Esc repeatedly just after the BIOS/UEFI screen.
+Reason: By default, GRUB may auto-boot the default kernel, so you must interrupt it to choose another.
+Effect: You see the GRUB boot menu listing all installed kernels and recovery options.
+
+Step 3: Identify older kernels
+In the GRUB menu, you’ll see something like:
+Red Hat Enterprise Linux (4.18.0-505.el8.x86_64)
+Red Hat Enterprise Linux (4.18.0-425.el8.x86_64)
+Red Hat Enterprise Linux (4.18.0-240.el8.x86_64)
+The top entry is usually the latest kernel (possibly broken). Older kernels are listed below.
+Reason: You need a kernel with a working initramfs to boot successfully.
+Effect: You know which kernel is safe to boot.
+
+Step 4: Select the old kernel
+Use arrow keys to highlight the old kernel you want. Press Enter.
+Reason: Selecting an older kernel tells GRUB to load its vmlinuz (kernel image) and its associated initramfs instead of the default one.
+Effect: System loads the chosen kernel along with its initramfs, bypassing the broken one.
+
+Step 5: Boot into the old kernel
+System will continue booting normally using the old kernel.
+Reason: You need a running system to repair the new kernel or initramfs.
+Effect: You now have a working Linux environment even if the new kernel is unusable.
+
+Step 6: Verify which kernel is running
+uname -r
+Example output: 4.18.0-425.el8.x86_64
+Reason: Confirm you are running the older kernel.
+Effect: Now you can safely regenerate initramfs for the broken kernel or remove it if needed.
+
+Step 7: Repair the broken kernel (Optional)
+Once booted: sudo dracut -f /boot/initramfs-4.18.0-505.el8.x86_64.img 4.18.0-505.el8.x86_64
+Reason: Recreate the missing initramfs so the new kernel can boot again.
+
+Step 1: Boot into Rescue/Live CD
+Boot from a RHEL installation DVD or USB.
+Choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+Once in the shell, we will identify partitions.
+Step 2: List all disks and partitions
+
+Use:
+
+lsblk -f
+
+What it does:
+
+Lists all block devices, their mount points, filesystem types, and labels.
+
+Example output:
+
+NAME           FSTYPE      LABEL      MOUNTPOINT
+sda
+├─sda1         vfat        EFI       /boot/efi
+├─sda2         xfs        boot       /boot
+└─sda3         xfs                  /
+sdb
+└─sdb1         xfs                  /data
+
+How to read it:
+
+/ → root filesystem (sda3 in this example)
+/boot → boot partition (sda2)
+/boot/efi → EFI System Partition (sda1) for UEFI systems
+
+On BIOS systems, you usually only have /boot and / (no /boot/efi).
+
+Step 3: Mount the root filesystem
+mkdir /mnt/sysimage
+mount /dev/sda3 /mnt/sysimage
+
+Explanation:
+
+/dev/sda3 → root partition from lsblk.
+Mounting it under /mnt/sysimage lets us chroot into it.
+
+Effect:
+
+Your installed Linux system files are now accessible at /mnt/sysimage.
+Step 4: Mount the boot partition
+BIOS system (legacy)
+mount /dev/sda2 /mnt/sysimage/boot
+
+Explanation:
+
+/dev/sda2 → /boot partition.
+Needed because GRUB2 stores its core files there.
+
+Effect:
+
+The bootloader files can now be recreated in /boot.
+UEFI system
+mount /dev/sda1 /mnt/sysimage/boot/efi
+
+Explanation:
+
+/dev/sda1 → EFI System Partition (FAT32).
+Required for UEFI firmware to find GRUB2.
+
+Effect:
+
+GRUB2 can be installed into EFI and the system will boot via UEFI.
+Step 5: Optional: Verify mounts
+ls /mnt/sysimage
+
+You should see:
+
+bin, etc, home, var → root filesystem
+boot (or boot/efi) → partition mounted correctly
+Step 6: Summary of Example Mappings
+System Type	Device	Mount Point in Rescue	Notes
+BIOS	/dev/sda3	/mnt/sysimage	root /
+BIOS	/dev/sda2	/mnt/sysimage/boot	bootloader files
+UEFI	/dev/sda3	/mnt/sysimage	root /
+UEFI	/dev/sda2	/mnt/sysimage/boot	kernel/initramfs files
+UEFI	/dev/sda1	/mnt/sysimage/boot/efi	EFI System Partition, GRUB2 binaries
+
+Step 1: Boot into Rescue/Live CD
+Boot from a RHEL installation DVD or USB.
+Choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+Once in the shell, we will identify partitions.
+
+Step 2: List all disks and partitions
+Use:
+lsblk -f
+What it does: Lists all block devices, their mount points, filesystem types, and labels.
+Example output:
+NAME           FSTYPE      LABEL      MOUNTPOINT
+sda
+├─sda1         vfat        EFI       /boot/efi
+├─sda2         xfs        boot       /boot
+└─sda3         xfs                  /
+sdb
+└─sdb1         xfs                  /data
+How to read it: 
+/ → root filesystem (sda3 in this example)
+/boot → boot partition (sda2)
+/boot/efi → EFI System Partition (sda1) for UEFI systems
+On BIOS systems, you usually only have /boot and / (no /boot/efi).
+
+Step 3: Mount the root filesystem
+mkdir /mnt/sysimage
+mount /dev/sda3 /mnt/sysimage
+Explanation: /dev/sda3 → root partition from lsblk. Mounting it under /mnt/sysimage lets us chroot into it.
+Effect: Your installed Linux system files are now accessible at /mnt/sysimage.
+
+Step 4: Mount the boot partition
+BIOS system (legacy)
+mount /dev/sda2 /mnt/sysimage/boot
+Explanation: /dev/sda2 → /boot partition. Needed because GRUB2 stores its core files there.
+Effect: The bootloader files can now be recreated in /boot.
+
+UEFI system
+mount /dev/sda1 /mnt/sysimage/boot/efi
+Explanation: /dev/sda1 → EFI System Partition (FAT32). Required for UEFI firmware to find GRUB2.
+Effect: GRUB2 can be installed into EFI and the system will boot via UEFI.
+
+Step 5: Optional: Verify mounts
+ls /mnt/sysimage
+You should see:
+bin, etc, home, var → root filesystem
+boot (or boot/efi) → partition mounted correctly
+
+Step 6: Summary of Example Mappings
+System Type	Device	Mount Point in Rescue	Notes
+BIOS	/dev/sda3	/mnt/sysimage	root /
+BIOS	/dev/sda2	/mnt/sysimage/boot	bootloader files
+UEFI	/dev/sda3	/mnt/sysimage	root /
+UEFI	/dev/sda2	/mnt/sysimage/boot	kernel/initramfs files
+UEFI	/dev/sda1	/mnt/sysimage/boot/efi	EFI System Partition, GRUB2 binaries
+
+Step 1: Verify the repository is recognized by DNF
+dnf repolist
+
+Explanation:
+
+Lists all enabled repositories.
+You should see something like:
+repo id      repo name                           status
+localrepo    Local RHEL Repository               1234
+
+Reason:
+Confirms DNF knows about your local repo.
+
+Effect:
+You know DNF can see the repository and its metadata.
+
+Step 2: List available packages from the local repo only
+dnf --disablerepo="*" --enablerepo=localrepo list available
+
+Explanation:
+
+--disablerepo="*" disables all other repositories.
+--enablerepo=localrepo enables only your local repository.
+
+Reason:
+Ensures DNF can read packages from your local repo, not the internet.
+
+Effect:
+You see a list of packages available in /opt/localrepo.
+
+✅ If you see packages listed, the repository is working correctly.
+
+Step 3: Try installing a package from the local repo
+
+Pick a package you know exists in the repository, e.g., vim:
+
+sudo dnf install vim --disablerepo="*" --enablerepo=localrepo
+
+Reason:
+Tests that DNF can actually install packages from the local repo.
+
+Effect:
+
+If the install succeeds, your repository is fully functional.
+If it fails, check:
+Correct path in baseurl (file:///opt/localrepo)
+Metadata exists (repodata/ folder)
+Permissions allow read access
+Step 4: Check dependencies
+
+Sometimes packages depend on others. Test installing a package with dependencies:
+
+sudo dnf install httpd --disablerepo="*" --enablerepo=localrepo
+
+Reason:
+Ensures your local repository contains all necessary packages to resolve dependencies.
+
+Effect:
+If DNF can resolve and install dependencies, your local repository is comprehensive.
+
+Step 5: Refresh metadata (optional)
+sudo dnf clean all
+sudo dnf makecache
+
+Reason:
+Ensures any recent changes (e.g., added packages) are reflected.
+
+Effect:
+DNF sees the latest package list from your local repository.
+
+Step 6: Check repository with dnf info
+dnf info vim --disablerepo="*" --enablerepo=localrepo
+
+Explanation:
+
+Displays package information (version, release, size, repo).
+
+Reason:
+Quickly confirms DNF can read package metadata from your local repo.
+
+Effect:
+If it shows Repo: localrepo, the repo is working perfectly.
+
+Step 1: Verify the repository is recognized by DNF
+dnf repolist
+Explanation: Lists all enabled repositories.
+You should see something like:
+repo id      repo name                           status
+localrepo    Local RHEL Repository               1234
+Reason: Confirms DNF knows about your local repo.
+Effect: You know DNF can see the repository and its metadata.
+
+Step 2: List available packages from the local repo only
+dnf --disablerepo="*" --enablerepo=localrepo list available
+Explanation: --disablerepo="*" disables all other repositories. --enablerepo=localrepo enables only your local repository.
+Reason: Ensures DNF can read packages from your local repo, not the internet.
+Effect: You see a list of packages available in /opt/localrepo.
+✅ If you see packages listed, the repository is working correctly.
+
+Step 3: Try installing a package from the local repo
+Pick a package you know exists in the repository, e.g., vim:
+sudo dnf install vim --disablerepo="*" --enablerepo=localrepo
+Reason: Tests that DNF can actually install packages from the local repo.
+Effect: If the install succeeds, your repository is fully functional. If it fails, check: Correct path in baseurl (file:///opt/localrepo), Metadata exists (repodata/ folder), Permissions allow read access.
+
+Step 4: Check dependencies
+Sometimes packages depend on others. Test installing a package with dependencies:
+sudo dnf install httpd --disablerepo="*" --enablerepo=localrepo
+Reason: Ensures your local repository contains all necessary packages to resolve dependencies.
+Effect: If DNF can resolve and install dependencies, your local repository is comprehensive.
+
+Step 5: Refresh metadata (optional)
+sudo dnf clean all
+sudo dnf makecache
+Reason: Ensures any recent changes (e.g., added packages) are reflected.
+Effect: DNF sees the latest package list from your local repository.
+
+Step 6: Check repository with dnf info
+dnf info vim --disablerepo="*" --enablerepo=localrepo
+Explanation: Displays package information (version, release, size, repo).
+Reason: Quickly confirms DNF can read package metadata from your local repo.
+Effect: If it shows Repo: localrepo, the repo is working perfectly.
+
+ip link show
+
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+    link/ether 08:00:27:6d:8c:5e brd ff:ff:ff:ff:ff:ff
+3: enp0s8: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/ether 08:00:27:1e:2b:45 brd ff:ff:ff:ff:ff:ff
+
+Interface Index and Name
+
+1: lo:
+2: enp0s3:
+
+- 1 and 2 are interface indices (internal to the kernel)
+- lo is the loopback interface
+- enp0s3 is a physical (or virtual) network interface
+
+Flags <...>
+Common flags:
+- UP → Interface is enabled
+- LOWER_UP → Physical link is active
+- BROADCAST → Supports broadcast
+- MULTICAST → Supports multicast traffic
+- LOOPBACK → Loopback interface
+
+MTU – Maximum Transmission Unit (packet size limit)
+Example: mtu 1500
+
+qdisc – Queueing discipline (how packets are scheduled)
+Example: qdisc fq_codel
+
+state – Interface state
+Common states: UP, DOWN, UNKNOWN
+
+MAC Address / Link Type
+
+link/ether 08:00:27:6d:8c:5e brd ff:ff:ff:ff:ff:ff
+- link/ether → Ethernet interface
+- 08:00:27:6d:8c:5e → MAC address
+- brd ff:ff:ff:ff:ff:ff → Broadcast address
+
+Using `ip link show`
+
+Look at the flags and state fields:
+
+- LOWER_UP → The physical layer is active (cable plugged in, switch port connected)  
+- Absence of LOWER_UP or NO-CARRIER → No physical connection
+
+Examples:
+
+1. 2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> ... state UP  
+   - LOWER_UP → Interface is physically connected  
+   - UP → Interface is administratively enabled
+
+2. 3: enp0s8: <BROADCAST,MULTICAST,UP> ... state DOWN  
+   - No LOWER_UP → Cable not connected or link down
+
+Step 0: Preparation
+Before you touch configuration files:
+Know your network details
+IPv4: IP address, netmask, gateway, DNS
+IPv6: IP address/prefix, gateway, DNS
+Interface name (find it with ip link show)
+Ensure you have root privileges
+Most network changes require sudo or root access.
+Backup existing configs
+sudo cp /etc/sysconfig/network-scripts/ifcfg-enp0s3 /etc/sysconfig/network-scripts/ifcfg-enp0s3.bak
+Step 1: Identify the interface
+ip link show
+Example output:
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> ...
+Here, interface name is enp0s3.
+Step 2: Edit the interface file
+RHEL stores interface configs in:
+/etc/sysconfig/network-scripts/ifcfg-<interface_name>
+sudo vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+Step 2a: Static IPv4 configuration
+Example:
+DEVICE=enp0s3
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=192.168.1.100
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+DNS1=8.8.8.8
+DNS2=8.8.4.4
+Explanation:
+BOOTPROTO=static → manual IP
+ONBOOT=yes → activate at boot
+IPADDR & NETMASK → your IPv4
+GATEWAY → default route
+DNS1 / DNS2 → resolvers
+Step 2b: Static IPv6 configuration
+Add these lines in the same file:
+IPV6INIT=yes
+IPV6ADDR=2001:db8:1::100/64
+IPV6_DEFAULTGW=2001:db8:1::1
+DNS1=2001:4860:4860::8888
+DNS2=2001:4860:4860::8844
+Explanation:
+IPV6INIT=yes → enable IPv6
+IPV6ADDR → static IPv6 with prefix length
+IPV6_DEFAULTGW → IPv6 gateway
+DNS1 / DNS2 → IPv6 DNS servers
+⚠️ Make sure IPv6 addresses don’t conflict with existing devices.
+Step 3: Enable and restart networking
+sudo nmcli connection reload
+sudo nmcli connection up enp0s3
+Or using the old network service (RHEL 7+ uses NetworkManager by default):
+sudo systemctl restart NetworkManager
+Step 4: Verify the configuration
+Check IP addresses:
+ip addr show enp0s3
+Check connectivity:
+ping 192.168.1.1      # IPv4 gateway
+ping6 2001:db8:1::1   # IPv6 gateway
+Check DNS resolution:
+ping google.com
+ping6 google.com
+Check default routes:
+ip route show
+ip -6 route show
+Step 5: Persist and finalize
+Configuration is already saved in /etc/sysconfig/network-scripts/ifcfg-enp0s3.
+Ensure firewall rules allow necessary traffic.
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --reload
+Document IP assignments for future reference.
+
+1️⃣ Make sure your DHCP server is running
+Check the DHCP service on your server:
+sudo systemctl status dhcpd
+Status should be active (running).
+The server config is usually in:
+/etc/dhcp/dhcpd.conf
+Make sure the subnet your client is on is included in the DHCP server config:
+subnet 192.168.1.0 netmask 255.255.255.0 {
+    range 192.168.1.100 192.168.1.200;
+    option routers 192.168.1.1;
+    option domain-name-servers 8.8.8.8, 8.8.4.4;
+}
+2️⃣ Configure the client to use DHCP
+On the client RHEL machine:
+Option A: Using nmcli (NetworkManager CLI)
+Set IPv4 to DHCP:
+sudo nmcli connection modify enp0s3 ipv4.method auto
+Optionally, enable DHCP for IPv6:
+sudo nmcli connection modify enp0s3 ipv6.method auto
+Bring the interface up:
+sudo nmcli connection up enp0s3
+Option B: Using interface config file
+Edit the interface file:
+sudo vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+Make sure it has:
+DEVICE=enp0s3
+BOOTPROTO=dhcp
+ONBOOT=yes
+Restart NetworkManager:
+sudo systemctl restart NetworkManager
+3️⃣ Verify DHCP IP
+Check which IP the client got from your DHCP server:
+ip addr show enp0s3
+You should see an IP in the range configured on the DHCP server, e.g., 192.168.1.100–200.
+Check the lease:
+sudo cat /var/lib/NetworkManager/dhclient-*.lease
+4️⃣ Test Connectivity
+Ping the default gateway (router):
+ping -c 3 192.168.1.1
+Ping the DHCP server itself:
+ping -c 3 <DHCP-server-IP>
+Ping an external IP to test Internet access (if allowed):
+ping -c 3 8.8.8.8
+5️⃣ What Happens Behind the Scenes
+The client broadcasts a DHCPDISCOVER message.
+The DHCP server responds with a DHCPOFFER including IP, subnet mask, gateway, and DNS.
+The client requests that IP using DHCPREQUEST.
+The server confirms with DHCPACK.
+The client configures its interface with the IP and other settings.
+
+Identify your interface
+First, find your network interface:
+ip link show
+Example output:
+1: lo: ...
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 ...
+Let’s assume your interface is enp0s3.
+2️⃣ Decide your static IP and network details
+You need:
+Parameter	Example Value	Notes
+IP Address	192.168.1.50	Must be unique in your LAN
+Subnet Mask	255.255.255.0	Usually /24 for small networks
+Gateway	192.168.1.1	Router or internet gateway
+DNS	8.8.8.8 (Google)	Needed for domain name resolution
+⚠️ Make sure this IP is not in the DHCP pool of any server/router to avoid conflicts.
+3️⃣ Configure static IP using NetworkManager (nmcli)
+Step 1: Set IPv4 manually
+sudo nmcli connection modify enp0s3 ipv4.addresses 192.168.1.50/24
+sudo nmcli connection modify enp0s3 ipv4.gateway 192.168.1.1
+sudo nmcli connection modify enp0s3 ipv4.dns "8.8.8.8 8.8.4.4"
+sudo nmcli connection modify enp0s3 ipv4.method manual
+What happens here:
+ipv4.addresses → Assigns your static IP and subnet.
+ipv4.gateway → Lets your server send packets to the internet.
+ipv4.dns → Lets your server resolve domain names like google.com.
+ipv4.method manual → Ensures DHCP is not used.
+Step 2: Bring the connection up
+sudo nmcli connection up enp0s3
+4️⃣ Configure static IP using ifcfg file (alternative)
+Edit /etc/sysconfig/network-scripts/ifcfg-enp0s3:
+DEVICE=enp0s3
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=192.168.1.50
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+DNS1=8.8.8.8
+DNS2=8.8.4.4
+Restart NetworkManager:
+sudo systemctl restart NetworkManager
+5️⃣ Verify configuration
+Check IP and interface status:
+ip addr show enp0s3
+Check routing:
+ip route show
+You should see:
+192.168.1.0/24 dev enp0s3 proto kernel scope link src 192.168.1.50
+default via 192.168.1.1 dev enp0s3
+6️⃣ Test connectivity
+Ping your gateway:
+ping -c 3 192.168.1.1
+Ping external IP (internet):
+ping -c 3 8.8.8.8
+Test DNS resolution:
+ping -c 3 google.com
+✅ If all succeed, your static IP is working with internet access.
+
+1. Installing an RPM package directly
+If you have downloaded .rpm files:
+sudo dnf install /path/to/package.rpm
+dnf will resolve dependencies automatically if possible.
+Example:
+sudo dnf install ~/Downloads/httpd-2.4.6-97.el8.x86_64.rpm
+2. Installing a package from the repository
+If you want dnf to fetch the package automatically from configured repos:
+sudo dnf install package_name
+Example:
+sudo dnf install vim
+3. Checking if a package is installed
+dnf list installed package_name
+Example:
+dnf list installed httpd
+Or to list all installed packages:
+dnf list installed
+4. Uninstalling (removing) a package
+sudo dnf remove package_name
+Example:
+sudo dnf remove httpd
+5. Updating a package
+To update a specific package:
+sudo dnf update package_name
+To update all packages:
+sudo dnf update
+To check if updates are available without installing:
+dnf check-update
+6. Checking available packages in repositories
+dnf list available
+Or for a specific package:
+dnf list available package_name
+7. Listing all packages in a repository
+dnf repository-packages <repoid> list
+Example: List packages in the AppStream repo:
+dnf repository-packages AppStream list
+1. List all enabled repositories
+dnf repolist
+This shows only enabled repositories.
+Output example:
+repo id               repo name                                  status
+AppStream             Red Hat Enterprise Linux 8 AppStream      2,345
+BaseOS                Red Hat Enterprise Linux 8 BaseOS         1,234
+2. List all repositories (enabled + disabled)
+dnf repolist all
+Output example:
+repo id               repo name                                  status
+AppStream             Red Hat Enterprise Linux 8 AppStream      enabled
+BaseOS                Red Hat Enterprise Linux 8 BaseOS         enabled
+ExtraRepo             Extra repository                           disabled
+Status can be enabled or disabled.
+3. Check repository details
+dnf repoinfo
+Gives more detailed info about each repo, including URLs, priorities, and whether it’s enabled.
+🔹 Quick Notes
+Repository configs are usually in /etc/yum.repos.d/.
+If you want to enable or disable a repo, you can use:
+sudo dnf config-manager --set-enabled <repoid>
+sudo dnf config-manager --set-disabled <repoid>
+1. Enable a repo using dnf config-manager
+sudo dnf config-manager --set-enabled <repoid>
+Replace <repoid> with the repository ID you want to enable.
+Example:
+sudo dnf config-manager --set-enabled AppStream
+After enabling, you can verify it:
+dnf repolist
+2. Enable a repo temporarily for one command
+If you don’t want to permanently enable it, you can do:
+sudo dnf --enablerepo=<repoid> install package_name
+Example:
+sudo dnf --enablerepo=ExtraRepo install vim
+This temporarily enables ExtraRepo just for this command.
+3. Enable a repo by editing the .repo file
+Repo configurations are in /etc/yum.repos.d/.
+Open the repo file:
+sudo nano /etc/yum.repos.d/ExtraRepo.repo
+Find the line:
+enabled=0
+Change it to:
+enabled=1
+Save and exit. Now the repo is enabled permanently.
+1. Disable using dnf config-manager
+sudo dnf config-manager --set-disabled <repoid>
+Replace <repoid> with the repository ID you want to disable.
+Example:
+sudo dnf config-manager --set-disabled AppStream
+Verify the change:
+dnf repolist
+The disabled repo will no longer appear in the list.
+2. Disable a repo temporarily for one command
+sudo dnf --disablerepo=<repoid> install package_name
+This only disables the repo for this single command.
+Example:
+sudo dnf --disablerepo=ExtraRepo install vim
+3. Disable by editing the .repo file
+Open the repo file:
+sudo nano /etc/yum.repos.d/ExtraRepo.repo
+Find the line:
+enabled=1
+Change it to:
+enabled=0
+Save and exit. The repo is now permanently disabled.
+3. Check package info and version
+dnf info <package_name>
+Example:
+dnf info httpd
+
+1. View the entire system log
+sudo journalctl
+Shows all logs collected by systemd since boot.
+Scroll with ↑/↓, exit with q.
+2. View the log for a specific service
+sudo journalctl -u <service_name>
+Example: Check logs for Apache (httpd):
+sudo journalctl -u httpd
+3. Show the logs in real time (like tail -f)
+sudo journalctl -f
+Or for a specific service:
+sudo journalctl -u httpd -f
+4. Show logs for the current boot only
+sudo journalctl -b
+Or for the previous boot:
+sudo journalctl -b -1
+5. Show logs within a time range
+sudo journalctl --since "YYYY-MM-DD HH:MM:SS" --until "YYYY-MM-DD HH:MM:SS"
+Example:
+sudo journalctl --since "2026-04-01 08:00" --until "2026-04-01 12:00"
+You can also use keywords like "yesterday" or "1 hour ago":
+sudo journalctl --since "yesterday"
+6. Show only errors or warnings
+sudo journalctl -p err       # only errors
+sudo journalctl -p warning   # warnings
+Priority levels (-p): emerg, alert, crit, err, warning, notice, info, debug.
+7. Limit the number of lines
+sudo journalctl -n 50
+Shows the last 50 lines of logs.
+Combine with -f for real-time monitoring:
+sudo journalctl -u httpd -n 50 -f
+8. Persistent logging
+By default, logs may be kept only in memory. To keep logs across reboots:
+sudo mkdir -p /var/log/journal
+sudo systemd-tmpfiles --create --prefix /var/log/journal
+sudo systemctl restart systemd-journald
+
+RHEL system uses LVM and the initramfs is deleted, the system won’t boot normally, because the initramfs is responsible for loading the LVM modules and mounting the root filesystem. You can still recover it using a rescue ISO, but the process is a bit different. Here’s a step-by-step guide:
+
+1. Boot From RHEL ISO in Rescue Mode
+Insert your RHEL installation ISO (or bootable USB) and choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+Choose “Skip mounting” when prompted — we will manually activate LVM volumes.
+2. Access the Rescue Shell
+You will get a bash shell (usually under /mnt/sysimage or just root of the live system).
+3. Scan and Activate LVM Volumes
+Make sure LVM tools are available (they should be on the rescue ISO):
+lvm pvscan       # Scan physical volumes
+lvm vgscan       # Scan volume groups
+lvm lvscan       # Scan logical volumes
+Activate the volume groups:
+vgchange -ay
+Now all your logical volumes should be available, e.g., /dev/mapper/rhel-root, /dev/mapper/rhel-swap.
+4. Mount the Root Filesystem
+Find your root logical volume (usually something like /dev/mapper/<VG>-root) using lvscan.
+Mount it manually:
+mkdir /mnt/sysimage
+mount /dev/mapper/rhel-root /mnt/sysimage
+If you have a separate /boot partition (non-LVM), mount it as well:
+mount /dev/sda1 /mnt/sysimage/boot   # Replace /dev/sda1 with your /boot
+5. Rebuild the Initramfs
+
+Now that your root is mounted and the LVM is active, rebuild initramfs:
+
+chroot /mnt/sysimage
+# Determine the kernel version
+ls /boot/vmlinuz-*
+
+# Rebuild initramfs for the kernel (example: 5.14.0-284.el9.x86_64)
+dracut -f /boot/initramfs-5.14.0-284.el9.x86_64.img 5.14.0-284.el9.x86_64
+-f forces overwrite if a file exists (though in your case it was deleted, so it just creates a new one).
+6. Reinstall GRUB (Optional but Recommended)
+
+If you suspect bootloader issues:
+
+grub2-install /dev/sda
+grub2-mkconfig -o /boot/grub2/grub.cfg
+7. Exit and Reboot
+exit          # Exit chroot
+umount -R /mnt/sysimage
+reboot
+Your system should now boot normally with LVM activated.
+
+
+
+
+1. Boot From RHEL ISO in Rescue Mode
+Insert your RHEL bootable USB or ISO.
+Choose Troubleshooting → Rescue a Red Hat Enterprise Linux system.
+You can choose Auto-mount because there’s no LVM to detect. The rescue environment will usually mount your root filesystem automatically under /mnt/sysimage.
+If you prefer manual, you can also choose Skip mounting — either way works for standard partitions.
+2. Verify Mounted Root
+
+Check if your root partition is mounted:
+
+ls /mnt/sysimage
+
+You should see directories like:
+
+bin  boot  etc  home  lib  usr  var
+If you chose Skip mounting, manually mount your partitions:
+mkdir /mnt/sysimage
+mount /dev/sda2 /mnt/sysimage       # replace /dev/sda2 with your root partition
+mount /dev/sda1 /mnt/sysimage/boot  # replace /dev/sda1 with /boot if separate
+3. Chroot into Your System
+
+Enter your installed system:
+
+chroot /mnt/sysimage
+
+Now your shell behaves as if you booted into your installed system.
+
+4. Rebuild initramfs
+Identify your kernel version:
+ls /boot/vmlinuz-*
+
+Example output: vmlinuz-5.14.0-284.el9.x86_64
+
+Rebuild initramfs:
+dracut -f /boot/initramfs-5.14.0-284.el9.x86_64.img 5.14.0-284.el9.x86_64
+-f forces overwriting if needed.
+5. Reinstall GRUB (Optional but Safe)
+
+If you suspect bootloader issues:
+
+grub2-install /dev/sda          # replace /dev/sda with your boot disk
+grub2-mkconfig -o /boot/grub2/grub.cfg
+6. Exit and Reboot
+exit                  # exit chroot
+umount -R /mnt/sysimage
+reboot
