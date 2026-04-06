@@ -1,0 +1,1078 @@
+What You Need
+RHEL 9 ISO – Must match your system’s major version (e.g., RHEL 9.2 system → RHEL 9.2 ISO).
+Root or sudo access – Needed to install software and edit system files.
+ISO file locally – Either copied to your system, or a DVD/USB inserted.
+⚙️ Step 1: Create a mount point
+Command:
+sudo mkdir -p /mnt/rhel_iso
+Explanation:
+mkdir -p → Makes a directory (folder).
+/mnt/rhel_iso → Path where the ISO content will appear. Think of it as opening a folder to see the files inside your ISO.
+Check it exists:
+ls -ld /mnt/rhel_iso
+⚙️ Step 2: Mount the ISO
+Case A: ISO is a file on your disk
+sudo mount -o loop /path/to/rhel.iso /mnt/rhel_iso
+Replace /path/to/rhel.iso with the actual path.
+Example:
+sudo mount -o loop /home/user/Downloads/rhel-9.2-x86_64-dvd.iso /mnt/rhel_iso
+Case B: Using DVD/USB
+sudo mount /dev/cdrom /mnt/rhel_iso
+Explanation:
+-o loop → Treats the ISO file like a physical disk.
+After mounting, /mnt/rhel_iso will contain the ISO files, just like opening a USB stick.
+Check contents:
+ls /mnt/rhel_iso
+Expected output:
+BaseOS
+AppStream
+EFI
+images
+...
+BaseOS → Core system packages.
+AppStream → Optional applications and extra packages.
+⚙️ Step 3: Create a local repo file
+Open file for editing:
+sudo vi /etc/yum.repos.d/local.repo
+(Or use nano if you prefer)
+Paste this:
+[BaseOS]
+name=Local BaseOS Repo
+baseurl=file:///mnt/rhel_iso/BaseOS
+enabled=1
+gpgcheck=0
+[AppStream]
+name=Local AppStream Repo
+baseurl=file:///mnt/rhel_iso/AppStream
+enabled=1
+gpgcheck=0
+Explanation:
+[BaseOS] → Repo name.
+baseurl=file://... → Path to ISO folders.
+enabled=1 → Turns the repo on.
+gpgcheck=0 → Skips signature checking (safe for local ISO).
+⚙️ Step 4: Disable online repositories
+RHEL 9 uses dnf, not yum.
+Check enabled repos:
+dnf repolist
+Disable all repos (except local):
+sudo dnf config-manager --disable '*'
+sudo dnf config-manager --enable BaseOS AppStream
+If config-manager is missing:
+sudo dnf install dnf-plugins-core
+Manual alternative:
+Open any repo file in /etc/yum.repos.d/.
+Set enabled=0 for online repos.
+⚙️ Step 5: Clean and rebuild cache
+sudo dnf clean all
+sudo dnf makecache
+dnf repolist
+Explanation:
+Clears old metadata and rebuilds repo info from your ISO.
+dnf repolist should now only show BaseOS and AppStream as enabled.
+⚙️ Step 6: Test installing a package
+Try installing Apache:
+sudo dnf install httpd -y
+Check if installed:
+rpm -q httpd
+If it installs, your local repo is working perfectly.
+🔁 Optional: Auto-mount ISO on boot
+Edit /etc/fstab:
+sudo vi /etc/fstab
+Add:
+/home/user/Downloads/rhel-9.2-x86_64-dvd.iso /mnt/rhel_iso iso9660 loop 0 0
+Explanation:
+Automatically mounts ISO at /mnt/rhel_iso on system boot.
+Test mount without reboot:
+sudo mount -a
+ls /mnt/rhel_iso
+
+1️⃣ Download the updated ISO
+Go to the Red Hat Customer Portal.
+Download the latest RHEL 9 DVD ISO (e.g., RHEL 9.3 if you had 9.2 before).
+Save it to a location like /home/user/Downloads/.
+2️⃣ Replace the old ISO (or mount new ISO)
+You have two options:
+Option A: Replace ISO file
+sudo mv /home/user/Downloads/rhel-9.2-x86_64-dvd.iso /home/user/Downloads/rhel-9.2-backup.iso
+sudo mv /home/user/Downloads/rhel-9.3-x86_64-dvd.iso /home/user/Downloads/rhel-9.2-x86_64-dvd.iso
+(Keep the same filename if you used /etc/fstab auto-mount.)
+Option B: Mount new ISO manually
+sudo umount /mnt/rhel_iso
+sudo mount -o loop /home/user/Downloads/rhel-9.3-x86_64-dvd.iso /mnt/rhel_iso
+3️⃣ Clean DNF cache
+After replacing/mounting the new ISO, rebuild the package metadata:
+sudo dnf clean all
+sudo dnf makecache
+dnf repolist
+Check: You should see BaseOS and AppStream again.
+4️⃣ Update packages from local repo
+Now you can update your system with the new ISO:
+sudo dnf upgrade -y
+This upgrades packages using the new ISO only, without internet.
+
+Step 0: Check existing kernels
+uname -r
+rpm -q kernel
+Example output:
+kernel-5.14.0-362.el9.x86_64
+kernel-5.14.0-427.el9.x86_64
+uname -r → current running kernel
+rpm -q kernel → all installed kernels
+✅ Keep at least 1 older kernel as a fallback.
+1️⃣ Install the new kernel
+For example, install the latest available kernel via DNF:
+sudo dnf install kernel
+This will install a third kernel (say kernel-5.14.0-500.el9.x86_64)
+Older kernels are kept automatically
+/boot will now have three kernels
+2️⃣ List all kernels after install
+rpm -q kernel
+Example output:
+kernel-5.14.0-362.el9.x86_64
+kernel-5.14.0-427.el9.x86_64
+kernel-5.14.0-500.el9.x86_64
+3️⃣ Set the new kernel as default
+Use grubby, which works for both BIOS and UEFI systems:
+sudo grubby --set-default /boot/vmlinuz-5.14.0-500.el9.x86_64
+Verify the default:
+grubby --default-kernel
+✅ GRUB will now boot the new kernel by default.
+4️⃣ Reboot and verify
+sudo reboot
+uname -r
+Ensure it boots into the new kernel
+Older kernels are still present as fallbacks in GRUB menu
+5️⃣ Files involved (and what to edit)
+RHEL 9 uses BLS (Boot Loader Specification) and auto-generates GRUB configs.
+You almost never edit these manually, especially in production.
+File Role Edit or not?
+/boot/grub2/grub.cfg (BIOS) Main boot config ❌ Do not edit manually
+/boot/efi/EFI/redhat/grub.cfg (UEFI) UEFI boot config ❌ Do not edit manually
+/etc/default/grub Default GRUB settings (timeout, cmdline) ✔ Optional edits
+/boot/loader/entries/*.conf Per-kernel boot entries ❌ Auto-generated, usually no edits
+/boot/vmlinuz-* Kernel image ❌ Don’t delete manually
+/boot/initramfs-* Initramfs ❌ Don’t delete manually
+✅ Rule of thumb:
+Use dnf to install/remove kernels
+Use grubby to set default kernel
+Avoid manual editing of grub.cfg or bootloader files
+6️⃣ Keep older kernels safe
+RHEL 9 keeps older kernels unless you remove them.
+Optionally, configure a limit of kernels:
+sudo vi /etc/dnf/dnf.conf
+Add:
+installonly_limit=3
+This keeps 3 kernels automatically (current + 2 older).
+✅ Summary Workflow (Production-safe)
+Check current kernels:
+uname -r
+rpm -q kernel
+Install new kernel:
+sudo dnf install kernel
+Set new kernel as default:
+sudo grubby --set-default /boot/vmlinuz-<new-version>
+grubby --default-kernel  # verify
+Reboot and test:
+sudo reboot
+uname -r
+Keep old kernels for rollback (don’t remove until fully tested).
+
+Safety Principle First
+Never remove the kernel you are currently running (uname -r)
+Always keep at least 1 fallback kernel
+Check GRUB entries before removing
+1️⃣ Check which kernel is running
+uname -r
+Example output:
+5.14.0-427.el9.x86_64
+✅ Do not remove this kernel
+2️⃣ List all installed kernels
+rpm -q kernel
+Example output:
+kernel-5.14.0-362.el9.x86_64
+kernel-5.14.0-427.el9.x86_64
+kernel-5.14.0-500.el9.x86_64   <-- faulty
+Identify the faulty kernel (e.g., 5.14.0-500.el9.x86_64)
+Confirm at least one older kernel is working
+3️⃣ Check GRUB entries (optional but recommended)
+sudo grubby --info=ALL
+Example snippet:
+/boot/vmlinuz-5.14.0-362.el9.x86_64
+/boot/vmlinuz-5.14.0-427.el9.x86_64
+/boot/vmlinuz-5.14.0-500.el9.x86_64
+Confirm faulty kernel is listed
+Confirm older working kernels exist
+4️⃣ Remove the faulty kernel safely
+Use dnf remove with full package name:
+sudo dnf remove kernel-5.14.0-500.el9.x86_64
+dnf will remove:
+/boot/vmlinuz-5.14.0-500.el9.x86_64
+/boot/initramfs-5.14.0-500.el9.x86_64.img
+Related modules in /lib/modules/5.14.0-500.el9.x86_64
+It will not touch your running kernel
+5️⃣ Verify removal
+rpm -q kernel
+ls /boot/loader/entries/
+grubby --info=ALL
+The faulty kernel should no longer appear
+Older working kernels remain
+6️⃣ Optional: Ensure default kernel is correct
+If the faulty kernel was set as default, reset it:
+sudo grubby --set-default /boot/vmlinuz-5.14.0-427.el9.x86_64
+grubby --default-kernel  # verify
+7️⃣ Reboot and test
+sudo reboot
+uname -r
+System should boot into default working kernel
+GRUB menu shows only working kernels
+8️⃣ Optional Cleanup
+Remove unused packages and free space:
+sudo dnf autoremove
+Ensure /boot is tidy
+
+what firewalld does
+Controls incoming & outgoing traffic
+Uses zones (public, private, trusted, etc.)
+Works with iptables / nftables in the background
+Allows dynamic changes without restarting the service
+📊 Check firewall status
+systemctl status firewalld
+or
+firewall-cmd --state
+▶️ Start / Stop firewall
+sudo systemctl start firewalld
+sudo systemctl stop firewalld
+sudo systemctl restart firewalld
+Enable at boot:
+sudo systemctl enable firewalld
+
+1. What are Firewalld Zones?
+A zone is essentially a security profile in firewalld that defines what network traffic is allowed or denied.
+Real-world analogy: Think of a zone like a door with a different lock for each type of visitor.
+Public Wi-Fi → strict lock (only known visitors allowed)
+Home network → more relaxed lock (friends and family allowed)
+Trusted network → no restrictions
+Technically, a zone is a set of firewall rules applied to one or more network interfaces or IP ranges. Each zone has its own allowed services, ports, and traffic behavior.
+
+# 1. Assign an Interface to a Zone
+# Most common method: tie a network interface (e.g., eth0) to a zone
+
+# Syntax
+firewall-cmd --zone=<zone> --add-interface=<interface> [--permanent]
+firewall-cmd --reload
+
+# Example
+# Assign eth0 to the home zone temporarily
+firewall-cmd --zone=home --add-interface=eth0
+
+# Make it permanent
+firewall-cmd --zone=home --add-interface=eth0 --permanent
+firewall-cmd --reload
+
+# Notes
+# --permanent → saves the change after reboot
+# Without --permanent → the change lasts until the next reboot
+
+# 2. Assign a Source IP or Network to a Zone
+# Assign specific IP addresses or entire subnets
+
+# Syntax
+firewall-cmd --zone=<zone> --add-source=<IP or subnet> [--permanent]
+firewall-cmd --reload
+
+# Example
+# Assign IP 192.168.1.50 to the trusted zone
+firewall-cmd --zone=trusted --add-source=192.168.1.50 --permanent
+
+# Assign subnet 192.168.1.0/24 to home zone
+firewall-cmd --zone=home --add-source=192.168.1.0/24 --permanent
+firewall-cmd --reload
+
+# All traffic from that IP/subnet will use the rules of the assigned zone
+
+# 3. Create a Custom Zone
+# If none of the predefined zones fit your needs
+
+# Syntax
+firewall-cmd --permanent --new-zone=<zone_name>
+firewall-cmd --reload
+
+# Example
+firewall-cmd --permanent --new-zone=labzone
+firewall-cmd --zone=labzone --add-service=http --permanent
+firewall-cmd --reload
+
+# Now labzone behaves like a normal zone, and you can assign interfaces or sources to it
+
+# 4. Check Assigned Zones
+# Active zones and their interfaces
+firewall-cmd --get-active-zones
+
+# All zones
+firewall-cmd --get-zones
+
+# Show services and rules of a specific zone
+firewall-cmd --zone=home --list-all
+
+# 1. Block a Specific IP Address
+# Syntax
+firewall-cmd --add-rich-rule='rule family="ipv4" source address="<IP>" reject' --permanent
+firewall-cmd --reload
+
+# Example: Block IP 192.168.1.100
+firewall-cmd --add-rich-rule='rule family="ipv4" source address="192.168.1.100" reject' --permanent
+firewall-cmd --reload
+
+# ✅ All traffic from that IP is rejected
+
+# 2. Block a Port
+# Syntax
+firewall-cmd --zone=<zone> --remove-port=<port>/tcp --permanent
+firewall-cmd --reload
+
+# Example: Remove SSH port 22 from public zone
+firewall-cmd --zone=public --remove-port=22/tcp --permanent
+firewall-cmd --reload
+
+# Only blocks incoming traffic to that port
+# To block UDP ports similarly, use --remove-port=53/udp
+
+# 3. Block a Service
+# Instead of a port, you can block a service by name
+firewall-cmd --zone=public --remove-service=http --permanent
+firewall-cmd --reload
+
+# Blocks HTTP (port 80) in the public zone
+
+# 4. Using a Zone for Blocking
+# Assign an interface or source to the block or drop zone
+
+# Example: Assign a source IP to block zone
+firewall-cmd --zone=block --add-source=192.168.1.200 --permanent
+firewall-cmd --reload
+
+# block → rejects incoming connections with ICMP
+# drop → silently discards incoming connections
+
+# 5. Block Entire Subnets
+firewall-cmd --add-rich-rule='rule family="ipv4" source address="10.10.10.0/24" reject' --permanent
+firewall-cmd --reload
+
+# Blocks all IPs in the 10.10.10.0/24 network
+
+# 6. Verify Rules
+firewall-cmd --list-all
+firewall-cmd --zone=block --list-sources
+firewall-cmd --zone=public --list-ports
+firewall-cmd --list-rich-rules
+
+# 1. Check Active Ports and Services
+# Check all allowed services and ports in a zone
+firewall-cmd --zone=<zone> --list-all
+
+# Example:
+firewall-cmd --zone=public --list-all
+
+# Example Output:
+# public (active)
+#   interfaces: enp0s3
+#   sources: 
+#   services: ssh dhcpv6-client
+#   ports: 8080/tcp 8443/tcp
+#   protocols: 
+#   masquerade: no
+#   forward-ports: 
+#   icmp-blocks: 
+#   rich rules: 
+
+# Explanation:
+# services → allowed services (SSH, HTTP, etc.)
+# ports → open TCP/UDP ports
+# interfaces → which network interfaces use this zone
+
+# Check only open ports
+firewall-cmd --zone=public --list-ports
+
+# Check only allowed services
+firewall-cmd --zone=public --list-services
+
+# 2. Check Blocked IPs
+# Blocked IPs are usually assigned via:
+# - rich rules (reject)
+# - block/drop zones
+
+# List rich rules
+firewall-cmd --list-rich-rules
+# Shows IP addresses explicitly blocked with reject or drop
+
+# Check block/drop zone sources
+firewall-cmd --zone=block --list-sources
+firewall-cmd --zone=drop --list-sources
+# Lists IPs or subnets assigned to block/drop zones
+
+# 3. Check Allowed IPs
+# Allowed IPs are assigned via:
+# - source IPs in trusted/home/work zones
+# - interfaces automatically assigned to zones
+
+# List sources for a zone
+firewall-cmd --zone=trusted --list-sources
+firewall-cmd --zone=home --list-sources
+# Shows which IP addresses or subnets are treated as allowed in that zone
+
+# 4. Check Active Zones and Interfaces
+firewall-cmd --get-active-zones
+
+# Example Output:
+# public
+#   interfaces: enp0s3
+# trusted
+#   sources: 192.168.1.50 192.168.1.0/24
+# Shows which interfaces and source IPs are assigned to which zones
+
+# 5. Check All Rules and Status
+firewall-cmd --list-all
+firewall-cmd --list-all-zones
+# --list-all → lists active zone rules
+# --list-all-zones → shows rules for all zones (even inactive ones)
+
+# What Are Rich Rules?
+# Rich rules are custom firewall rules in firewalld that go beyond the basic “allow service or port” model
+# They allow control based on:
+# - Source/destination IP
+# - Ports and protocols
+# - Interfaces
+# - ICMP types
+# - Logging
+# - Actions like accept, reject, drop, or masquerade
+
+# Real-world analogy:
+# Normal firewall rule → "Allow SSH on port 22"
+# Rich rule → "Allow SSH on port 22 only from 192.168.1.50, log attempts, reject everything else"
+
+# 2. Why Use Rich Rules?
+# - Block or allow specific IPs or subnets
+# - Allow services only from certain networks
+# - Log suspicious traffic
+# - Define complex firewall behaviors without editing raw iptables/nftables
+
+# 3. Syntax of Rich Rules
+firewall-cmd --permanent --zone=<zone> --add-rich-rule='<rule>'
+
+# General Rule Format:
+# rule family="ipv4|ipv6"
+#      source address="<IP or subnet>" 
+#      destination address="<IP>" 
+#      port port="<port>" protocol="tcp|udp" 
+#      accept|reject|drop
+
+# Parameters:
+# family → IPv4 or IPv6
+# source → IP or subnet of sender
+# destination → optional, IP of receiver
+# port → port number
+# protocol → tcp, udp, or icmp
+# action → accept, reject, drop
+
+# 4. Examples
+
+# 1️⃣ Block a single IP
+firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="192.168.1.100" reject'
+firewall-cmd --reload
+# Rejects traffic from 192.168.1.100
+
+# 2️⃣ Allow SSH only from a specific IP
+firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="192.168.1.50" port port="22" protocol="tcp" accept'
+firewall-cmd --reload
+# Only 192.168.1.50 can access SSH
+
+# 3️⃣ Log blocked traffic
+firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="10.10.10.0/24" reject log prefix="Blocked IP: "'
+firewall-cmd --reload
+# Blocks the subnet and logs attempts with prefix "Blocked IP: "
+
+# 4️⃣ Drop traffic from a subnet
+firewall-cmd --permanent --zone=drop --add-rich-rule='rule family="ipv4" source address="10.0.0.0/24" drop'
+firewall-cmd --reload
+# Silently discards packets from the subnet
+
+# 5. Check Existing Rich Rules
+firewall-cmd --zone=public --list-rich-rules
+# Displays all rich rules applied to a zone
+
+# What is Masquerading?
+# Masquerading is a form of Network Address Translation (NAT) in Linux firewalls
+
+# Real-world analogy:
+# - Home network with private IPs (192.168.x.x)
+# - All devices access the internet using a single public IP
+# - Masquerading hides internal IPs behind the firewall’s public IP
+# - Outbound traffic appears to come from the firewall machine, not individual devices
+
+# Technical meaning:
+# Masquerading changes the source IP of outgoing packets to the firewall’s IP
+# Allows internal networks with private IPs to communicate externally
+
+# 2. When Do You Use Masquerading?
+# - Your RHEL machine acts as a router/gateway for a private network
+# - Private IP addresses internally (10.0.0.0/24, 192.168.1.0/24)
+# - You want them to access the internet via the firewall’s public IP
+
+# Example:
+# Private Network: 192.168.1.0/24
+# Firewall/Public IP: 203.0.113.5
+# Masquerading allows 192.168.1.x devices to access the internet via 203.0.113.5
+
+# 3. How to Enable Masquerading in Firewalld
+
+# Temporary (lost on reboot)
+firewall-cmd --zone=external --add-masquerade
+
+# Permanent
+firewall-cmd --zone=external --add-masquerade --permanent
+firewall-cmd --reload
+
+# --zone=external → typically the zone connected to the internet
+# Masquerading rewrites source IP addresses of outgoing packets automatically
+
+# 4. Verify Masquerading
+firewall-cmd --zone=external --query-masquerade
+# Returns 'yes' if enabled, 'no' if not
+
+# Scenario: Home/Office Network Using a RHEL Firewall
+
+# Network Setup:
+# Device             IP
+# RHEL firewall      203.0.113.5 (public IP facing internet)
+# Internal server    192.168.1.10 (private IP)
+# Internal desktop   192.168.1.20 (private IP)
+# Internal network   192.168.1.0/24
+
+# Internal devices cannot access the internet directly because they have private IPs.
+# Goal: Access internet via RHEL firewall, masquerading traffic as 203.0.113.5
+
+# Step 1: Assign Zones
+# Assume:
+# - Public interface connected to ISP: enp0s3
+# - Internal LAN interface: enp0s8
+
+# Public interface (internet)
+firewall-cmd --zone=external --add-interface=enp0s3 --permanent
+
+# Internal LAN interface
+firewall-cmd --zone=internal --add-interface=enp0s8 --permanent
+
+firewall-cmd --reload
+
+# Zones:
+# external → zone facing the internet
+# internal → zone for private network
+
+# Step 2: Enable Masquerading
+firewall-cmd --zone=external --add-masquerade --permanent
+firewall-cmd --reload
+# Outgoing packets from internal network appear as firewall's public IP
+
+# Step 3: Allow Forwarding
+# Masquerading requires IP forwarding
+
+# Enable IP forwarding temporarily
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# Make it permanent
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+sysctl -p
+
+# Step 4: Test
+# On internal machine (192.168.1.10):
+ping 8.8.8.8
+# If working, ping succeeds.
+# Internet sees requests as coming from 203.0.113.5
+
+# Check masquerading rules on firewall:
+firewall-cmd --zone=external --query-masquerade
+# Should return "yes"
+
+# Step 5: Optional – Allow Specific Ports
+# Allow HTTP/HTTPS for internal devices
+firewall-cmd --zone=external --add-service=http --permanent
+firewall-cmd --zone=external --add-service=https --permanent
+firewall-cmd --reload
+
+# Summary – Traffic Flow
+# 192.168.1.10/192.168.1.20 (LAN)
+#           │
+#           ▼
+#     enp0s8 (internal interface) [internal zone]
+#           │
+#           ▼ (masquerading rewrites source IP)
+#     enp0s3 (public interface) [external zone] 203.0.113.5
+#           │
+#           ▼
+#         Internet
+# Private IPs are hidden
+# Firewall handles NAT automatically
+# Works for all LAN devices if traffic passes through firewall
+
+# What is Port Forwarding?
+
+# Port forwarding allows:
+# - Redirecting incoming traffic from one IP/port to another IP/port inside your network
+
+# Simple Definition:
+# - When someone from the internet connects to your public IP + port,
+#   the firewall/router forwards that request to a specific internal device and port
+
+# Scenario Setup: Port Forwarding
+
+# Network:
+# Device          IP                       Role
+# PC1             192.168.1.10             Internal client
+# PC2             192.168.1.11             Internal client
+# PC3             192.168.1.12             Internal client (hosting web service port 80)
+# PC4             192.168.1.13             Internal client
+# PC5             192.168.1.14             Internal client
+# RHEL Server     192.168.1.1 (LAN), 203.0.113.5 (Public)  Firewall/Router
+
+# Goal:
+# Internet users connect to PC3’s web service via 203.0.113.5:8080
+
+# Step 1: Setup the RHEL Firewall Server
+# Server interfaces:
+# enp0s8 → LAN (192.168.1.1)
+# enp0s3 → Public/Internet (203.0.113.5)
+
+# Check interfaces
+ip addr show
+
+# Step 2: Assign Zones
+# Public interface (Internet)
+sudo firewall-cmd --zone=external --add-interface=enp0s3 --permanent
+
+# Internal interface (LAN)
+sudo firewall-cmd --zone=internal --add-interface=enp0s8 --permanent
+
+sudo firewall-cmd --reload
+
+# Step 3: Enable IP Forwarding
+# Temporary
+sudo sysctl -w net.ipv4.ip_forward=1
+
+# Permanent
+sudo sh -c "echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf"
+sudo sysctl -p
+
+# Step 4: Enable Masquerading (optional if LAN PCs need internet)
+sudo firewall-cmd --zone=external --add-masquerade --permanent
+sudo firewall-cmd --reload
+
+# Step 5: Setup Port Forwarding to PC3
+# Forward external 203.0.113.5:8080 → internal 192.168.1.12:80
+sudo firewall-cmd --permanent --zone=external \
+  --add-forward-port=port=8080:proto=tcp:toaddr=192.168.1.12:toport=80
+
+sudo firewall-cmd --reload
+
+# Step 6: Allow Traffic on External Port 8080
+sudo firewall-cmd --zone=external --add-port=8080/tcp --permanent
+sudo firewall-cmd --reload
+
+# Step 7: Test
+# From Internet:
+curl http://203.0.113.5:8080
+# From LAN:
+curl http://192.168.1.12
+
+# Step 8: Additional Considerations
+# Security: Forward only needed ports
+# Multiple PCs: Use different external ports for different internal services
+# Example for PC4 SSH on port 2222:
+sudo firewall-cmd --permanent --zone=external \
+  --add-forward-port=port=2222:proto=tcp:toaddr=192.168.1.13:toport=22
+sudo firewall-cmd --zone=external --add-port=2222/tcp --permanent
+sudo firewall-cmd --reload
+
+# Logging: Use rich rules to monitor external access if needed
+
+# Step 9: Verify Rules
+firewall-cmd --zone=external --list-all
+firewall-cmd --zone=external --list-forward-ports
+
+# ✅ Summary of Flow
+# Internet
+#    │
+# 203.0.113.5:8080
+#    │ (firewalld port forward)
+# RHEL Firewall Server
+#    │
+# 192.168.1.12:80 (PC3)
+
+# What is ICMP?
+
+# ICMP = Internet Control Message Protocol
+# - Network layer protocol
+# - Used by devices (computers, routers, servers) to send error messages
+#   and operational info about IP packet delivery
+# - Unlike TCP/UDP, it does not carry application data; used for control/diagnostics
+
+# Common Uses:
+# Function             Example
+# Test connectivity    ping 8.8.8.8 → sends Echo Request, receives Echo Reply
+# Trace route          traceroute 8.8.8.8 → uses ICMP Time Exceeded messages
+# Destination unreachable
+#                      Router sends "host unreachable" if packet can't be delivered
+# Redirect             Router can tell host to use a different gateway
+
+# ICMP Packet Types:
+# - Echo Request / Echo Reply → used by ping
+# - Destination Unreachable → network or host unreachable
+# - Time Exceeded → TTL expired (used by traceroute)
+# - Redirect → tells host to use better route
+
+# Why ICMP Matters in Firewalls:
+# - Firewalls may block or allow ICMP
+#   If blocked: ping/traceroute fail
+#   If allowed: network diagnostics and troubleshooting possible
+
+# Example: Allow ping through firewalld
+sudo firewall-cmd --zone=public --add-icmp-block-inversion
+sudo firewall-cmd --zone=public --add-icmp-block=echo-request --permanent
+sudo firewall-cmd --reload
+# echo-request → allows ICMP ping requests through the firewall
+
+# Analogy:
+# ICMP = “messenger” for the network
+# TCP/UDP = “letters with content”
+# ICMP = “notes about the letters” (status, errors, routing info)
+
+# -----------------------------
+# Step 1: Assign static IPs to each NIC
+# -----------------------------
+sudo nmcli connection modify enp0s3 ipv4.addresses 192.168.1.1/24 ipv4.method manual
+sudo nmcli connection modify enp0s4 ipv4.addresses 10.0.0.1/24 ipv4.method manual
+sudo nmcli connection modify enp0s5 ipv4.addresses 172.16.1.1/24 ipv4.method manual
+sudo nmcli connection modify enp0s6 ipv4.addresses 192.168.2.1/24 ipv4.method manual
+sudo nmcli connection modify enp0s7 ipv4.addresses 10.10.10.1/24 ipv4.method manual
+
+# Bring up all NICs
+sudo nmcli connection up enp0s3
+sudo nmcli connection up enp0s4
+sudo nmcli connection up enp0s5
+sudo nmcli connection up enp0s6
+sudo nmcli connection up enp0s7
+
+# -----------------------------
+# Step 2: Add routes for each subnet (temporary for testing)
+# -----------------------------
+sudo ip route add 10.0.0.0/24 dev enp0s4
+sudo ip route add 172.16.1.0/24 dev enp0s5
+sudo ip route add 192.168.2.0/24 dev enp0s6
+sudo ip route add 10.10.10.0/24 dev enp0s7
+
+# Default route via main LAN (internet)
+sudo ip route add default via 192.168.1.254 dev enp0s3
+# 192.168.1.254 → gateway of main LAN
+
+# -----------------------------
+# Step 3: Make routes persistent using nmcli
+# -----------------------------
+sudo nmcli connection modify enp0s4 +ipv4.routes "10.0.0.0/24 0.0.0.0"
+sudo nmcli connection modify enp0s5 +ipv4.routes "172.16.1.0/24 0.0.0.0"
+sudo nmcli connection modify enp0s6 +ipv4.routes "192.168.2.0/24 0.0.0.0"
+sudo nmcli connection modify enp0s7 +ipv4.routes "10.10.10.0/24 0.0.0.0"
+
+# Bring connections up to apply
+sudo nmcli connection up enp0s4
+sudo nmcli connection up enp0s5
+sudo nmcli connection up enp0s6
+sudo nmcli connection up enp0s7
+
+# -----------------------------
+# Step 4: Alternative persistent method using route-ifcfg files (older method)
+# -----------------------------
+# Create /etc/sysconfig/network-scripts/route-enp0s4 with:
+# 10.0.0.0/24 dev enp0s4
+# 172.16.1.0/24 dev enp0s5
+# 192.168.2.0/24 dev enp0s6
+# 10.10.10.0/24 dev enp0s7
+
+# Restart NetworkManager
+sudo systemctl restart NetworkManager
+
+# -----------------------------
+# Step 5: Verify routes
+# -----------------------------
+ip route show
+# Expected output:
+# default via 192.168.1.254 dev enp0s3
+# 192.168.1.0/24 dev enp0s3 proto kernel scope link src 192.168.1.1
+# 10.0.0.0/24 dev enp0s4 proto kernel scope link src 10.0.0.1
+# 172.16.1.0/24 dev enp0s5 proto kernel scope link src 172.16.1.1
+# 192.168.2.0/24 dev enp0s6 proto kernel scope link src 192.168.2.1
+# 10.10.10.0/24 dev enp0s7 proto kernel scope link src 10.10.10.1
+
+# -----------------------------
+# Step 6: Test traffic per NIC
+# -----------------------------
+ping -I enp0s4 10.0.0.5       # Lab network
+ping -I enp0s5 172.16.1.20   # Test network
+ping -I enp0s6 192.168.2.20  # Backup LAN
+ping -I enp0s7 10.10.10.5    # DMZ
+# -I <interface> ensures the packet goes through the correct NIC
+
+What does “adding routes permanently” mean?
+Temporary route: sudo ip route add 10.0.0.0/24 via 192.168.1.254 dev enp0s4
+This route works immediately, but it disappears after a reboot.
+Permanent route: The route stays even after the system restarts.
+In RHEL, this is done by either:
+Using NetworkManager (nmcli)
+Creating route files in /etc/sysconfig/network-scripts/
+🔹 2️⃣ How to add permanent routes in RHEL
+Option 1: Using route files (classic method)
+Create a file for your NIC: sudo vi /etc/sysconfig/network-scripts/route-enp0s4
+Add route(s) specific to that NIC:
+10.0.0.0/24 dev enp0s4
+Directly connected subnet → no gateway needed.
+For a default route (all internet traffic):
+default via 192.168.1.254 dev enp0s3
+Restart NetworkManager: sudo systemctl restart NetworkManager
+Option 2: Using NetworkManager (nmcli)
+# Add permanent route to NIC
+sudo nmcli connection modify enp0s4 +ipv4.routes "10.0.0.0/24 0.0.0.0"
+sudo nmcli connection up enp0s4
+0.0.0.0 as gateway → means directly reachable via this NIC (no next-hop gateway).
+🔹 3️⃣ What is 0.0.0.0?
+0.0.0.0 has two common uses:
+Default route: ip route add default via 192.168.1.1
+Some people write it as 0.0.0.0/0 → matches all destinations not in any other route.
+Example: 0.0.0.0/0 via 192.168.1.254 dev enp0s3
+Directly connected route: If you don’t need a gateway, you can write 0.0.0.0 for the gateway in nmcli route definition. It tells Linux: send traffic directly to that network via this NIC.
+🔹 4️⃣ Quick Examples
+a) Permanent route for subnet via NIC (directly connected)
+10.0.0.0/24 dev enp0s4
+Traffic to 10.0.0.0/24 goes through enp0s4.
+b) Permanent default route (internet)
+0.0.0.0/0 via 192.168.1.254 dev enp0s3
+Traffic for everything else goes through the main LAN gateway.
+🔹 5️⃣ Verify after reboot
+ip route show
+Should display all permanent routes.
+Default route should point to the gateway NIC.
+Subnet routes go to the correct NIC.
+
+What is Masquerading?
+Masquerading is a form of Network Address Translation (NAT) where multiple private IP addresses are translated into a single public IP address when accessing external networks (like the internet).
+👉 In simple terms:
+Private IPs → get “masked” as one public IP.
+It’s typically implemented using firewall tools like firewalld or iptables.
+
+Alright—let’s do this end-to-end, exactly like a real production-style lab.
+We’ll set up:
+🖥️ RHEL 9 Server (NAT / Masquerading machine)
+💻 Client machine (internal host)
+✅ Then test + verify everything works
+🔹 🧩 Topology (what we are building)
+Internal Machine (192.168.1.10)
+        |
+        |  (Private network via eth1)
+        |
+RHEL NAT Server
+   eth1: 192.168.1.1
+   eth0: Public IP
+        |
+        |  (Internet via eth0)
+        |
+     Internet
+🔹 PART 1: Setup on RHEL 9 Server (NAT Machine)
+We’ll use firewalld (default in RHEL 9).
+✅ Step 1: Configure Network Interfaces
+Edit connections:
+nmcli connection show
+Configure eth0 (external)
+nmcli connection modify eth0 ipv4.method auto
+nmcli connection up eth0
+👉 Gets IP from router/ISP
+Configure eth1 (internal)
+nmcli connection modify eth1 ipv4.addresses 192.168.1.1/24
+nmcli connection modify eth1 ipv4.method manual
+nmcli connection up eth1
+✅ Step 2: Enable IP Forwarding
+Temporary:
+echo 1 > /proc/sys/net/ipv4/ip_forward
+Permanent:
+echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+sysctl -p
+✅ Step 3: Enable Masquerading
+firewall-cmd --zone=public --add-masquerade --permanent
+firewall-cmd --reload
+✅ Step 4: Assign Interfaces to Zones
+firewall-cmd --zone=public --change-interface=eth0 --permanent
+firewall-cmd --zone=internal --change-interface=eth1 --permanent
+firewall-cmd --reload
+✅ Step 5: Allow Forwarding
+firewall-cmd --permanent --add-forward
+firewall-cmd --reload
+🔹 PART 2: Setup on Client Machine
+This is your internal system.
+✅ Step 1: Configure IP
+nmcli connection modify eth0 ipv4.addresses 192.168.1.10/24
+nmcli connection modify eth0 ipv4.gateway 192.168.1.1
+nmcli connection modify eth0 ipv4.dns 8.8.8.8
+nmcli connection modify eth0 ipv4.method manual
+nmcli connection up eth0
+✅ Step 2: Verify Network
+ip a
+ip route
+You should see:
+IP: 192.168.1.10
+Gateway: 192.168.1.1
+🔹 PART 3: Testing & Verification
+Now the important part 👇
+✅ Test 1: Ping Gateway
+From client:
+ping 192.168.1.1
+✔️ Must work
+✅ Test 2: Ping Internet IP
+ping 8.8.8.8
+✔️ If this works → NAT is working
+❌ If fails:
+Check on server:
+sysctl net.ipv4.ip_forward
+firewall-cmd --list-all
+✅ Test 3: DNS Test
+ping google.com
+✔️ If this fails but IP ping works → DNS issue
+✅ Test 4: Check Public IP
+curl ifconfig.me
+👉 Output should be public IP of RHEL server (eth0)
+
+Client → 10.0.0.5:80 (eth0)
+        ↓
+RHEL Server (DNAT applied)
+        ↓
+192.168.1.10:80
+        ↓
+Response back via NAT
+
+🧩 LAB SETUP (You should have 2 machines)
+🖥️ 1. RHEL 9 Server (Gateway / NAT + Port Forwarding)
+This machine has 2 interfaces:
+Interface	Purpose	Example IP
+eth0	External (Internet side)	10.0.0.5 (or public IP)
+eth1	Internal network	192.168.1.1
+💻 2. Internal Machine (Web Server)
+Interface	IP
+eth0	192.168.1.10
+🔹 🎯 Goal
+👉 When someone hits:
+http://10.0.0.5
+It should open:
+http://192.168.1.10
+🔹 PART 1: Configure RHEL 9 Server
+Using firewalld
+✅ Step 1: Configure Interfaces
+External Interface (eth0)
+nmcli connection modify eth0 ipv4.method auto
+nmcli connection up eth0
+👉 Gets IP from network (e.g., 10.0.0.5)
+Internal Interface (eth1)
+nmcli connection modify eth1 ipv4.addresses 192.168.1.1/24
+nmcli connection modify eth1 ipv4.method manual
+nmcli connection up eth1
+✅ Step 2: Enable IP Forwarding
+echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+sysctl -p
+Verify:
+sysctl net.ipv4.ip_forward
+✅ Step 3: Configure Firewall Zones
+firewall-cmd --permanent --zone=public --change-interface=eth0
+firewall-cmd --permanent --zone=internal --change-interface=eth1
+firewall-cmd --reload
+✅ Step 4: Enable Masquerading (VERY IMPORTANT)
+firewall-cmd --permanent --zone=public --add-masquerade
+firewall-cmd --reload
+✅ Step 5: Allow HTTP on Server
+firewall-cmd --permanent --add-service=http
+firewall-cmd --reload
+✅ Step 6: Add Port Forwarding Rule
+👉 Forward:
+Incoming port: 80 (eth0)
+To: 192.168.1.10:80
+firewall-cmd --permanent 
+--add-forward-port=port=80:proto=tcp:toaddr=192.168.1.10:toport=80
+firewall-cmd --reload
+🔹 PART 2: Configure Internal Machine (Web Server)
+✅ Step 1: Configure IP
+nmcli connection modify eth0 ipv4.addresses 192.168.1.10/24
+nmcli connection modify eth0 ipv4.gateway 192.168.1.1
+nmcli connection modify eth0 ipv4.dns 8.8.8.8
+nmcli connection modify eth0 ipv4.method manual
+nmcli connection up eth0
+✅ Step 2: Install Web Server
+dnf install httpd -y
+systemctl enable httpd
+systemctl start httpd
+✅ Step 3: Allow HTTP in Firewall
+firewall-cmd --permanent --add-service=http
+firewall-cmd --reload
+✅ Step 4: Add Test Page
+echo "Hello from Internal Server" > /var/www/html/index.html
+🔹 PART 3: Testing
+✅ Test 1: From RHEL Server
+curl 192.168.1.10
+✔️ Should show:
+Hello from Internal Server
+✅ Test 2: From External Machine (or same server)
+curl http://10.0.0.5
+✔️ Should ALSO show:
+Hello from Internal Server
+✅ Test 3: Browser
+Open:
+http://10.0.0.5
+🔹 🔍 PART 4: Verification
+Check Forward Rule
+firewall-cmd --list-all
+Look for:
+forward-ports: port=80:proto=tcp:toaddr=192.168.1.10:toport=80
+
+What is a Gateway?
+A gateway is the next hop IP a machine uses to reach networks outside its own subnet.
+🔹 In Your Setup
+🖥️ RHEL Server (Gateway / NAT Machine)
+Interface	IP	Gateway
+eth0 (external)	10.0.0.5	✅ 10.0.0.1 (your router)
+eth1 (internal)	192.168.1.1	❌ NO gateway here
+👉 Important:
+Gateway is set only on external interface (eth0)
+Internal interface does NOT need a gateway
+💻 Client (Internal Machine)
+Interface	IP	Gateway
+eth0	192.168.1.10	✅ 192.168.1.1 (RHEL server)
+🔹 🔥 Key Rule
+👉 Client gateway = RHEL server internal IP
+👉 RHEL server gateway = upstream router
+🔹 Visual Understanding
+Client Machine
+192.168.1.10
+Gateway → 192.168.1.1  (RHEL Server)
+        |
+        ↓
+RHEL Server
+eth1: 192.168.1.1
+eth0: 10.0.0.5
+Gateway → 10.0.0.1 (Router)
+        |
+        ↓
+    Internet
+
+How Rich Rules Are Applied in RHEL 9
+1️⃣ Through Zones
+firewalld works with zones.
+Each zone can have one or more interfaces assigned.
+Rich rules are applied per zone, not directly per interface.
+2️⃣ Interface vs Whole Server
+Option A: Apply to a specific interface
+Assign interface eth1 to a zone called internal
+Add rich rule to the internal zone
+Only traffic coming via eth1 is affected
