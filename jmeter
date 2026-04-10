@@ -1,0 +1,2067 @@
+1. Number of Threads (Users)
+
+Meaning:
+Total virtual users JMeter will simulate.
+
+How it works:
+Each thread = 1 virtual user sending requests.
+
+Example:
+
+50 threads → 50 users hitting your system
+
+How to choose:
+
+Based on expected load:
+Small test: 10–50 users
+Medium: 100–500 users
+Heavy: 1000+ users
+Start small, then increase gradually (important for finding bottlenecks)
+🔹 2. Ramp-Up Period (seconds)
+
+Meaning:
+Time JMeter takes to start all threads.
+
+How it works:
+Threads are started evenly over this time.
+
+Formula:
+
+Delay between each thread = Ramp-up / Number of threads
+
+Example:
+
+Threads = 10
+Ramp-up = 20 seconds
+→ 1 thread starts every 2 seconds
+
+Why it matters:
+
+Prevents sudden spike
+Simulates real-world gradual user arrival
+
+How to choose:
+
+Realistic load → keep ramp-up ≈ number of threads
+Stress test → smaller ramp-up (faster load spike)
+Spike test → ramp-up = 0 or very low
+🔹 3. Loop Count
+
+Meaning:
+How many times each thread repeats the test.
+
+Options:
+
+Fixed number (e.g., 5)
+Infinite (checkbox selected)
+
+How it works:
+
+Loop = how many iterations per user
+
+Example:
+
+10 threads × loop 5 → 50 total executions
+
+Infinite loop:
+
+Runs until manually stopped or duration controller is used
+
+How to choose:
+
+Short test → fixed loops
+Long-running test → infinite + duration control
+🔹 4. Same User on Each Iteration
+
+Meaning:
+Controls whether JMeter resets session/cookies between loops.
+
+If checked:
+
+Same user session reused
+Cookies, cache preserved
+Simulates real returning user
+
+If unchecked:
+
+Each loop = new fresh user
+Session reset
+
+How to choose:
+
+Login/session-based apps → ✔ enable
+Stateless APIs → ❌ disable
+🔹 5. Delay Thread Creation Until Needed
+
+Meaning:
+Threads are created only when required, not all at once.
+
+Why useful:
+
+Saves memory
+Helps with large-scale tests
+
+How it works:
+
+Threads are initialized gradually instead of upfront
+
+How to choose:
+
+Large load (1000+ users) → ✔ enable
+Small tests → not necessary
+🔹 6. Specify Thread Lifetime
+
+When enabled, you get:
+
+➤ Duration (seconds)
+
+Total time the test will run
+
+➤ Startup Delay (seconds)
+
+Wait time before test starts
+
+How it works:
+
+Threads run until duration ends (even if loop not finished)
+
+Example:
+
+Duration = 60 sec
+→ test runs for 1 minute
+🔥 Putting It All Together (Example)
+Scenario: 100 users over 5 minutes
+Threads = 100
+Ramp-up = 100 seconds
+Loop = Infinite
+Duration = 300 seconds
+Same user = ✔
+Delay thread creation = ✔
+
+👉 Result:
+
+Users gradually start
+Test runs for 5 minutes
+Realistic user behavior
+
+
+
+Startup Delay (seconds)
+
+👉 What it means:
+Time JMeter waits before starting any threads at all
+
+👉 How it works:
+
+Test is launched
+JMeter does nothing for the delay time
+After delay → threads start as per ramp-up
+
+Example:
+
+Startup Delay = 10 sec
+Threads = 5
+Ramp-up = 5 sec
+
+👉 Timeline:
+
+0–10 sec → nothing happens
+After 10 sec → threads start (1 per second)
+
+👉 Use cases:
+
+Wait for server/app to be ready
+Synchronize with external events
+Stagger multiple test runs
+🔹 2. Delay Thread Creation Until Needed
+
+👉 What it means:
+Controls WHEN threads are created in memory, not when they start running.
+
+👉 How it works:
+
+❌ If NOT checked (default)
+All threads are created immediately at test start
+Even if they start later (due to ramp-up)
+✔ If checked
+Threads are created gradually as needed
+Matches ramp-up timing
+
+Example:
+
+Threads = 1000
+Ramp-up = 1000 sec
+
+👉 Without delay option:
+
+1000 threads created instantly → high memory usage
+
+👉 With delay option:
+
+1 thread created per second → efficient
+
+
+Authorization / Token
+
+Postman: You set Bearer tokens, Basic Auth, OAuth, etc.
+
+JMeter equivalent:
+
+HTTP Header Manager – add Authorization: Bearer <token> header.
+HTTP Authorization Manager – supports Basic, Digest, NTLM authentication automatically.
+Dynamic tokens:
+Use JSON Extractor to extract a token from a login response
+Store in a JMeter Variable (e.g., ${authToken})
+Use it in headers for subsequent requests
+
+Example:
+
+Login request → JSON Extractor → save token as authToken
+Header Manager → Authorization: Bearer ${authToken}
+2️⃣ Headers
+
+Postman: You can add any HTTP header per request.
+
+JMeter equivalent:
+
+HTTP Header Manager – attach to HTTP Request sampler.
+Can be global (attach at Thread Group level) or per-request.
+3️⃣ Variables / Environment
+
+Postman: Variables store reusable data like URL, user ID, tokens.
+
+JMeter equivalent:
+
+User Defined Variables – set global variables per test plan
+CSV Data Set Config – data-driven variables (more below)
+JMeter Variables from extractors – dynamically get data from responses
+4️⃣ Scripting / Tests
+
+Postman: Pre-request scripts or test scripts (JS code).
+
+JMeter equivalent:
+
+JSR223 Sampler / PreProcessor / PostProcessor – write Groovy (faster than Beanshell)
+Use for:
+Dynamic data manipulation
+Custom assertions
+Generating random values
+
+Example: Generate random user ID:
+
+vars.put("userId", UUID.randomUUID().toString())
+5️⃣ Extract Data from JSON Response
+
+Postman: Use pm.response.json()
+
+JMeter equivalent:
+
+JSON Extractor
+Steps:
+Add JSON Extractor as a child of HTTP Request
+Define JSON path, e.g., $.data.token
+Store in variable ${token}
+Can then reuse in subsequent requests
+6️⃣ Use Response Data in Other Requests
+
+Postman: Use variable from previous response in next request.
+
+JMeter equivalent:
+
+Extract with JSON Extractor → ${variable} → use in HTTP Request or Header Manager
+
+Example:
+
+HTTP Request URL: /user/${userId}/details
+7️⃣ Data-Driven Testing (CSV)
+
+Postman: Use collection runner with CSV/JSON.
+
+JMeter equivalent:
+
+CSV Data Set Config
+Steps:
+Add CSV Data Set Config to Thread Group
+Provide CSV file path
+Define variable names (column headers)
+Use ${variable} in HTTP requests or scripts
+
+Example: users.csv
+
+username,password
+user1,pass1
+user2,pass2
+HTTP Request body:
+{"username": "${username}", "password": "${password}"}
+Each thread/iteration uses next line from CSV
+8️⃣ Assertions (Response Validation)
+
+Postman: Tests like pm.expect(response.code).to.equal(200)
+
+JMeter equivalent:
+
+Response Assertion – check text, code, or JSON
+JSR223 Assertion – custom validation using Groovy
+
+
+🔹 What is Constant Timer?
+
+A Constant Timer adds a fixed delay (pause) before every sampler (request) is executed.
+
+👉 Think of it like:
+“Wait X milliseconds before sending each request.”
+
+🔹 How to Use Constant Timer
+Step-by-step:
+Open your Test Plan in Apache JMeter
+Right-click on your Thread Group
+Go to → Add → Timer → Constant Timer
+In the Constant Timer settings:
+Thread Delay (in milliseconds) → enter the delay time
+🔹 Example
+
+If you set:
+
+Thread Delay = 2000 ms
+
+👉 Behavior:
+
+JMeter will wait 2 seconds before every request
+🔹 How It Behaves
+1. Applied to Each Sampler
+The delay is applied before each request
+
+If you have multiple samplers:
+
+Request 1 → wait → execute
+Request 2 → wait → execute
+2. Per Thread (User)
+Each virtual user (thread) follows the delay independently
+
+Example:
+
+5 users
+2-second delay
+
+👉 Each user waits 2 seconds before their own requests
+
+3. Total Execution Flow
+
+Without timer:
+
+Request → Request → Request (very fast)
+
+With Constant Timer (2000 ms):
+
+Wait 2s → Request → Wait 2s → Request → Wait 2s → Request
+4. Important Note ⚠️
+The delay is added in addition to response time
+
+Example:
+
+Server response = 500 ms
+Timer = 2000 ms
+
+👉 Total time per request ≈ 2.5 seconds
+
+🔹 Where to Add Timer Matters
+Under Thread Group → applies to all requests
+Under specific sampler → applies only to that request
+Under controller → applies to requests inside that controller
+
+🔹 When to Use Constant Timer
+
+Use it when you want:
+
+Fixed user think time
+Simple load pacing
+Avoid hitting server too aggressively
+
+
+🔹 What is Uniform Random Timer?
+
+It adds a random delay before each request, within a defined range.
+
+👉 Formula used:
+
+Delay = Constant Delay Offset + Random Delay (0 to Maximum Random Delay)
+🔹 How to Use It
+Steps:
+Open your Test Plan in Apache JMeter
+Right-click on Thread Group (or sampler)
+Go to → Add → Timer → Uniform Random Timer
+Configure:
+Random Delay Maximum (ms) → upper bound of randomness
+Constant Delay Offset (ms) → minimum delay
+🔹 Example
+Input:
+Random Delay Maximum = 3000 ms
+Constant Delay Offset = 2000 ms
+Output Behavior:
+
+Each request delay will be:
+
+2000 ms + (0 to 3000 ms random)
+
+👉 So actual delay range:
+2000 ms to 5000 ms
+
+🔹 How It Behaves
+1. Delay Before Each Request
+
+Just like Constant Timer:
+
+Wait → Request → Wait → Request
+
+But now:
+
+Wait time is different every time
+2. Per Thread (User)
+
+Each virtual user gets its own random delay
+
+Example:
+
+User 1 → waits 2.3 sec
+User 2 → waits 4.7 sec
+User 3 → waits 3.1 sec
+3. Execution Flow Example
+Random wait (2–5s) → Request  
+Random wait (2–5s) → Request  
+Random wait (2–5s) → Request
+4. Adds to Response Time ⚠️
+
+If:
+
+Random delay = 3000 ms
+Response time = 500 ms
+
+👉 Total ≈ 3.5 seconds
+
+🔹 Where to Place It
+Thread Group → applies to all requests
+Controller → applies to requests inside it
+Sampler → applies only to that request
+🔹 Why Use Uniform Random Timer?
+
+✅ Simulates real user behavior
+(real users don’t click at exact intervals)
+
+✅ Avoids traffic spikes
+(prevents all users hitting server at same time)
+
+✅ Makes test more realistic
+
+What is Precise Throughput Timer?
+
+It ensures that requests are sent at a specific target rate (throughput) over time.
+
+👉 Unlike other timers:
+
+It focuses on requests per time unit
+Not just adding delays
+🔹 How to Use It
+Steps:
+Open your Test Plan in JMeter
+Right-click → Thread Group
+Go to → Add → Timer → Precise Throughput Timer
+Configure these fields:
+Important Fields:
+Target Throughput (samples per period)
+Throughput Period (seconds)
+
+👉 Together they define:
+
+Throughput = Requests / Time
+🔹 Example
+Input:
+Target Throughput = 60
+Period = 60 seconds
+
+👉 Result:
+
+1 request per second
+Another Example:
+Target Throughput = 120
+Period = 60 seconds
+
+👉 Result:
+
+2 requests per second
+🔹 How It Behaves
+1. Smooth Request Distribution
+
+Instead of bursts, it spreads requests evenly:
+
+Without timer:
+
+Burst → many requests at once → idle → burst
+
+With Precise Throughput Timer:
+
+Request → wait → request → wait → request (even spacing)
+2. Dynamic Waiting Time
+JMeter calculates delay automatically
+Delay changes depending on:
+Current throughput
+Target throughput
+
+👉 You don’t set delay manually
+
+3. Across All Threads
+Works globally across threads
+Coordinates users to maintain overall rate
+
+Example:
+
+10 users
+Target = 10 req/sec
+
+👉 Each user may send ~1 request/sec (adjusted dynamically)
+
+4. If System is Slow ⚠️
+
+If response time is high:
+
+Timer cannot exceed system capacity
+
+Example:
+
+Target = 100 req/sec
+Server can handle only 50
+
+👉 Actual throughput ≈ 50 req/sec
+
+1. Test Duration (seconds)
+✅ What it is:
+Total time for which the timer will plan and distribute requests
+🔧 How it behaves:
+JMeter spreads requests evenly across this duration
+📌 Example:
+Throughput = 600 requests
+Test Duration = 60 sec
+
+👉 JMeter will aim:
+
+600 requests / 60 sec = 10 requests per second
+⚠️ Important:
+If your Thread Group runs longer than this → timer may stop controlling properly after duration
+Best practice:
+👉 Match Test Duration with Thread Group duration
+🔹 2. Number of Threads in Batch
+✅ What it is:
+Number of threads (users) that will be released together in one group (batch)
+🔧 How it behaves:
+Threads are not all activated at once
+They are released in small groups
+📌 Example:
+Total Threads = 50
+Threads in Batch = 10
+
+👉 Execution:
+
+First 10 threads start  
+Next 10 threads start  
+Next 10 threads start...
+🎯 Why this matters:
+Prevents sudden spikes
+Helps smoother traffic distribution
+🔹 3. Delay Between Threads in Batch (ms)
+✅ What it is:
+Time gap between starting each batch
+🔧 How it behaves:
+📌 Example:
+Threads in Batch = 10
+Delay between batches = 2000 ms
+
+👉 Execution:
+
+Start 10 threads  
+(wait 2 sec)  
+Start next 10 threads  
+(wait 2 sec)  
+Start next 10 threads
+🎯 Purpose:
+Avoids all users starting at same time
+Helps gradual ramp-up (alternative to ramp-up in Thread Group)
+🔹 4. Random Seed
+✅ What it is:
+Controls the randomization logic used internally by the timer
+🔧 How it behaves:
+Case 1: Same seed value
+JMeter generates same request pattern every run
+
+👉 Good for:
+
+Reproducible tests
+Debugging
+Case 2: Different / empty seed
+JMeter generates different pattern every time
+
+👉 Good for:
+
+Real-world simulation
+📌 Example:
+Seed = 123 → same timing pattern every run
+Seed empty → new random distribution each run
+🔹 Putting It All Together (Real Example)
+Configuration:
+Target Throughput = 600 requests
+Test Duration = 60 sec
+Threads = 50
+Threads in Batch = 10
+Delay between batch = 2 sec
+Behavior:
+Timer plans → 10 requests/sec
+Threads start in groups of 10 every 2 seconds
+Requests are evenly distributed across 60 sec
+If seed is fixed → same pattern each run
+🔹 Important Observations ⚠️
+1. Timer controls rate, not thread creation
+Thread Group still controls total users
+Timer only controls when requests fire
+2. Batch settings affect smoothness
+Smaller batches → smoother traffic
+Larger batches → bursty traffic
+
+
+
+🔹 What is Constant Throughput Timer?
+
+It tries to ensure your test runs at a target throughput (requests per minute) by adding delays dynamically.
+
+👉 Key idea:
+
+“Adjust wait time so total requests ≈ target throughput”
+🔹 How to Use It
+Steps:
+Add → Timer → Constant Throughput Timer
+Configure:
+Important Fields:
+1. Target Throughput
+Measured in samples per minute
+
+👉 Example:
+
+600 → means 600 requests/min
+= 10 requests/sec
+2. Calculate Throughput Based On
+
+This is the most important setting ⚠️
+It controls how throughput is shared.
+
+Options:
+
+🔸 1. This thread only
+
+👉 Each user tries to achieve the target independently
+
+Example:
+Threads = 10
+Throughput = 60 req/min
+
+👉 Result:
+
+Each thread → 60 req/min  
+Total → 600 req/min
+🔸 2. All active threads (shared)
+
+👉 All users together achieve the target
+
+Example:
+Threads = 10
+Throughput = 600 req/min
+
+👉 Result:
+
+Total → 600 req/min  
+Each thread ≈ 60 req/min
+🔸 3. All active threads in current thread group
+
+👉 Same as above, but limited to that thread group
+
+🔸 4. All active threads (shared) in all thread groups
+
+👉 Across entire test plan
+
+🔹 How It Behaves
+1. Works by Adding Delays
+JMeter calculates how fast requests are going
+If too fast → adds delay
+If too slow → no delay
+2. Not Perfectly Smooth ⚠️
+Can create small bursts
+Less accurate than Precise Throughput Timer
+3. Depends on Threads
+Needs enough users to maintain rate
+4. Affected by Response Time
+
+Example:
+
+Target = 600 req/min
+Response time = 2 sec
+
+👉 You’ll need more threads to keep rate
+
+🔹 Example Scenario
+Config:
+Threads = 10
+Target Throughput = 600 req/min
+Mode = All active threads
+Behavior:
+JMeter ensures:
+Total ≈ 10 requests/sec
+Adds delays dynamically between requests
+🔹 Constant vs Precise Throughput Timer
+Feature	Constant Throughput Timer	Precise Throughput Timer
+Accuracy	Medium	High
+Distribution	Can be uneven	Very smooth
+Control	Delay-based	Schedule-based
+Complexity	Simple	Advanced
+🔹 When to Use Constant Throughput Timer
+
+✅ Simple throughput control
+✅ Basic API testing
+✅ When slight inaccuracy is okay
+
+🔹 When NOT to Use
+
+❌ Need exact RPS
+❌ Need perfectly smooth traffic
+❌ High-precision performance testing
+
+👉 Use Precise Throughput Timer instead
+
+🔹 Common Mistakes ⚠️
+❌ Wrong mode selection
+“This thread only” → multiplies throughput unexpectedly
+❌ Too few threads
+Can’t reach target throughput
+❌ Ignoring units
+It’s requests per minute, not per second
+
+What Summary Report shows
+
+Each row represents one sampler / request (e.g., Login, Search, Logout).
+
+📋 Fields in Summary Report (and meaning)
+1. 🧪 Label
+Name of the request (sampler name)
+Example: Login API, Search Request
+
+👉 Helps identify which API you are analyzing
+
+2. 🔢 # Samples
+Total number of requests executed
+
+👉 Example:
+
+100 threads × 3 loops = 300 samples
+3. ⏱️ Average (ms)
+Average response time of all requests
+
+👉 Formula:
+
+Average = Total response time / number of samples
+
+✔️ Lower = better performance
+
+4. ⚡ Min (ms)
+Fastest response time recorded
+
+👉 Best-case performance
+
+5. 🐢 Max (ms)
+Slowest response time recorded
+
+👉 Helps identify spikes or worst-case delays
+
+6. 📏 Std. Dev. (Standard Deviation)
+Shows variation in response time
+
+👉 Interpretation:
+
+Low value → consistent performance
+High value → unstable / fluctuating system
+7. 📶 Error %
+Percentage of failed requests
+
+👉 Formula:
+
+(Failed samples / Total samples) × 100
+
+✔️ Ideal: 0%
+⚠️ Anything >1–2% needs attention
+
+8. 🚀 Throughput
+Number of requests processed per unit time
+
+👉 Usually shown as:
+
+requests/second OR requests/minute
+
+✔️ Higher = better system capacity
+
+9. 📦 Received KB/sec
+Data received from server per second
+
+👉 Helps measure response payload size impact
+
+10. 📤 Sent KB/sec
+Data sent to server per second
+
+👉 Useful for request payload analysis
+
+📊 How to interpret Summary Report (real-world thinking)
+🟢 Good performance example:
+Avg: 200 ms
+Error%: 0%
+Std Dev: low
+Throughput: stable
+
+👉 Meaning:
+✔ System is fast
+✔ Stable under load
+✔ No failures
+
+🔴 Bad performance example:
+Avg: 2000 ms
+Max: 15000 ms
+Error%: 5%
+Std Dev: high
+
+👉 Meaning:
+❌ Slow system
+❌ Unstable response times
+❌ Possible bottleneck or overload
+
+🚀 What is Throughput?
+📌 Definition
+
+Throughput = Number of requests processed per unit time
+
+It is usually expressed as:
+
+requests/second (req/sec)
+requests/minute (req/min)
+🧠 Simple analogy
+
+Think of a toll booth:
+
+Cars = API requests
+Booth = server/API
+Throughput = how many cars pass per second
+
+👉 Higher throughput = more traffic handled efficiently
+
+📊 In API testing context
+
+If you run a load test:
+
+1000 requests sent in 10 seconds
+and 800 succeed in that time
+
+👉 Throughput ≈ 80 req/sec
+
+⚙️ How JMeter calculates it
+
+In Apache JMeter:
+
+Based on completed requests
+Divided by total test duration
+
+So:
+
+Throughput = (Total requests completed) / (Total time taken)
+📈 Where you see it
+
+You’ll see throughput in:
+
+Summary Report
+Aggregate Report
+HTML Dashboard Report
+🔍 How to interpret Throughput
+🟢 High throughput
+
+✔ System handles more requests per second
+✔ Good scalability
+✔ Efficient backend
+
+🔴 Low throughput
+
+❌ System processes fewer requests
+❌ Possible bottlenecks:
+
+slow DB
+thread exhaustion
+network latency
+⚠️ Important insights (very important in interviews)
+1. Throughput ≠ Response Time
+Response time = how fast one request completes
+Throughput = how many requests system can handle overall
+
+👉 You can have:
+
+Low response time but low throughput (limited concurrency)
+High throughput but slightly higher response time (balanced load system)
+
+
+What is Latency?
+
+👉 Latency = Time taken for the server to start responding after a request is sent
+
+It does NOT wait for the full response to complete.
+
+🧠 Simple analogy
+
+Think of ordering food at a restaurant:
+
+You place an order (request sent)
+Wait time until chef starts serving your food = latency
+Time until you finish eating = full response time
+📊 In API testing terms
+
+When you call an API:
+
+Request is sent
+Server receives it
+Server processes it
+First byte of response is received
+
+👉 Time from (1 → 4) = Latency
+
+⚙️ Latency in JMeter
+
+In Apache JMeter:
+
+Latency is the time until first byte of response arrives
+It is shown in:
+Aggregate Report
+View Results Tree
+📌 Latency vs Response Time (VERY IMPORTANT)
+Metric	Meaning
+Latency	Time until first byte of response
+Response Time	Total time to get full response
+📈 Example
+
+Let’s say:
+
+Request sent at: 0 ms
+First byte received: 200 ms → Latency = 200 ms
+Full response received: 500 ms → Response time = 500 ms
+
+
+What is Aggregate Report?
+
+👉 Aggregate Report is a listener that shows statistical performance metrics for each request (sampler) after test execution.
+
+It helps you understand:
+
+Speed
+Stability
+Consistency
+Worst-case behavior
+Error rate
+⚙️ How it behaves
+Collects data from all requests during test execution
+Groups results by Label (request name)
+Calculates statistical values after execution
+Works best in non-GUI mode for large tests
+
+👉 It does NOT affect test execution (only analysis)
+
+📋 Fields in Aggregate Report & meaning
+1. 🧪 Label
+Name of the request (API/sampler name)
+
+👉 Example:
+
+Login API
+Search API
+2. 🔢 # Samples
+Total number of requests executed
+
+👉 Example:
+
+100 users × 5 loops = 500 samples
+3. ⏱️ Average (ms)
+Mean response time of all requests
+
+👉 Formula:
+
+Average = Total response time / number of samples
+
+✔️ Lower is better
+❗ Can hide spikes (important limitation)
+
+4. 📉 Median (ms)
+Middle value of response times
+
+👉 50th percentile (P50)
+
+✔️ More stable than average
+✔️ Shows “typical user experience”
+
+5. 📈 90% Line (ms)
+90% of requests completed within this time
+
+👉 90th percentile (P90)
+
+✔️ Very important SLA metric
+✔️ Shows user experience for most users
+
+6. 📊 95% Line (ms)
+95% of requests completed within this time
+
+👉 Shows near worst-case normal performance
+
+7. 📉 99% Line (ms)
+99% of requests completed within this time
+
+👉 Shows extreme slow requests
+
+✔️ Helps detect rare performance issues
+
+8. 🐢 Min (ms)
+Fastest response time recorded
+
+👉 Best-case performance
+
+9. 🚨 Max (ms)
+Slowest response time recorded
+
+👉 Worst-case spikes
+
+10. ❌ Error %
+Percentage of failed requests
+
+👉 Formula:
+
+(Failed requests / Total requests) × 100
+
+✔️ Ideal = 0%
+⚠️ Anything >1–2% is concerning
+
+11. 🚀 Throughput
+Requests handled per second/minute
+
+👉 Measures system capacity
+
+✔️ Higher = better scalability
+
+12. 📤 Received KB/sec
+Data received per second from server
+13. 📥 Sent KB/sec
+Data sent per second to server
+🧠 How to interpret each field (real-world thinking)
+🟢 1. Average
+Overall speed indicator
+Good for quick overview
+❗ But can be misleading if spikes exist
+🟢 2. Median (P50)
+Most realistic “normal user experience”
+✔ Better than average
+🟡 3. 90% Line (P90)
+90% users experience this or better
+✔ Used in SLA definitions
+🔴 4. 95% & 99% Lines
+Show worst user experience
+Helps detect:
+DB slow queries
+network spikes
+thread starvation
+🔵 5. Min/Max
+Shows extremes
+Useful for spotting instability
+🔴 6. Error %
+Most critical metric
+Even fast system is useless if errors exist
+🟢 7. Throughput
+System capacity under load
+Helps identify bottleneck point
+
+Throughput Controller – Fields & Behavior
+
+When you add a Throughput Controller, you will see these main options:
+
+1️⃣ Throughput (Value field)
+📌 What it means
+
+This is the main control value.
+
+It defines:
+
+Percentage of execution OR
+Number of executions (depending on mode)
+2️⃣ Calculate Throughput based on
+
+This is the MOST important setting.
+
+It has 2 modes:
+
+🔹 A) Percent Executions (most used)
+📌 Meaning:
+
+Value is treated as percentage
+
+Example:
+
+50 → means 50% of iterations
+20 → means 20% of iterations
+⚙️ How it behaves
+
+Assume:
+
+100 users
+Throughput = 50%
+
+👉 JMeter will:
+
+Randomly allow ~50 users
+Skip ~50 users
+
+✔ Not exact, but approximately distributed
+
+🧠 Key behavior:
+Works like probability
+Each iteration is independent
+🔹 B) Total Executions
+📌 Meaning:
+
+Value is treated as fixed count of executions
+
+Example:
+
+10 → run only 10 times total (across all threads)
+⚙️ How it behaves
+
+Assume:
+
+100 users
+Throughput = 10 executions
+
+👉 Result:
+
+Only first 10 eligible executions will run
+Remaining users skip it
+
+✔ This is GLOBAL LIMIT mode
+
+3️⃣ Per User (checkbox in some versions)
+📌 Meaning:
+
+Controls whether limit applies:
+
+per thread (user)
+or globally
+🔹 If enabled (Per User = true)
+
+Each user gets its own quota.
+
+Example:
+
+Throughput = 2 executions
+5 users
+
+👉 Each user runs it 2 times:
+
+Total = 10 executions
+🔹 If disabled (Per User = false)
+
+Quota is shared across all users.
+
+Example:
+
+Throughput = 2 executions
+5 users
+
+👉 Only 2 executions total (shared)
+
+🧪 Your Setup
+Based on → Total Executions
+Throughput value → 10
+Per User → CHECKED
+Users → 100 threads
+🎯 What this means
+✔ “Total Executions = 10”
+
+👉 There is a limit of 10 executions
+
+✔ “Per User = ON”
+
+👉 That limit applies to each user separately
+
+⚙️ How JMeter behaves
+
+Each of the 100 users gets its own counter.
+
+So:
+
+User 1 → can execute 10 times
+User 2 → can execute 10 times
+User 3 → can execute 10 times
+...
+User 100 → can execute 10 times
+📊 Final result
+Users	Executions per user	Total executions
+100	10	100 × 10 = 1000
+🧠 Step-by-step behavior
+
+For each user:
+
+IF executions < 10
+   run sampler
+ELSE
+   skip
+
+This reset happens for every thread separately
+
+🧪 Simple example
+User 1:
+Run 10 times ✔
+Then stop
+User 2:
+Run 10 times ✔
+Then stop
+
+👉 Same behavior for all 100 users
+
+⚠️ Important insight
+
+This is NOT:
+❌ 10 executions total for whole test
+
+It IS:
+✔ 10 executions per user
+
+🧠 Easy way to remember
+Per User ON = each user gets quota
+Total Executions = size of quota
+
+So:
+
+100 users × 10 executions each = 1000 total executions
+
+🚀 One-line interview answer
+
+In JMeter, when Throughput Controller is set to Total Executions = 10 with Per User enabled and 100 users, each user independently executes the sampler 10 times, resulting in a total of 1000 executions.
+
+
+Your Setup
+Based on → Total Executions
+Throughput value → 10
+Per User → ❌ UNCHECKED
+Users → 100 threads
+🎯 What this means
+✔ “Total Executions = 10”
+
+👉 Only 10 executions are allowed in total
+
+✔ “Per User = OFF”
+
+👉 That limit is shared across all users
+
+⚙️ How JMeter behaves
+
+Now all 100 users compete for the same 10 executions
+
+👉 Once 10 executions are completed:
+
+Controller stops executing for everyone
+📊 Final result
+Users	Total executions allowed	Actual execution
+100	10 (shared)	only 10 users execute once
+🧠 Step-by-step behavior
+
+JMeter does this internally:
+
+global_counter = 10
+
+for each user request:
+    if global_counter > 0:
+        execute sampler
+        global_counter--
+    else:
+        skip
+🧪 Example flow
+Execution order	User	Result
+1	User 1	runs ✔
+2	User 2	runs ✔
+3	User 3	runs ✔
+...	...	...
+10	User 10	runs ✔
+11–100	remaining users	❌ skipped
+🧠 Final outcome
+
+👉 Only 10 total executions across all 100 users
+
+⚠️ Key insight
+With Per User = ON → each user gets quota
+With Per User = OFF → all users share one quota
+
+
+
+What is Interleave Controller?
+
+👉 It makes JMeter execute only one child request per iteration, and it rotates through all child requests in sequence.
+
+🧠 Simple idea
+
+If you have:
+
+Request A
+Request B
+Request C
+
+👉 Interleave Controller will run like:
+
+Iteration	Executed Request
+1	A
+2	B
+3	C
+4	A
+5	B
+6	C
+
+✔ It “cycles” through requests
+
+⚙️ How to use Interleave Controller
+Structure:
+Thread Group
+  └── Interleave Controller
+        ├── Request A
+        ├── Request B
+        ├── Request C
+📋 Fields in Interleave Controller
+1️⃣ Interleave across threads (checkbox)
+📌 Meaning:
+
+Controls whether rotation is:
+
+Per thread OR
+Shared across all threads
+🔹 If NOT checked (default)
+
+👉 Rotation happens per thread
+
+Each user has its own sequence:
+
+User 1: A → B → C → A
+User 2: A → B → C → A
+
+✔ Independent rotation per user
+
+🔹 If checked
+
+👉 Rotation is global across all users
+
+Example with 2 users:
+
+Step	User	Request
+1	User1	A
+2	User2	B
+3	User1	C
+4	User2	A
+
+✔ Shared sequence across threads
+
+🧪 Example behavior
+Setup:
+1 thread group
+3 requests inside Interleave Controller
+2 loops
+Result (default behavior):
+Loop 1:
+  A
+  B
+  C
+
+Loop 2:
+  A
+  B
+  C
+
+👉 Actually each iteration picks only ONE request:
+
+Correct Interleave behavior:
+
+Iteration	Output
+1	A
+2	B
+3	C
+4	A
+5	B
+6	C
+📌 Key behavior points
+
+✔ Executes only ONE child per iteration
+✔ Rotates sequentially
+✔ Maintains order
+✔ Can be per-thread or global
+
+Interleave Controller (Fields)
+
+You see 2 checkboxes:
+
+1️⃣ Ignore Sub-Controller Blocks
+2️⃣ Interleave Across Threads
+🧠 1️⃣ Ignore Sub-Controller Blocks
+📌 Meaning
+
+👉 JMeter will ignore nested controllers and treat only direct samplers
+
+⚙️ Behavior
+🔹 If NOT checked (default)
+
+If you have:
+
+Interleave Controller
+   ├── Request A
+   ├── Simple Controller
+   │      ├── Request B
+   │      └── Request C
+
+👉 JMeter treats Simple Controller as one block
+
+So execution rotates like:
+
+A → (B+C together) → A → (B+C)
+🔹 If CHECKED
+
+👉 JMeter ignores grouping inside sub-controllers
+
+So it treats everything like:
+
+A
+B
+C
+
+✔ Flat structure rotation
+
+🧠 Simple meaning
+Option	Behavior
+Unchecked	respects grouping
+Checked	flattens everything
+🔁 2️⃣ Interleave Across Threads
+📌 Meaning
+
+👉 Controls whether rotation is:
+
+per user (thread) OR
+shared across all users
+🔹 If NOT checked (default)
+
+👉 Each user has its own cycle
+
+Example (3 requests: A, B, C)
+
+| User 1 | A → B → C |
+| User 2 | A → B → C |
+
+✔ Independent rotation per thread
+
+🔹 If CHECKED
+
+👉 ALL users share one global sequence
+
+Example:
+Step	User	Request
+1	User1	A
+2	User2	B
+3	User1	C
+4	User2	A
+
+✔ One global rotation shared
+
+🧪 Real behavior example
+Setup:
+2 users
+3 requests: A, B, C
+❌ Interleave Across Threads = OFF
+User1: A → B → C
+User2: A → B → C
+
+✔ Each user independent
+
+✅ Interleave Across Threads = ON
+A (User1)
+B (User2)
+C (User1)
+A (User2)
+
+✔ Global round-robin
+
+
+🎲 What is Random Controller?
+
+👉 Random Controller selects child requests randomly every time the test runs.
+
+🧠 Simple idea
+
+If you have:
+
+Request A
+Request B
+Request C
+
+👉 Random Controller will execute like:
+
+Iteration	Output
+1	B
+2	C
+3	A
+4	B
+5	A
+
+✔ No fixed order
+
+⚙️ How to use Random Controller
+Structure:
+Thread Group
+  └── Random Controller
+        ├── Request A
+        ├── Request B
+        ├── Request C
+📋 Fields in Random Controller
+
+👉 Important point:
+Random Controller has NO configuration fields.
+
+✔ No dropdown
+✔ No checkbox
+✔ No numeric input
+
+👉 It is behavior-only controller
+
+🔁 How it behaves
+🔹 Case 1: Simple Random Controller
+Each iteration:
+JMeter picks ONE random child sampler
+Executes it
+Example (A, B, C):
+Iteration	Selected
+1	B
+2	A
+3	C
+4	C
+5	B
+🔹 Case 2: Multiple loops
+
+If loop count = 10:
+
+👉 JMeter randomly selects requests each time
+👉 Same request may repeat multiple times
+👉 Some requests may not run at all
+
+🔹 Case 3: Random with multiple users
+
+If 100 users:
+
+👉 Each user behaves independently:
+
+User1: random sequence
+User2: different random sequence
+🧠 Key behavior points
+
+✔ Executes random child each iteration
+✔ Does NOT follow order
+✔ May repeat same request multiple times
+✔ May skip some requests completely
+
+Random Controller Field
+🔹 Ignore Sub-Controller Blocks (checkbox)
+🧠 What it means
+
+This option controls whether JMeter should:
+
+Treat sub-controllers as single blocks, OR
+Break them into individual samplers
+⚙️ Behavior
+🔹 If UNCHECKED (default)
+
+👉 JMeter treats a sub-controller as one single unit
+
+Example:
+Random Controller
+   ├── Request A
+   ├── Simple Controller
+   │       ├── Request B
+   │       └── Request C
+
+👉 Behavior:
+
+A, B+C treated as separate blocks
+Random selection happens between:
+A
+(B+C together)
+
+✔ So B and C always run together
+
+🔹 If CHECKED
+
+👉 JMeter ignores grouping inside controllers
+
+Same structure becomes:
+A
+B
+C
+
+👉 Now Random Controller treats everything as:
+
+A OR B OR C (fully flat)
+
+✔ Each request is independent
+
+📊 Comparison
+Setting	Behavior
+Unchecked	Sub-controller = single block
+Checked	All requests treated individually
+🧪 Simple example
+Structure:
+Random Controller
+   ├── Login
+   ├── Search (Simple Controller)
+   │       ├── API1
+   │       └── API2
+❌ Ignore Sub-Controller Blocks = OFF
+
+Random choices:
+
+Login
+(Search group → API1 + API2 together)
+✅ Ignore Sub-Controller Blocks = ON
+
+Random choices:
+
+Login
+API1
+API2
+🧠 Easy way to remember
+❌ OFF → “Respect grouping”
+✅ ON → “Flatten everything”
+🎯 Why this matters
+
+Because it changes your test realism:
+
+OFF:
+
+✔ Simulates business flows (grouped actions)
+
+ON:
+
+✔ Simulates independent API calls
+
+🚀 One-line interview answer
+
+In JMeter Random Controller, “Ignore Sub-Controller Blocks” determines whether nested controllers are treated as single execution units or flattened so that individual samplers inside them are randomly executed independently.
+
+
+🎲 What is Random Order Controller?
+
+👉 It runs all requests inside it, but in a different random order each time.
+
+🧠 Simple idea
+
+If you have:
+
+Request A
+Request B
+Request C
+
+👉 Random Order Controller will execute:
+
+Iteration 1:
+B → A → C
+Iteration 2:
+C → B → A
+Iteration 3:
+A → C → B
+
+✔ All run, but order changes every time
+
+⚙️ How to use Random Order Controller
+Structure:
+Thread Group
+  └── Random Order Controller
+        ├── Request A
+        ├── Request B
+        ├── Request C
+📋 Fields in Random Order Controller
+
+👉 Important point:
+
+✔ It has NO configurable fields
+✔ No dropdowns
+✔ No checkboxes
+
+👉 It is purely behavior-based
+
+🔁 How it behaves
+🔹 Key rule:
+
+Executes ALL child samplers once per loop, but in random order
+
+🧪 Example
+Loop 1:
+C
+A
+B
+Loop 2:
+B
+C
+A
+Loop 3:
+A
+B
+C
+📊 Key behavior points
+
+✔ Executes ALL requests
+✔ Randomizes execution order
+✔ One full cycle per iteration
+✔ No skipping of samplers
+✔ No repetition within same loop
+
+🆚 Random Controller vs Random Order Controller
+Feature	Random Controller	Random Order Controller
+Execution	1 random request	all requests
+Order	random pick	shuffled order
+Skip samplers	yes	no
+Repetition per loop	possible	no
+
+
+📦 What is Simple Controller?
+
+👉 A Simple Controller just groups multiple samplers together so you can manage them easily.
+
+🧠 Simple idea
+
+Think of it like a folder:
+
+It holds requests
+It does NOT control execution behavior
+⚙️ How to use Simple Controller
+📦 Structure
+Thread Group
+   ├── Simple Controller (Login Flow)
+   │       ├── Login API
+   │       └── Get Profile API
+   ├── Simple Controller (Search Flow)
+   │       ├── Search API
+   │       └── View Product API
+🔁 How it behaves
+
+👉 Simple Controller does NOT:
+
+randomize
+loop
+skip
+limit
+
+✔ It simply executes its children in order
+
+🧪 Example
+Simple Controller
+   ├── A
+   ├── B
+   ├── C
+Execution:
+
+👉 A → B → C
+
+✔ Always sequential
+✔ Always all executed
+
+📊 Key behavior points
+
+✔ Executes all child requests
+✔ Executes in same order
+✔ No logic applied
+✔ Only for grouping
+
+🎯 Why use Simple Controller?
+1️⃣ Organization
+
+👉 Makes test plan clean and readable
+
+2️⃣ Grouping flows
+
+Example:
+
+Login flow
+Checkout flow
+Search flow
+3️⃣ Apply other controllers easily
+
+You can wrap Simple Controller inside:
+
+Loop Controller
+Throughput Controller
+If Controller
+🧪 Example use case
+Loop Controller (Loop = 2)
+   └── Simple Controller (Checkout Flow)
+          ├── Add to Cart
+          ├── Payment
+          └── Order Confirm
+
+👉 Whole flow repeats 2 times
+
+⚠️ Important point
+
+❌ Simple Controller does NOT control execution
+✔ It only groups elements
+
+
+What is Module Controller?
+
+👉 It allows you to pick and execute another controller (or flow) from somewhere else in the Test Plan
+
+🧠 Simple idea
+
+Think of it like:
+
+🔁 “Shortcut / reference to an existing flow”
+
+Instead of copying the same requests again and again, you just reference them
+
+⚙️ How to use Module Controller
+Step 1: Create a reusable flow
+Test Plan
+   └── Simple Controller (Login Flow)
+          ├── Login API
+          ├── Get Profile API
+Step 2: Use Module Controller
+Thread Group
+   └── Module Controller → (points to Login Flow)
+
+👉 Now when test runs:
+✔ Module Controller will execute Login Flow
+
+📋 Field in Module Controller
+🔹 Module To Run
+
+👉 This is a dropdown/tree where you select:
+
+Any controller
+Any part of test plan
+🔁 How it behaves
+
+👉 When execution reaches Module Controller:
+
+It goes to the selected module
+Executes all elements inside it
+Then comes back
+🧪 Example
+Structure:
+Simple Controller (Login Flow)
+   ├── Login
+   └── Profile
+
+Thread Group
+   ├── Module Controller → Login Flow
+   ├── Search API
+Execution:
+Login
+Profile
+Search API
+📊 Key behavior points
+
+✔ Reuses existing test flow
+✔ Avoids duplication
+✔ Executes referenced module fully
+✔ Maintains original order
+
+🎯 Why use Module Controller?
+1️⃣ Reusability
+
+Same flow used multiple times
+
+2️⃣ Maintainability
+
+Change in one place → reflects everywhere
+
+3️⃣ Cleaner test plan
+
+No repeated code
+
+🧪 Real-world example
+
+Login flow used in multiple scenarios:
+
+Login Flow (defined once)
+
+Thread Group
+   ├── Module Controller → Login Flow
+   ├── Search
+
+   ├── Module Controller → Login Flow
+   ├── Checkout
+
+👉 Login reused without duplication
+
+⚠️ Important points
+
+❌ It does NOT copy requests
+✔ It references original structure
+
+❌ Cannot modify inside Module Controller
+✔ Changes must be done in original module
+
+
+Include Controller is used to import and run another JMeter test plan (.jmx file) inside your current test plan.
+
+📥 What is Include Controller?
+
+👉 It allows you to reuse an external .jmx file by including it into your current test.
+
+🧠 Simple idea
+
+Think of it like:
+
+📄 “Insert another JMeter file into this one”
+
+⚙️ How to use Include Controller
+✅ Step 1: Create a reusable JMX file
+
+Example: login.jmx
+
+Test Plan
+   └── Simple Controller (Login Flow)
+          ├── Login API
+          └── Get Profile API
+✅ Step 2: Use Include Controller in main test
+Test Plan
+   └── Thread Group
+         ├── Include Controller → login.jmx
+         ├── Search API
+🔁 Execution
+
+👉 When test runs:
+
+Login API
+Get Profile API
+Search API
+
+✔ Included file executes as part of main test
+
+📋 Field in Include Controller
+🔹 Include Controller → Filename
+
+👉 You provide:
+
+Path to .jmx file
+
+Example:
+
+login.jmx
+
+or full path:
+
+C:\tests\login.jmx
+🧠 How it behaves
+
+👉 At runtime:
+
+JMeter loads the external JMX
+Inserts its content
+Executes it as part of current flow
+📊 Key behavior points
+
+✔ Reuses external test plans
+✔ Avoids duplication
+✔ Executes included file fully
+✔ Works like copy-paste at runtime
+
+⚠️ Important rules
+1️⃣ File must exist
+
+❌ Wrong path → test fails
+
+2️⃣ Path handling
+
+✔ Keep file in same folder (best practice)
+✔ Or use relative path
+
+3️⃣ Variables & data
+
+👉 Included file shares:
+
+variables
+context
+thread execution
+🧪 Real-world use case
+Example:
+
+You have separate modules:
+
+login.jmx
+search.jmx
+checkout.jmx
+
+Main test:
+
+Thread Group
+   ├── Include → login.jmx
+   ├── Include → search.jmx
+   ├── Include → checkout.jmx
+
+✔ Clean modular design
+
+
+What is Include Controller?
+
+👉 It allows you to reuse an external .jmx file by including it into your current test.
+
+🧠 Simple idea
+
+Think of it like:
+
+📄 “Insert another JMeter file into this one”
+
+⚙️ How to use Include Controller
+✅ Step 1: Create a reusable JMX file
+
+Example: login.jmx
+
+Test Plan
+   └── Simple Controller (Login Flow)
+          ├── Login API
+          └── Get Profile API
+✅ Step 2: Use Include Controller in main test
+Test Plan
+   └── Thread Group
+         ├── Include Controller → login.jmx
+         ├── Search API
+🔁 Execution
+
+👉 When test runs:
+
+Login API
+Get Profile API
+Search API
+
+✔ Included file executes as part of main test
+
+📋 Field in Include Controller
+🔹 Include Controller → Filename
+
+👉 You provide:
+
+Path to .jmx file
+
+Example:
+
+login.jmx
+
+or full path:
+
+C:\tests\login.jmx
+🧠 How it behaves
+
+👉 At runtime:
+
+JMeter loads the external JMX
+Inserts its content
+Executes it as part of current flow
+
