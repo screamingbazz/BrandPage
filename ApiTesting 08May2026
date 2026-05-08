@@ -1,0 +1,554 @@
+1. POST
+
+POST is mainly used to create new data.
+
+When you use POST:
+
+The server usually generates the ID
+A new resource is created
+Multiple identical POST requests may create multiple records
+Example
+
+Request:
+
+POST /users
+Content-Type: application/json
+
+{
+  "name": "Rahul"
+}
+
+Server response:
+
+{
+  "id": 101,
+  "name": "Rahul"
+}
+
+The server created a new user.
+
+2. PUT
+
+PUT is mainly used to replace or update an existing resource.
+
+When you use PUT:
+
+The client usually knows the resource ID
+Existing data gets replaced
+Sending the same PUT request repeatedly gives the same result
+Example
+
+Request:
+
+PUT /users/101
+Content-Type: application/json
+
+{
+  "name": "Rahul Sharma"
+}
+
+This updates/replaces user 101.
+
+Important Concept: Idempotent
+PUT is idempotent
+
+Meaning:
+
+Sending the same request 1 time or 100 times → same final result
+
+Example:
+
+PUT /users/101
+{
+  "name": "Rahul"
+}
+
+No matter how many times you send it, user 101 still becomes "Rahul".
+
+POST is NOT idempotent
+
+Each request may create a new resource.
+
+Example:
+
+POST /orders
+
+Sending it 3 times may create:
+
+Order #1
+Order #2
+Order #3
+
+
+
+https://api.example.com/users/101/orders?status=completed&sort=date
+|----| |---------------| |-----------------| |--------------------------|
+protocol      domain              path              query parameters
+
+
+URL Breakdown
+1. Protocol (Scheme)
+https
+
+Tells how communication happens.
+
+Common protocols:
+
+http
+https
+2. Domain
+api.example.com
+
+The server or website name.
+
+example.com → main domain
+api → subdomain
+3. Path
+/users/101/orders
+
+Specifies the resource location on the server.
+
+Think of it like folders/files.
+
+4. Path Parameter
+
+Inside the path:
+
+101
+
+This is a path parameter because it identifies a specific resource.
+
+Example meaning:
+
+User ID = 101
+
+Framework example:
+
+/users/{id}/orders
+
+Here:
+
+{id} is a path parameter
+5. Query Parameters
+
+After the ?
+
+?status=completed&sort=date
+
+Query parameters are:
+
+status=completed
+sort=date
+
+Used for:
+
+filtering
+sorting
+searching
+pagination
+
+
+What is a Path?
+
+Example URL:
+
+https://api.example.com/users/101/orders
+
+The path is:
+
+/users/101/orders
+
+Everything after the domain and before query parameters is the path.
+
+Role of the Path
+
+The path helps the server:
+
+identify the requested resource
+route the request to correct logic/code
+organize API endpoints
+
+Think of it like an address inside a building.
+
+Real-world Analogy
+
+Imagine:
+
+https://library.com/books/10
+library.com → building
+/books/10 → room/shelf/book location
+
+The path tells exactly where to go.
+
+How Path Works Internally
+
+When a request reaches the server:
+
+GET /users/101
+
+The server checks the path:
+
+/users/101
+
+Then matches it with routing rules.
+
+Example backend routes:
+
+GET /users
+GET /users/:id
+POST /users
+
+If path is:
+
+/users/101
+
+Server matches:
+
+/users/:id
+
+Then:
+
+extracts 101
+sends request to corresponding function/controller
+Path in REST APIs
+
+Paths usually represent resources.
+
+Examples
+Get all users
+GET /users
+Get one user
+GET /users/101
+Get orders of a user
+GET /users/101/orders
+Path Structure
+
+Paths are hierarchical.
+
+Example:
+
+/companies/5/employees/20
+
+Meaning:
+
+company ID = 5
+employee ID = 20
+Difference Between Path and Query Parameters
+Path
+
+Used for:
+
+identifying a resource
+
+Example:
+
+/products/45
+
+Product 45
+
+Query Parameters
+
+Used for:
+
+filtering
+sorting
+optional settings
+
+Example:
+
+/products?color=red
+
+
+1. ROUTE (What it is)
+
+A route is the rule/definition that tells your backend:
+
+“If a request matches this path + method, run this code.”
+
+Example (Express-style)
+app.get('/users/:id', (req, res) => {
+  res.send("User data")
+})
+
+This is a route.
+
+Route = Pattern + Handler
+
+It includes:
+
+HTTP method (GET, POST, etc.)
+path pattern (/users/:id)
+handler function (what to execute)
+Route Definition
+GET /users/:id  ->  function handler
+2. ENDPOINT (What it is)
+
+An endpoint is:
+
+The actual callable API URL (often combined with method).
+
+Example
+GET /users/42
+
+This is an endpoint.
+
+Endpoint = Real Request Target
+
+It is:
+
+actual URL
+with real values
+accessed by client
+KEY DIFFERENCE (Very Important)
+Concept	Meaning	Example
+Route	Rule in backend code	/users/:id
+Endpoint	Actual API call	/users/42
+
+
+URI (Uniform Resource Identifier)
+
+A URI is the umbrella term.
+
+Anything that identifies a resource (by name or location) is a URI.
+
+Example URIs:
+https://api.example.com/users/42
+urn:isbn:9780132350884
+
+So URI can be:
+
+a URL
+a URN
+or both concepts combined
+2. URL (Uniform Resource Locator)
+
+A URL is a type of URI that tells you WHERE + HOW to access something.
+
+It gives location + access method (protocol)
+
+Example URLs:
+https://google.com
+https://api.shop.com/users/42
+ftp://files.server.com/file.zip
+URL structure
+scheme://host/path?query
+
+Example:
+
+https://api.example.com/users/42?active=true
+Part	Meaning
+https	protocol
+api.example.com	domain
+/users/42	path
+?active=true	query
+KEY IDEA
+
+URL = URI + location + access method
+
+3. URN (Uniform Resource Name)
+
+A URN is a type of URI that gives ONLY NAME, not location.
+
+It does NOT tell where to find something.
+
+Example URN:
+urn:isbn:9780132350884
+
+This means:
+
+“This is a book identified by ISBN”
+
+But NOT:
+
+where it is stored
+how to access it
+URN structure
+urn:<namespace>:<identifier>
+
+Examples:
+
+urn:uuid:550e8400-e29b-41d4-a716-446655440000
+urn:isbn:9780132350884
+
+
+What is a URL really?
+
+Example:
+
+https://api.example.com/users/42?active=true
+
+Breakdown:
+
+Part	Meaning
+https	protocol
+api.example.com	domain
+/users/42	path
+?active=true	query
+
+👉 This whole thing is the URL
+
+2. What is a domain name?
+
+Example:
+
+api.example.com
+
+This is just the domain name, NOT the full URL.
+
+3. What is an IP address?
+
+Example:
+
+142.250.190.78
+
+This is the actual machine address.
+
+4. How they connect (very important)
+
+When you type:
+
+https://google.com
+
+Here’s what happens:
+
+Step 1: URL is entered
+https://google.com
+Step 2: DNS lookup happens
+
+Domain is converted to IP:
+
+google.com → 142.250.190.78
+Step 3: Request is sent to IP server
+5. So relationship is:
+URL → contains domain → domain maps to IP → server responds
+
+
+1. What is API pagination?
+
+Instead of returning all data:
+
+GET /users
+
+You return data in chunks:
+
+GET /users?page=1&limit=10
+
+Response:
+
+{
+  "data": [/* 10 users */],
+  "page": 1,
+  "limit": 10,
+  "total": 95,
+  "totalPages": 10
+}
+2. What you should test (core areas)
+
+You must validate:
+
+A. Correct data slicing
+Are you getting correct number of records per page?
+B. Page navigation correctness
+page=1, page=2, page=3 returns correct data
+C. Boundary conditions
+last page behavior
+empty page behavior
+D. Consistency
+no duplicate/missing records across pages
+E. Invalid inputs
+negative page
+page=0
+huge page number
+F. Sorting stability (VERY important)
+data order should not randomly change between pages
+3. Basic test cases
+✅ Test Case 1: First page
+GET /users?page=1&limit=10
+
+Check:
+
+returns ≤ 10 records
+correct first 10 items
+✅ Test Case 2: Second page
+GET /users?page=2&limit=10
+
+Check:
+
+returns next 10 items
+no overlap with page 1
+✅ Test Case 3: Last page
+
+If total = 95:
+
+GET /users?page=10&limit=10
+
+Check:
+
+returns remaining 5 items
+no crash
+✅ Test Case 4: Page out of range
+GET /users?page=999&limit=10
+
+Expected:
+
+empty array OR proper error (depends on API design)
+✅ Test Case 5: limit test
+GET /users?page=1&limit=1
+
+Check:
+
+only 1 record returned
+4. Edge cases (VERY IMPORTANT in interviews)
+❌ Negative page
+GET /users?page=-1&limit=10
+
+Expected:
+
+validation error OR default to page 1
+❌ Zero page
+GET /users?page=0&limit=10
+
+Check:
+
+should not break API
+❌ Very large limit
+GET /users?limit=100000
+
+Check:
+
+system protection (max limit enforced)
+❌ Missing params
+GET /users
+
+Check:
+
+default pagination applied (page=1, limit=10 etc.)
+
+
+Logical Order of Execution
+FROM
+Tables are identified
+Subqueries in FROM are executed first (derived tables)
+JOIN / ON
+Tables are joined
+Join conditions are applied
+WHERE
+Row-level filtering happens here
+Filters rows before grouping
+GROUP BY
+Rows are grouped into aggregates
+HAVING
+Filters groups (not individual rows)
+Applied after aggregation
+SELECT
+Columns/expressions are computed
+Aggregates like SUM, COUNT, etc. are finalized here
+DISTINCT (if used)
+Removes duplicate rows
+ORDER BY
+Results are sorted
+LIMIT / OFFSET
+Final slicing of result set (pagination)
+
+
+
