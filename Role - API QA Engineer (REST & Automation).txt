@@ -1,0 +1,28 @@
+﻿Role - API QA Engineer (REST & Automation)
+Experience - 1.5+ yrs | Location - Mumbai | Work from office
+About Us
+We are surrounded by the world's leading consumer companies led by technology - Amazon for retail, Airbnb for hospitality, Uber for mobility, Netflix and Spotify for entertainment, etc. Food & Beverage is the only consumer sector where large players are still traditional restaurant companies. At Rebel Foods, we are challenging this status quo as we are building the world's most valuable restaurant company on the internet, superfast.
+The opportunity for us is immense due to the exponential growth in the food delivery business worldwide which has helped us build 'The World's Largest Internet Restaurant Company' in the last few years. Rebel Foods' current presence in India, UAE & UK with close to 50 brands and 4500+ internet restaurants has been built on The Rebel Operating System.
+While for us it is still Day 1, we know we are in the middle of a revolution towards creating never seen before customer-first experiences. We bring you a once-in-a-lifetime opportunity to disrupt the 500-year-old industry with technology at its core.
+We urge you to refer to the below to understand how we are changing the restaurant industry before applying at Rebel Foods.
+https://spirit.rebelfoods.com/why-is-rebel-foods-hiring-super-talented-engineers-b88586223ebe
+https://spirit.rebelfoods.com/how-to-build-1000-restaurants-in-24-months-the-rebel-method-cb5b0cea4dc8
+https://spirit.rebelfoods.com/winning-the-last-frontier-for-consumer-internet-5f2a659c43db
+https://spirit.rebelfoods.com/a-unique-take-on-food-tech-dcef8c51ba41
+Software Engineering @ Rebel
+Software Engineering @ Rebel comprises of most of the components of a customer-centric internet commerce company and problem statements of scalable and distributed systems. We believe in applying engineering excellence and operational excellence in all the areas of compute, storage, network to build & operate efficient systems. While we work on open-source, cloud-managed and enterprise tech stacks in Frontend (web/mobile), Backend (API layers), Caching, Async Processing/Queuing, Databases (SQL,NoSQL), ERP, CRM, Analytics, Big Data (Hadoop, Spark, MongoDB etc), Data Science (ML) etc, we also work/evaluate on many emerging tech stacks like NLP, AI/IOT, Robotics + Automations, Bots, Voice, Vision computing, Blockchain etc to solve many use cases around different verticals of FoodTech. The teams have built more than 30 different systems in-house to tackle the massive complexity of a multi-brand operation while keeping business metrics supremely efficient and optimized.
+Future of Software Engineering @ Rebel
+Rebel Engineering function is working on Software + Robotics + Automation to solve the toughest problems in an integrated fashion for our customers and to make their food experiences unique, memorable and delightful & sure. We believe in continuous adoption of emerging technologies to solve customer problems in fast and innovative fashion. Technology and data are the backbone for us to disrupt this industry and build the most loved experiences for customers.
+Job Summary
+We are looking for a detail-oriented API QA Engineer to join our engineering team. You will be responsible for ensuring the reliability, performance, and security of our RESTful services. The ideal candidate has a deep understanding of API architecture, can navigate server logs like a pro to hunt down bugs, and possesses the SQL skills to validate data integrity at the source. You will operate within an Agile/Scrum framework, participating in sprints and ensuring quality is delivered continuously. While your primary focus is the backend, you should be comfortable performing functional checks on the frontend to ensure seamless end-to-end integration.
+Key Responsibilities
+* Agile Participation: Actively participate in Sprint Planning, Daily Stand-ups, Backlog Grooming, and Retrospectives to ensure quality is integrated from the start.
+* API Testing: Design and execute comprehensive test suites for RESTful APIs using tools like Postman or Insomnia.
+* Issue Debugging: Actively monitor and analyze application logs (using CloudWatch, Splunk, ELK, or terminal-based tools) to identify root causes of failures.
+* Database Validation: Write and execute SQL queries to verify that API transactions are correctly reflected in the database.
+* Automation: Gradually transition manual test cases into automated scripts using RestAssured (Java) to improve regression efficiency.
+* Full-Stack Awareness: Perform "Light" Frontend testing to verify that API responses are correctly rendered on the UI.
+* Defect Management: Document clear, reproducible bug reports and track them through the entire SDLC via JIRA or similar tools.
+The Rebel Culture
+We believe in empowering and growing people to perform the best at their job functions. We follow outcome-oriented, fail-fast iterative & collaborative culture to move fast in building tech solutions. Rebel is not a usual workplace. The following slides will give you a sense of our culture, how Rebel conducts itself and who will be the best fit for our company. We suggest you go through it before making up your mind.
+Culture@RebelFoods.pdf
