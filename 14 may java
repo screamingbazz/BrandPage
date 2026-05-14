@@ -1045,3 +1045,829 @@ Say this:
 
 “When we execute a SQL query using JDBC, the data is returned in the form of ResultSet object. ResultSet holds data in tabular format, and we extract values using methods like getString(), getInt(), etc., depending on the column data type.”
 
+Best Practice: Reusable Base Class
+
+Create a utility class:
+
+public class AuthUtil {
+
+    private static String token;
+
+    public static String getToken() {
+
+        if (token == null) {
+
+            Response response =
+                RestAssured
+                    .given()
+                    .contentType("application/json")
+                    .body("{\"username\":\"admin\",\"password\":\"admin123\"}")
+                    .post("https://api.example.com/login");
+
+            token = response.jsonPath().getString("token");
+        }
+
+        return token;
+    }
+}
+
+Then everywhere:
+
+String token = AuthUtil.getToken();
+Handling Expired Tokens
+
+Sometimes token expires after:
+
+15 mins
+1 hour
+single request
+
+In that case:
+
+Option 1: Generate Fresh Token Before Every Test
+
+Using TestNG:
+
+@BeforeMethod
+public void setup() {
+    token = AuthUtil.getToken();
+}
+Option 2: Refresh Token Logic
+
+If API gives refresh token:
+
+{
+  "access_token": "...",
+  "refresh_token": "..."
+}
+
+You:
+
+Store refresh token
+Call refresh endpoint when access token expires
+Extracting Tokens from Headers
+
+Sometimes token comes in response header:
+
+String token =
+    response.getHeader("Authorization");
+
+or:
+
+String jsessionId =
+    response.getCookie("JSESSIONID");
+Using Session Filters (Advanced)
+
+REST Assured provides session handling:
+
+SessionFilter sessionFilter = new SessionFilter();
+
+given()
+    .filter(sessionFilter)
+    .post("/login");
+
+given()
+    .filter(sessionFilter)
+    .get("/users");
+
+Useful for:
+
+session-based apps
+cookie auth
+web apps
+Real-World Framework Structure
+
+A scalable framework usually has:
+
+src
+ ├── utils
+ │     └── AuthUtil.java
+ ├── tests
+ │     └── UserAPITest.java
+ ├── base
+ │     └── BaseTest.java
+
+api-automation-framework/
+│
+├── src/test/java
+│
+│   ├── base
+│   │     ├── BaseTest.java
+│   │     ├── BaseAPI.java
+│   │
+│   ├── config
+│   │     ├── ConfigManager.java
+│   │     ├── Environment.java
+│   │
+│   ├── constants
+│   │     ├── Endpoints.java
+│   │     ├── FrameworkConstants.java
+│   │
+│   ├── clients
+│   │     ├── UserClient.java
+│   │     ├── AuthClient.java
+│   │
+│   ├── models
+│   │     ├── request
+│   │     │      ├── LoginRequest.java
+│   │     │      ├── CreateUserRequest.java
+│   │     │
+│   │     ├── response
+│   │            ├── LoginResponse.java
+│   │            ├── UserResponse.java
+│   │
+│   ├── specifications
+│   │     ├── RequestSpecBuilder.java
+│   │     ├── ResponseSpecBuilder.java
+│   │
+│   ├── utils
+│   │     ├── TokenManager.java
+│   │     ├── JsonUtils.java
+│   │     ├── FakerUtils.java
+│   │     ├── SchemaValidatorUtil.java
+│   │
+│   ├── listeners
+│   │     ├── TestListener.java
+│   │
+│   ├── tests
+│   │     ├── LoginTest.java
+│   │     ├── UserTest.java
+│   │
+│   └── schemas
+│         ├── login-schema.json
+│         ├── user-schema.json
+│
+├── src/test/resources
+│     ├── config.properties
+│     ├── qa.properties
+│     ├── staging.properties
+│
+├── pom.xml
+└── testng.xml
+2. Config Manager
+config.properties
+base.url=https://reqres.in
+username=admin
+password=admin123
+ConfigManager.java
+package config;
+
+import java.io.FileInputStream;
+import java.util.Properties;
+
+public class ConfigManager {
+
+    private static Properties properties;
+
+    static {
+        try {
+            properties = new Properties();
+            FileInputStream fis =
+                    new FileInputStream("src/test/resources/config.properties");
+
+            properties.load(fis);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String get(String key) {
+        return properties.getProperty(key);
+    }
+}
+3. Request Specification
+RequestSpecBuilder.java
+package specifications;
+
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.specification.RequestSpecification;
+
+import static io.restassured.http.ContentType.JSON;
+
+public class RequestSpecifications {
+
+    public static RequestSpecification getRequestSpec() {
+
+        return new RequestSpecBuilder()
+                .setBaseUri("https://reqres.in")
+                .setContentType(JSON)
+                .addHeader("Accept", "application/json")
+                .build();
+    }
+}
+4. Response Specification
+ResponseSpecifications.java
+package specifications;
+
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.specification.ResponseSpecification;
+
+public class ResponseSpecifications {
+
+    public static ResponseSpecification getResponseSpec() {
+
+        return new ResponseSpecBuilder()
+                .expectStatusCode(200)
+                .build();
+    }
+}
+5. POJO Request Model
+LoginRequest.java
+package models.request;
+
+public class LoginRequest {
+
+    private String email;
+    private String password;
+
+    public LoginRequest() {}
+
+    public LoginRequest(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+6. POJO Response Model
+LoginResponse.java
+package models.response;
+
+public class LoginResponse {
+
+    private String token;
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+}
+7. Dynamic Token Handling
+TokenManager.java
+package utils;
+
+import io.restassured.response.Response;
+import models.request.LoginRequest;
+import models.response.LoginResponse;
+
+import static io.restassured.RestAssured.given;
+
+public class TokenManager {
+
+    private static String token;
+
+    public static String getToken() {
+
+        if (token == null) {
+
+            LoginRequest request =
+                    new LoginRequest(
+                            "eve.holt@reqres.in",
+                            "cityslicka");
+
+            Response response =
+                    given()
+                            .baseUri("https://reqres.in")
+                            .body(request)
+                    .when()
+                            .post("/api/login");
+
+            LoginResponse loginResponse =
+                    response.as(LoginResponse.class);
+
+            token = loginResponse.getToken();
+        }
+
+        return token;
+    }
+}
+8. Base API
+BaseAPI.java
+package base;
+
+import io.restassured.specification.RequestSpecification;
+import specifications.RequestSpecifications;
+import utils.TokenManager;
+
+import static io.restassured.RestAssured.given;
+
+public class BaseAPI {
+
+    protected RequestSpecification requestSpec() {
+
+        return given()
+                .spec(RequestSpecifications.getRequestSpec())
+                .header("Authorization",
+                        "Bearer " + TokenManager.getToken());
+    }
+}
+9. Schema Validation
+user-schema.json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer" },
+    "name": { "type": "string" },
+    "job": { "type": "string" }
+  },
+  "required": ["name", "job"]
+}
+Schema Validation Usage
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
+
+response.then()
+        .assertThat()
+        .body(matchesJsonSchemaInClasspath("schemas/user-schema.json"));
+10. API Client Layer
+UserClient.java
+package clients;
+
+import base.BaseAPI;
+import io.restassured.response.Response;
+import models.request.CreateUserRequest;
+
+public class UserClient extends BaseAPI {
+
+    public Response createUser(CreateUserRequest requestBody) {
+
+        return requestSpec()
+                .body(requestBody)
+                .when()
+                .post("/api/users");
+    }
+}
+11. Test Class
+UserTest.java
+package tests;
+
+import clients.UserClient;
+import io.restassured.response.Response;
+import models.request.CreateUserRequest;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+public class UserTest {
+
+    @Test
+    public void createUserTest() {
+
+        CreateUserRequest request =
+                new CreateUserRequest("Rahul", "QA");
+
+        UserClient client = new UserClient();
+
+        Response response = client.createUser(request);
+
+        Assert.assertEquals(response.statusCode(), 201);
+
+        response.then()
+                .body("name",
+                        equalTo("Rahul"));
+    }
+}
+12. Better Token Strategy (Recommended)
+
+Instead of static token:
+
+Auto Refresh Token Logic
+if(tokenExpired()) {
+   generateNewToken();
+}
+
+Store:
+
+token
+expiryTime
+refreshToken
+
+inside:
+
+AuthSession.java
+13. Dynamic Login Handling
+Approach 1: API Login
+@BeforeSuite
+public void login() {
+   token = TokenManager.getToken();
+}
+Approach 2: Multiple User Roles
+getToken("ADMIN")
+getToken("CUSTOMER")
+getToken("MANAGER")
+14. Environment Support
+qa.properties
+base.url=https://qa-api.myapp.com
+staging.properties
+base.url=https://staging-api.myapp.com
+
+Run:
+
+mvn test -Denv=qa
+15. Logging
+given()
+.log().all()
+.when()
+.post()
+.then()
+.log().all();
+16. Reporting
+
+Recommended:
+
+Allure Report
+Extent Report
+
+Allure:
+
+allure serve allure-results
+17. Retry Failed Tests
+public class RetryAnalyzer implements IRetryAnalyzer
+
+Useful for unstable APIs.
+
+18. Advanced Enterprise Enhancements
+Add:
+Filters
+RequestLoggingFilter
+ResponseLoggingFilter
+Custom Assertions
+ResponseValidator.validateStatusCode()
+DB Validation
+
+Use JDBC.
+
+Contract Testing
+
+Use:
+
+Pact
+OpenAPI Validator
+19. Best Real-World Architecture
+
+MOST IMPORTANT:
+
+NEVER write API calls directly in tests.
+
+BAD:
+
+given().when().post()
+
+GOOD:
+
+UserClient.createUser()
+
+This creates:
+
+reusable framework
+maintainable code
+scalable structure
+cleaner tests
+20. Final Enterprise Flow
+Test
+ ↓
+Client Layer
+ ↓
+Base API
+ ↓
+Request Specification
+ ↓
+REST Assured
+ ↓
+Response
+ ↓
+POJO Mapping
+ ↓
+Validation
+ ↓
+Reporting
+Recommended Final Design Pattern
+
+For enterprise framework use:
+
+Builder Pattern
+Singleton Pattern
+Factory Pattern
+Strategy Pattern
+Best Folder Separation
+Recommended
+models/
+   request/
+   response/
+
+Because response POJO and request POJO differ often.
+
+Bonus Recommendation
+
+For modern scalable framework:
+
+Use:
+
+Lombok
+Jackson
+Owner library
+Faker
+AssertJ
+Allure
+
+Example with Lombok:
+
+@Data
+@Builder
+public class LoginRequest {
+   private String email;
+   private String password;
+}
+
+This removes boilerplate getters/setters.
+
+Test classes
+LoginTest.java
+CheckoutTest.java
+SearchTest.java
+Each has 3 methods, for example:
+LoginTest
+  - validLoginTest (groups: smoke)
+  - invalidLoginTest (groups: regression)
+  - loginUItest (groups: ui)
+
+CheckoutTest
+  - addToCartTest (smoke)
+  - removeFromCartTest (regression)
+  - checkoutFlowTest (e2e)
+
+SearchTest
+  - searchValidTest (smoke)
+  - searchEmptyTest (negative)
+  - searchPerformanceTest (performance)
+
+And you have a testng.xml.
+
+1. Run ALL tests (entire suite)
+From TestNG XML
+mvn test -DsuiteXmlFile=testng.xml
+
+OR if configured in POM:
+
+mvn test
+2. Run by CLASS (only one file)
+Run only LoginTest
+mvn test -Dtest=LoginTest
+Run multiple classes
+mvn test -Dtest=LoginTest,CheckoutTest
+3. Run by METHOD (very useful in debugging)
+Single method
+mvn test -Dtest=LoginTest#validLoginTest
+Multiple methods in same class
+mvn test -Dtest=LoginTest#validLoginTest,invalidLoginTest
+Method across classes (not directly supported cleanly)
+
+You must do:
+
+mvn test -Dtest=LoginTest,CheckoutTest
+
+Then filter via groups or XML.
+
+4. Run by GROUPS (MOST IMPORTANT in frameworks)
+Run smoke tests only
+mvn test -Dgroups=smoke
+
+This will run:
+
+LoginTest → validLoginTest
+CheckoutTest → addToCartTest
+SearchTest → searchValidTest
+Run regression tests
+mvn test -Dgroups=regression
+Run multiple groups (OR logic)
+mvn test -Dgroups=smoke,ui
+Exclude flaky/performance
+mvn test -DexcludedGroups=performance
+5. Combine CLASS + GROUP
+Only LoginTest + smoke group
+mvn test -Dtest=LoginTest -Dgroups=smoke
+
+👉 This is useful for debugging one module.
+
+6. Combine XML + GROUP (framework-style execution)
+XML defines structure, groups filter execution
+mvn test -DsuiteXmlFile=testng.xml -Dgroups=smoke
+
+👉 Very common in CI pipelines
+
+7. Combine XML + EXCLUDED groups
+mvn test -DsuiteXmlFile=testng.xml -DexcludedGroups=ui
+
+What <parameter> in testng.xml actually does
+
+In TestNG, parameters in testng.xml are configuration inputs, not test data.
+
+They are injected into test methods using @Parameters.
+
+📌 Why are parameters written ABOVE <test>?
+
+Example:
+
+<suite name="Suite">
+
+    <parameter name="browser" value="chrome"/>
+    <parameter name="env" value="qa"/>
+
+    <test name="Login Tests">
+        <classes>
+            <class name="tests.LoginTest"/>
+        </classes>
+    </test>
+
+</suite>
+🧠 Reason (important concept)
+
+Because TestNG has a hierarchy:
+
+suite level  →  test level  →  class level  → method level
+
+So:
+
+<suite> parameters = global (available everywhere)
+<test> parameters = only inside that test tag
+<class> parameters = only for that class (rarely used)
+📌 Do suite parameters go to ALL tests?
+✅ YES — IF you design it that way
+Suite-level parameter:
+<parameter name="browser" value="chrome"/>
+
+👉 Available to:
+
+ALL <test> blocks
+ALL classes
+ALL methods (if used with @Parameters)
+📌 But IMPORTANT: It does NOT automatically inject data
+
+TestNG will NOT magically give values.
+
+You must explicitly request it:
+
+✔️ Example test method
+@Test
+@Parameters({"browser", "env"})
+public void loginTest(String browser, String env) {
+
+    System.out.println(browser);
+    System.out.println(env);
+}
+🧠 What actually happens internally
+
+When TestNG runs:
+
+Reads testng.xml
+Finds parameters at suite/test/class level
+Matches them with @Parameters
+Injects values into methods
+📌 Will suite parameters go to ALL test methods?
+✔️ YES — BUT only if:
+Method declares them using @Parameters
+❌ NO — if method does not declare them
+
+Example:
+
+@Test
+public void loginTest() {
+    System.out.println("No parameters here");
+}
+
+👉 This method will NOT receive anything.
+
+📌 Suite vs Test vs Class parameters (VERY IMPORTANT)
+1. Suite level (global)
+<suite>
+    <parameter name="browser" value="chrome"/>
+</suite>
+
+👉 Available everywhere in suite
+
+2. Test level
+<test name="Login">
+    <parameter name="browser" value="firefox"/>
+</test>
+
+👉 Overrides suite parameter for this test only
+
+3. Class level (rare use)
+<class name="tests.LoginTest">
+    <parameter name="browser" value="edge"/>
+</class>
+
+👉 Overrides test/suite
+
+🧠 Priority order (VERY IMPORTANT)
+
+If same parameter exists:
+
+class > test > suite
+
+So:
+
+suite browser = chrome
+test browser = firefox
+
+👉 Result = firefox (test level wins)
+
+📌 Do parameters go to ALL test files?
+✔️ YES — if:
+They are at suite level
+And the class uses @Parameters
+
+Example:
+
+Works for ALL classes:
+<suite>
+    <parameter name="env" value="qa"/>
+</suite>
+Used in multiple test files:
+@Parameters("env")
+
+GOAL
+
+You want:
+
+mvn test -DsuiteXmlFile=testng.xml -Dbrowser=chrome -Denv=qa
+
+And use:
+
+browser
+env
+
+inside TestNG tests.
+
+🧾 1. testng.xml (NO hardcoding of values)
+
+👉 We define parameters, but we also allow CLI override
+
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="Automation Suite">
+
+    <!-- default values (fallback if CLI not passed) -->
+    <parameter name="browser" value="chrome"/>
+    <parameter name="env" value="qa"/>
+
+    <test name="Login Tests">
+
+        <classes>
+            <class name="tests.LoginTest"/>
+        </classes>
+
+    </test>
+
+</suite>
+🧪 2. Test File (LoginTest.java)
+
+This is where CLI + XML merge happens.
+
+package tests;
+
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+public class LoginTest {
+
+    @Test
+    @Parameters({"browser", "env"})
+    public void loginTest(String browserFromXml, String envFromXml) {
+
+        // CLI override (MOST IMPORTANT PART)
+        String browser = System.getProperty("browser", browserFromXml);
+        String env = System.getProperty("env", envFromXml);
+
+        System.out.println("Browser: " + browser);
+        System.out.println("Environment: " + env);
+
+        // Example usage
+        if (browser.equals("chrome")) {
+            System.out.println("Launching Chrome driver...");
+        }
+    }
+}
+🚀 3. Maven CLI command
+Run with CLI override:
+mvn test -DsuiteXmlFile=testng.xml -Dbrowser=firefox -Denv=stage
+
+
+
