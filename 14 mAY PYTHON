@@ -535,3 +535,1116 @@ Now access like:
 
 result['username']
 
+api-automation-framework/
+│
+├── tests/
+│   ├── test_users.py
+│   ├── test_auth.py
+│   └── test_orders.py
+│
+├── api/
+│   ├── base_api.py
+│   ├── users_api.py
+│   ├── auth_api.py
+│   └── orders_api.py
+│
+├── core/
+│   ├── config.py
+│   ├── logger.py
+│   ├── assertions.py
+│   ├── session_manager.py
+│   └── helpers.py
+│
+├── data/
+│   ├── test_data.json
+│   ├── payloads.py
+│   └── schemas.py
+│
+├── configs/
+│   ├── dev.env
+│   ├── qa.env
+│   └── prod.env
+│
+├── reports/
+│
+├── logs/
+│
+├── conftest.py
+├── pytest.ini
+├── requirements.txt
+└── README.md
+What Each Folder/File Does
+1. tests/
+
+Contains actual test cases.
+
+Example:
+
+# tests/test_users.py
+
+def test_get_user(users_api):
+    response = users_api.get_user(1)
+
+    assert response.status_code == 200
+Responsibility
+Business validation
+Assertions
+End-to-end scenarios
+API workflow testing
+2. api/
+
+Contains API client classes.
+
+This layer handles all HTTP requests.
+
+base_api.py
+
+Common reusable request methods.
+
+# api/base_api.py
+
+import requests
+
+class BaseAPI:
+
+    def __init__(self, base_url, headers=None):
+        self.base_url = base_url
+        self.headers = headers or {}
+
+    def get(self, endpoint):
+        return requests.get(
+            f"{self.base_url}{endpoint}",
+            headers=self.headers
+        )
+
+    def post(self, endpoint, payload):
+        return requests.post(
+            f"{self.base_url}{endpoint}",
+            json=payload,
+            headers=self.headers
+        )
+Responsibility
+Common HTTP methods
+Retry handling
+Common headers
+Authentication
+Logging requests/responses
+users_api.py
+
+Specific API endpoints.
+
+# api/users_api.py
+
+from api.base_api import BaseAPI
+
+class UsersAPI(BaseAPI):
+
+    def get_user(self, user_id):
+        return self.get(f"/users/{user_id}")
+
+    def create_user(self, payload):
+        return self.post("/users", payload)
+Responsibility
+Encapsulates endpoint logic
+Keeps tests clean
+Reusable methods
+3. core/
+
+Framework utilities and reusable infrastructure.
+
+config.py
+
+Loads environment configuration.
+
+# core/config.py
+
+from dotenv import dotenv_values
+
+config = dotenv_values("configs/qa.env")
+
+BASE_URL = config["BASE_URL"]
+TOKEN = config["TOKEN"]
+Responsibility
+Environment switching
+Secrets handling
+Config centralization
+logger.py
+
+Centralized logging.
+
+# core/logger.py
+
+import logging
+
+logging.basicConfig(
+    filename="logs/test.log",
+    level=logging.INFO
+)
+
+logger = logging.getLogger()
+Responsibility
+Logs requests
+Logs responses
+Debugging failures
+assertions.py
+
+Custom reusable assertions.
+
+# core/assertions.py
+
+def assert_status_code(response, expected):
+    assert response.status_code == expected
+Responsibility
+Common validations
+Cleaner tests
+Reusable assertions
+session_manager.py
+
+Maintains reusable HTTP session.
+
+# core/session_manager.py
+
+import requests
+
+session = requests.Session()
+Responsibility
+Connection pooling
+Shared auth
+Better performance
+helpers.py
+
+Generic utility functions.
+
+# core/helpers.py
+
+import random
+
+def generate_email():
+    return f"user{random.randint(1000,9999)}@test.com"
+Responsibility
+Random data
+Date helpers
+Utility methods
+4. data/
+
+Stores test data and schemas.
+
+payloads.py
+
+Reusable request payloads.
+
+# data/payloads.py
+
+def create_user_payload(name, email):
+    return {
+        "name": name,
+        "email": email
+    }
+Responsibility
+Centralized payloads
+Dynamic request bodies
+schemas.py
+
+Response validation schemas.
+
+# data/schemas.py
+
+from pydantic import BaseModel
+
+class UserSchema(BaseModel):
+    id: int
+    name: str
+    email: str
+Responsibility
+Contract validation
+Schema validation
+Response structure validation
+5. configs/
+
+Environment-specific variables.
+
+Example:
+
+# configs/qa.env
+
+BASE_URL=https://qa-api.example.com
+TOKEN=abc123
+Responsibility
+Multi-environment support
+Secrets/config separation
+6. conftest.py
+
+Pytest fixtures live here.
+
+# conftest.py
+
+import pytest
+
+from api.users_api import UsersAPI
+from core.config import BASE_URL
+
+@pytest.fixture
+def users_api():
+    return UsersAPI(BASE_URL)
+Responsibility
+Dependency injection
+Shared setup
+Shared teardown
+Fixtures
+7. pytest.ini
+
+Pytest configuration.
+
+[pytest]
+addopts = -v
+testpaths = tests
+Responsibility
+Test execution settings
+Markers
+Logging config
+8. requirements.txt
+
+Dependencies.
+
+pytest
+requests
+python-dotenv
+pydantic
+allure-pytest
+faker
+9. reports/
+
+Stores execution reports.
+
+Examples:
+
+Allure reports
+HTML reports
+JUnit XML
+10. logs/
+
+Stores logs.
+
+Examples:
+
+logs/
+   execution.log
+   api.log
+
+
+Install Dependency
+pip install psycopg2-binary
+3. Industry-Level Structure for DB Layer
+
+Add a dedicated DB layer in your framework:
+
+api-automation-framework/
+│
+├── database/
+│   ├── db_client.py
+│   ├── db_config.py
+│   └── queries/
+│       ├── user_queries.py
+│       └── order_queries.py
+4. DB Configuration File
+database/db_config.py
+DB_CONFIG = {
+    "host": "localhost",
+    "database": "testdb",
+    "user": "postgres",
+    "password": "admin",
+    "port": 5432
+}
+5. DB Connection + Execution Layer
+database/db_client.py
+
+This is the MOST IMPORTANT file.
+
+import psycopg2
+from database.db_config import DB_CONFIG
+
+
+class DBClient:
+
+    def __init__(self):
+        self.conn = psycopg2.connect(**DB_CONFIG)
+        self.cursor = self.conn.cursor()
+
+    # SELECT queries
+    def fetch_all(self, query, params=None):
+        self.cursor.execute(query, params)
+        return self.cursor.fetchall()
+
+    # SELECT single row
+    def fetch_one(self, query, params=None):
+        self.cursor.execute(query, params)
+        return self.cursor.fetchone()
+
+    # INSERT / UPDATE / DELETE
+    def execute_query(self, query, params=None):
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+    def close(self):
+        self.cursor.close()
+        self.conn.close()
+6. Writing SQL Queries Separately (Best Practice)
+database/queries/user_queries.py
+GET_USER_BY_ID = """
+SELECT id, name, email
+FROM users
+WHERE id = %s
+"""
+7. How to Execute Queries (Usage)
+Example in a test:
+from database.db_client import DBClient
+from database.queries.user_queries import GET_USER_BY_ID
+
+
+def test_user_in_database():
+
+    db = DBClient()
+
+    result = db.fetch_one(GET_USER_BY_ID, (1,))
+
+    print(result)
+
+    db.close()
+
+    assert result[0] == 1
+8. How Parameters Work (Very Important)
+db.fetch_one(query, (1,))
+
+This replaces:
+
+WHERE id = 1
+WHY THIS IS IMPORTANT
+Prevents SQL injection
+Cleaner queries
+Reusable queries
+9. Insert Example
+INSERT_USER = """
+INSERT INTO users (name, email)
+VALUES (%s, %s)
+"""
+
+Usage:
+
+db = DBClient()
+
+db.execute_query(INSERT_USER, ("John", "john@test.com"))
+
+framework/
+│
+├── schemas/
+│   ├── user_schema.py
+│   ├── order_schema.py
+│
+├── validators/
+│   ├── schema_validator.py
+3. Example: Pydantic Schema (User)
+schemas/user_schema.py
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+
+
+class UserSchema(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    age: Optional[int] = None
+What this does:
+Ensures id is integer
+Ensures email is valid format
+Ensures optional fields are handled safely
+Fails automatically if API response is wrong
+4. How API response looks
+
+Example API response:
+
+{
+  "id": 101,
+  "name": "John",
+  "email": "john@test.com",
+  "age": 25
+}
+5. Pydantic Validation Layer (Reusable)
+validators/schema_validator.py
+from pydantic import ValidationError
+
+
+def validate_schema(response_json, schema_class):
+
+    try:
+        schema_class(**response_json)
+
+    except ValidationError as e:
+        raise AssertionError(f"Schema validation failed:\n{e}")
+6. How you use it in TEST class
+
+This is the MOST IMPORTANT part.
+
+tests/test_users.py
+from schemas.user_schema import UserSchema
+from validators.schema_validator import validate_schema
+
+
+def test_get_user(users_client):
+
+    response = users_client.get_user(1)
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # Pydantic validation happens here
+    validate_schema(data, UserSchema)
+
+1. Run ALL tests
+pytest
+
+or explicitly:
+
+pytest tests/
+2. Run a single test file
+pytest test_login.py
+pytest test_checkout.py
+pytest test_cart.py
+3. Run multiple specific files
+pytest test_login.py test_cart.py
+4. Run a specific test method
+pytest test_login.py::test_valid_login
+
+If inside a class:
+
+pytest test_login.py::TestLogin::test_valid_login
+5. Run multiple specific test methods
+pytest test_login.py::test_valid_login test_cart.py::test_add_item
+6. Run tests matching a name pattern (-k)
+
+Runs tests whose names match expression:
+
+pytest -k "login"
+
+Examples:
+
+pytest -k "login or cart"
+pytest -k "not logout"
+pytest -k "valid"
+7. Run tests using markers (-m)
+
+If you use markers like:
+
+@pytest.mark.smoke
+@pytest.mark.regression
+
+Run:
+
+pytest -m smoke
+pytest -m regression
+pytest -m "smoke or regression"
+pytest -m "not smoke"
+8. Run tests from a specific directory
+pytest tests/ui/
+pytest tests/api/
+9. Run with verbosity (useful for debugging Selenium)
+pytest -v
+pytest -vv
+10. Run in parallel (very common for Selenium) using xdist
+
+Install first:
+
+pip install pytest-xdist
+
+Run:
+
+pytest -n 3
+
+or auto CPU-based:
+
+pytest -n auto
+11. Run failed tests only
+pytest --lf
+
+Run last failed first:
+
+pytest --ff
+12. Stop after first failure (useful in Selenium debugging)
+pytest -x
+
+or stop after N failures:
+
+pytest --maxfail=2
+13. Show print/log output (important in Selenium debugging)
+pytest -s
+
+or:
+
+pytest --capture=no
+14. Combine multiple filters (very powerful)
+
+Example:
+
+pytest test_login.py -k "valid" -m smoke -n auto -v
+
+1. Defining test folders (test discovery)
+📄 pytest.ini
+[pytest]
+testpaths = tests
+📁 Project structure
+project/
+│
+├── tests/
+│   ├── test_login.py
+│   ├── test_cart.py
+│
+├── pages/
+├── conftest.py
+└── pytest.ini
+▶ Run
+pytest
+
+👉 Pytest will ONLY look inside tests/
+
+🟡 2. Grouping tests (markers like TestNG groups)
+📄 pytest.ini
+[pytest]
+markers =
+    smoke: quick sanity tests
+    regression: full suite tests
+    login: login module tests
+    cart: cart module tests
+📄 test_login.py
+import pytest
+
+@pytest.mark.smoke
+def test_valid_login():
+    assert True
+
+@pytest.mark.regression
+def test_invalid_login():
+    assert True
+▶ Run commands
+pytest -m smoke
+pytest -m regression
+pytest -m "smoke or regression"
+pytest -m "not smoke"
+
+👉 This replaces testng.xml groups
+
+🔵 3. Default CLI options (auto applied every run)
+📄 pytest.ini
+[pytest]
+addopts = -v -s --tb=short
+▶ Now just run:
+pytest
+
+It automatically becomes:
+
+pytest -v -s --tb=short
+Meaning:
+-v → verbose output
+-s → show print logs (VERY important in Selenium)
+--tb=short → short error trace
+🟣 4. Reporting setup (HTML report)
+Install plugin
+pip install pytest-html
+📄 pytest.ini
+[pytest]
+addopts = --html=reports/report.html --self-contained-html
+▶ Run
+pytest
+Output:
+reports/report.html
+
+👉 Open in browser → full test report
+
+🔴 5. Logging setup (Selenium debugging)
+📄 pytest.ini
+[pytest]
+log_cli = true
+log_cli_level = INFO
+📄 test example
+import logging
+
+def test_login():
+    logging.info("Opening login page")
+    assert True
+▶ Run
+pytest
+Output:
+INFO root: Opening login page
+🟠 6. Parallel execution (VERY important in Selenium)
+Install plugin
+pip install pytest-xdist
+📄 pytest.ini
+[pytest]
+addopts = -n auto
+▶ Run
+pytest
+What happens:
+Tests run in parallel
+Uses all CPU cores
+
+You can also control manually:
+
+pytest -n 3
+🟢 Full REAL-WORLD pytest.ini (Selenium framework style)
+[pytest]
+testpaths = tests
+
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+
+markers =
+    smoke: quick tests
+    regression: full suite
+    login: login module
+    cart: cart module
+
+addopts =
+    -v
+    -s
+    --tb=short
+    --html=reports/report.html
+    --self-contained-html
+    -n auto
+
+log_cli = true
+log_cli_level = INFO
+
+
+Categorizing flakiness (very important in companies)
+
+Teams classify flaky tests into 4 types:
+
+1. ⏱ Timing issues
+Element not ready
+Page loads slowly
+AJAX not finished
+2. 🌐 Environment issues
+Test server unstable
+CI load issues
+Network latency
+3. 🔍 Selenium sync issues
+NoSuchElementException
+StaleElementReferenceException
+4. 🧪 Test design issues
+Poor assertions
+Dependency between tests
+Hard-coded data
+🟡 3. Fix strategy (preferred over retry)
+✔ A. Explicit waits (MOST IMPORTANT)
+
+Instead of:
+
+driver.find_element(By.ID, "login").click()
+
+Companies enforce:
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.ID, "login"))
+).click()
+✔ B. Page Object Model (POM)
+
+Reduces flaky locators and duplication.
+
+class LoginPage:
+    def login(self):
+        self.wait_and_click(self.login_button)
+✔ C. Stable locators strategy
+
+Preferred order:
+
+data-testid (BEST)
+id
+name
+CSS selector
+XPath (last resort)
+🔴 4. Retry strategy (controlled, not blind)
+
+Companies use smart retries only for known flaky categories
+
+Install:
+pip install pytest-rerunfailures
+Example:
+pytest --reruns 1 --reruns-delay 2
+OR per test level (better control)
+import pytest
+
+@pytest.mark.flaky(reruns=2, reruns_delay=2)
+def test_login():
+    assert True
+🟣 5. Quarantine / Isolation strategy (VERY common in companies)
+
+Flaky tests are moved to a separate bucket:
+
+[pytest]
+markers =
+    smoke
+    regression
+    flaky
+    quarantine
+
+Run:
+
+pytest -m "not flaky"
+
+👉 Flaky tests:
+
+don’t block CI pipeline
+are fixed separately
+🔵 6. CI pipeline strategy (Jenkins / GitHub Actions)
+
+Typical flow:
+
+Stage 1: Smoke tests
+pytest -m smoke
+Stage 2: Regression
+pytest -m regression
+Stage 3: Flaky rerun job (separate job)
+pytest --lf --reruns 2
+🟠 7. Screenshot + logs for debugging
+
+Companies ALWAYS attach:
+
+screenshot on failure
+browser logs
+network logs (if possible)
+
+Example:
+
+def attach_screenshot(driver):
+    driver.save_screenshot("fail.png")
+
+Or Allure:
+
+allure.attach(driver.get_screenshot_as_png(),
+              name="fail",
+              attachment_type=allure.attachment_type.PNG)
+🟢 8. Smart waiting framework (advanced companies)
+
+Instead of raw Selenium waits, they build:
+
+def wait_click(driver, locator):
+    WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable(locator)
+    ).click()
+
+👉 Centralized wait utilities reduce flakiness massively.
+
+🔴 9. Test independence rule
+
+Companies enforce:
+
+✔ No test depends on another test
+✔ Each test creates its own data
+✔ Clean setup/teardown
+
+Bad example:
+
+test_login() → test_checkout() depends on login ❌
+
+Good:
+
+each test logs in independently ✔
+
+
+1. Recommended Framework Architecture
+
+Most companies use a combination of:
+
+PyTest → test runner
+Selenium WebDriver → UI automation
+Page Object Model (POM) → maintainable design
+Logging → debugging
+Config management → environment handling
+Utilities/helpers → reusable functions
+Reports → Allure/HTML reports
+2. Ideal Folder Structure
+automation_framework/
+│
+├── tests/
+│   ├── test_login.py
+│   ├── test_checkout.py
+│   └── test_search.py
+│
+├── pages/
+│   ├── login_page.py
+│   ├── home_page.py
+│   └── checkout_page.py
+│
+├── locators/
+│   ├── login_locators.py
+│   └── home_locators.py
+│
+├── utilities/
+│   ├── logger.py
+│   ├── read_config.py
+│   ├── screenshots.py
+│   ├── waits.py
+│   └── excel_utils.py
+│
+├── config/
+│   ├── config.ini
+│   └── environments.json
+│
+├── reports/
+│
+├── logs/
+│
+├── screenshots/
+│
+├── testdata/
+│   ├── users.json
+│   └── testdata.xlsx
+│
+├── conftest.py
+├── pytest.ini
+├── requirements.txt
+└── README.md
+3. What Each Folder/File Contains
+tests/
+
+Contains actual test cases.
+
+Example:
+
+def test_valid_login(login_page):
+    login_page.login("admin", "password")
+    assert login_page.is_login_successful()
+
+Purpose:
+
+Only business validations
+No Selenium logic directly
+Easy to read
+pages/
+
+Contains Page Object Model classes.
+
+Example:
+
+class LoginPage:
+
+    def __init__(self, driver):
+        self.driver = driver
+
+    def enter_username(self, username):
+        self.driver.find_element(*LoginLocators.USERNAME).send_keys(username)
+
+    def login(self, user, pwd):
+        self.enter_username(user)
+
+Purpose:
+
+Encapsulates page behavior
+Keeps Selenium code centralized
+Easier maintenance if UI changes
+locators/
+
+Stores element locators separately.
+
+Example:
+
+class LoginLocators:
+    USERNAME = ("id", "username")
+    PASSWORD = ("id", "password")
+    LOGIN_BTN = ("xpath", "//button")
+
+Purpose:
+
+Centralized locator maintenance
+Cleaner page classes
+utilities/logger.py
+
+Creates reusable logging setup.
+
+Example:
+
+import logging
+
+def get_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    fh = logging.FileHandler("logs/test.log")
+    logger.addHandler(fh)
+
+    return logger
+
+Purpose:
+
+Track execution
+Debug failures
+Audit execution flow
+utilities/read_config.py
+
+Reads configuration values.
+
+Example:
+
+from configparser import ConfigParser
+
+config = ConfigParser()
+config.read("config/config.ini")
+
+base_url = config.get("settings", "base_url")
+
+Purpose:
+
+Environment independence
+No hardcoded URLs/credentials
+utilities/waits.py
+
+Reusable wait methods.
+
+Example:
+
+WebDriverWait(driver, 10).until(
+    EC.visibility_of_element_located(locator)
+)
+
+Purpose:
+
+Avoid flaky tests
+Synchronization handling
+utilities/screenshots.py
+
+Captures screenshots on failure.
+
+Example:
+
+driver.save_screenshot("screenshots/fail.png")
+
+Purpose:
+
+Failure analysis
+Reporting evidence
+testdata/
+
+Stores external test data.
+
+Formats:
+
+JSON
+Excel
+CSV
+YAML
+
+Purpose:
+
+Data-driven testing
+Reusability
+config/config.ini
+
+Contains environment settings.
+
+Example:
+
+[settings]
+base_url=https://testsite.com
+browser=chrome
+timeout=10
+
+Purpose:
+
+Easy environment switching
+conftest.py
+
+Very important PyTest file.
+
+Contains:
+
+Fixtures
+Browser setup
+Teardown
+Hooks
+
+Example:
+
+@pytest.fixture
+def setup():
+    driver = webdriver.Chrome()
+    yield driver
+    driver.quit()
+
+Purpose:
+
+Common setup shared across tests
+pytest.ini
+
+PyTest configuration.
+
+Example:
+
+[pytest]
+markers =
+    smoke
+    regression
+addopts = -v --html=reports/report.html
+
+Purpose:
+
+Centralized PyTest settings
+reports/
+
+Stores:
+
+HTML reports
+Allure reports
+XML reports
+logs/
+
+Stores execution logs.
+
+Example:
+
+2026-05-13 INFO Login successful
+2026-05-13 ERROR Element not found
+4. Real Industry Enhancements
+
+Advanced frameworks may also include:
+
+Feature	Purpose
+Jenkins/GitHub Actions	CI/CD
+Docker	Environment consistency
+Parallel execution	Faster runs
+Allure Reports	Rich reporting
+Retry mechanism	Handle flaky tests
+API utilities	Hybrid testing
+Database utilities	Backend validation
+5. How to Explain Framework in Interview
+
+This is the MOST important part.
+
+Interviewers do NOT only want structure.
+They want:
+
+Why you designed it
+Benefits
+Scalability
+Real-world thinking
+6. Best Interview Answer (Strong Version)
+
+You can say:
+
+“I developed a hybrid Selenium-PyTest automation framework using the Page Object Model design pattern.
+
+The framework is structured to separate test logic, page actions, locators, utilities, configurations, and test data for better maintainability and scalability.
+
+I used PyTest fixtures in conftest.py for browser setup, teardown, and reusable initialization.
+
+Page classes contain reusable methods for interacting with web pages, while locators are maintained separately to simplify maintenance when UI changes occur.
+
+Logging is implemented using Python logging module to capture execution flow and failures. Screenshots are automatically captured on failures for debugging.
+
+Configuration values such as URLs, browser type, and timeouts are externalized in config files to support multiple environments.
+
+The framework also supports data-driven testing using JSON/Excel files and generates HTML or Allure reports for execution analysis.
+
+It is CI/CD ready and can be integrated with Jenkins or GitHub Actions for scheduled and parallel execution.”
