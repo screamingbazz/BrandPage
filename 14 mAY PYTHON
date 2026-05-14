@@ -1,0 +1,537 @@
+Ideal Folder Structure
+automation_framework/
+│
+├── tests/
+│   ├── test_login.py
+│   ├── test_checkout.py
+│   └── test_search.py
+│
+├── pages/
+│   ├── login_page.py
+│   ├── home_page.py
+│   └── checkout_page.py
+│
+├── locators/
+│   ├── login_locators.py
+│   └── home_locators.py
+│
+├── utilities/
+│   ├── logger.py
+│   ├── read_config.py
+│   ├── screenshots.py
+│   ├── waits.py
+│   └── excel_utils.py
+│
+├── config/
+│   ├── config.ini
+│   └── environments.json
+│
+├── reports/
+│
+├── logs/
+│
+├── screenshots/
+│
+├── testdata/
+│   ├── users.json
+│   └── testdata.xlsx
+│
+├── conftest.py
+├── pytest.ini
+├── requirements.txt
+└── README.md
+3. What Each Folder/File Contains
+tests/
+
+Contains actual test cases.
+
+Example:
+
+def test_valid_login(login_page):
+    login_page.login("admin", "password")
+    assert login_page.is_login_successful()
+
+Purpose:
+
+Only business validations
+No Selenium logic directly
+Easy to read
+pages/
+
+Contains Page Object Model classes.
+
+Example:
+
+class LoginPage:
+
+    def __init__(self, driver):
+        self.driver = driver
+
+    def enter_username(self, username):
+        self.driver.find_element(*LoginLocators.USERNAME).send_keys(username)
+
+    def login(self, user, pwd):
+        self.enter_username(user)
+
+Purpose:
+
+Encapsulates page behavior
+Keeps Selenium code centralized
+Easier maintenance if UI changes
+locators/
+
+Stores element locators separately.
+
+Example:
+
+class LoginLocators:
+    USERNAME = ("id", "username")
+    PASSWORD = ("id", "password")
+    LOGIN_BTN = ("xpath", "//button")
+
+Purpose:
+
+Centralized locator maintenance
+Cleaner page classes
+utilities/logger.py
+
+Creates reusable logging setup.
+
+Example:
+
+import logging
+
+def get_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    fh = logging.FileHandler("logs/test.log")
+    logger.addHandler(fh)
+
+    return logger
+
+Purpose:
+
+Track execution
+Debug failures
+Audit execution flow
+utilities/read_config.py
+
+Reads configuration values.
+
+Example:
+
+from configparser import ConfigParser
+
+config = ConfigParser()
+config.read("config/config.ini")
+
+base_url = config.get("settings", "base_url")
+
+Purpose:
+
+Environment independence
+No hardcoded URLs/credentials
+utilities/waits.py
+
+Reusable wait methods.
+
+Example:
+
+WebDriverWait(driver, 10).until(
+    EC.visibility_of_element_located(locator)
+)
+
+Purpose:
+
+Avoid flaky tests
+Synchronization handling
+utilities/screenshots.py
+
+Captures screenshots on failure.
+
+Example:
+
+driver.save_screenshot("screenshots/fail.png")
+
+Purpose:
+
+Failure analysis
+Reporting evidence
+testdata/
+
+Stores external test data.
+
+Formats:
+
+JSON
+Excel
+CSV
+YAML
+
+Purpose:
+
+Data-driven testing
+Reusability
+config/config.ini
+
+Contains environment settings.
+
+Example:
+
+[settings]
+base_url=https://testsite.com
+browser=chrome
+timeout=10
+
+Purpose:
+
+Easy environment switching
+conftest.py
+
+Very important PyTest file.
+
+Contains:
+
+Fixtures
+Browser setup
+Teardown
+Hooks
+
+Example:
+
+@pytest.fixture
+def setup():
+    driver = webdriver.Chrome()
+    yield driver
+    driver.quit()
+
+Purpose:
+
+Common setup shared across tests
+pytest.ini
+
+PyTest configuration.
+
+Example:
+
+[pytest]
+markers =
+    smoke
+    regression
+addopts = -v --html=reports/report.html
+
+Purpose:
+
+Centralized PyTest settings
+reports/
+
+Stores:
+
+HTML reports
+Allure reports
+XML reports
+logs/
+
+Stores execution logs.
+
+Example:
+
+2026-05-13 INFO Login successful
+2026-05-13 ERROR Element not found
+
+
+
+Step 1: Create Driver Fixture in conftest.py
+import pytest
+from selenium import webdriver
+
+@pytest.fixture()
+def setup(request):
+
+    driver = webdriver.Chrome()
+    driver.maximize_window()
+
+    request.cls.driver = driver
+
+    yield driver
+
+    driver.quit()
+5. Step 2: Add PyTest Hook for Failure Detection
+
+Inside conftest.py:
+
+import pytest
+import os
+from datetime import datetime
+
+@pytest.hookimpl(hookwrapper=True)
+
+def pytest_runtest_makereport(item, call):
+
+    outcome = yield
+    report = outcome.get_result()
+
+    if report.when == "call" and report.failed:
+
+        driver = item.funcargs["setup"]
+
+        screenshots_dir = "screenshots"
+
+        os.makedirs(screenshots_dir, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        file_name = f"{item.name}_{timestamp}.png"
+
+        file_path = os.path.join(screenshots_dir, file_name)
+
+        driver.save_screenshot(file_path)
+
+        print(f"Screenshot saved: {file_path}")
+6. How It Works
+
+This hook executes after every test.
+
+It checks:
+
+report.failed
+
+If test failed:
+
+It gets Selenium driver
+Creates screenshot filename
+Saves screenshot automatically
+7. Example Failure Scenario
+
+Suppose:
+
+def test_login(setup):
+
+    driver = setup
+
+    driver.get("https://google.com")
+
+    assert False
+
+Output:
+
+Screenshot saved:
+screenshots/test_login_20260513_153010.png
+
+
+
+
+. Common Python DB Libraries
+
+Depends on database:
+
+DB	Library
+MySQL	mysql-connector-python or pymysql
+PostgreSQL	psycopg2
+SQL Server	pyodbc
+SQLite	built-in sqlite3
+2. Install (Example: MySQL)
+pip install mysql-connector-python
+3. Basic DB Connection (MySQL)
+import mysql.connector
+
+def connect_db():
+
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="password",
+        database="test_db"
+    )
+
+    return conn
+4. Execute Query
+def fetch_data(query):
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    cursor.execute(query)
+
+    result = cursor.fetchall()
+
+    conn.close()
+
+    return result
+5. Example DB Test (PyTest)
+Validate user exists in DB
+def test_user_exists_in_db():
+
+    query = "SELECT username FROM users WHERE id = 1"
+
+    result = fetch_data(query)
+
+    assert result[0][0] == "admin"
+6. Real Framework Structure
+framework/
+│
+├── db/
+│   ├── db_connection.py
+│   ├── db_queries.py
+│
+├── tests/
+│   ├── test_db_validation.py
+│
+├── conftest.py
+7. Best Practice: DB Utility Class
+import mysql.connector
+
+class DBUtils:
+
+    def __init__(self):
+
+        self.conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database="test_db"
+        )
+
+        self.cursor = self.conn.cursor()
+
+    def fetch_one(self, query):
+
+        self.cursor.execute(query)
+
+        return self.cursor.fetchone()
+
+    def fetch_all(self, query):
+
+        self.cursor.execute(query)
+
+        return self.cursor.fetchall()
+
+    def close(self):
+
+        self.conn.close()
+8. Using DB in Test
+from db.db_connection import DBUtils
+
+def test_order_data():
+
+    db = DBUtils()
+
+    result = db.fetch_one("SELECT status FROM orders WHERE id=101")
+
+    assert result[0] == "SHIPPED"
+
+    db.close()
+9. DB Validation with UI Data (REAL WORLD)
+
+Example:
+
+Step 1: UI gets order ID
+Step 2: Validate in DB
+def test_ui_db_validation(setup):
+
+    driver = setup
+
+    order_id = "101"  # from UI
+
+    db = DBUtils()
+
+    db_status = db.fetch_one(
+        f"SELECT status FROM orders WHERE id={order_id}"
+    )
+
+    assert db_status[0] == "SHIPPED"
+10. Best Practices (VERY IMPORTANT)
+✔ Always close connection
+conn.close()
+✔ Use parameterized queries (avoid SQL injection)
+cursor.execute("SELECT * FROM users WHERE id=%s", (1,))
+✔ Don’t hardcode credentials
+
+Use config file:
+
+[db]
+host=localhost
+user=root
+password=admin
+database=test_db
+
+The data type of SQL query result depends on the method you use (fetchone, fetchall, fetchmany) and the DB driver.
+
+I’ll explain clearly.
+
+1. Using fetchone()
+Code
+result = cursor.fetchone()
+Output type:
+
+👉 tuple
+
+Example:
+('admin', 25, 'Mumbai')
+Meaning:
+One row only
+Each column becomes an element in tuple
+2. Using fetchall()
+Code
+result = cursor.fetchall()
+Output type:
+
+👉 list of tuples
+
+Example:
+[
+    ('admin', 25, 'Mumbai'),
+    ('user1', 30, 'Delhi')
+]
+Meaning:
+Multiple rows
+Each row is a tuple
+Entire result is a list
+3. Using fetchmany(n)
+Code
+result = cursor.fetchmany(2)
+Output type:
+
+👉 list of tuples (limited rows)
+
+4. Summary Table
+Method	Return Type	Example
+fetchone()	tuple	('admin', 25)
+fetchall()	list of tuples	[('a',1), ('b',2)]
+fetchmany()	list of tuples	same as above (limited rows)
+5. Why tuple?
+
+Because:
+
+DB rows are immutable
+Each row is structured data (columns fixed)
+Tuple is lightweight and fast
+6. How you access values
+fetchone example:
+result = cursor.fetchone()
+
+print(result[0])  # first column
+print(result[1])  # second column
+fetchall example:
+results = cursor.fetchall()
+
+for row in results:
+    print(row[0], row[1])
+7. Real DB Testing Example
+result = db.fetch_one("SELECT username FROM users WHERE id=1")
+
+assert result[0] == "admin"
+8. Advanced (Important Interview Point)
+
+Some libraries allow dictionary output:
+
+MySQL with dictionary cursor:
+cursor = conn.cursor(dictionary=True)
+Output becomes:
+{'username': 'admin', 'age': 25}
+
+Now access like:
+
+result['username']
+
