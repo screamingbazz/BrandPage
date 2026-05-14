@@ -1,0 +1,1047 @@
+ProjectName
+│
+├── src/main/java
+│   │
+│   ├── base
+│   │   └── BaseClass.java
+│   │
+│   ├── pages
+│   │   ├── LoginPage.java
+│   │   ├── HomePage.java
+│   │   └── CheckoutPage.java
+│   │
+│   ├── utilities
+│   │   ├── ExcelUtility.java
+│   │   ├── WaitUtility.java
+│   │   ├── ScreenshotUtility.java
+│   │   ├── ConfigReader.java
+│   │   └── ExtentManager.java
+│   │
+│   ├── listeners
+│   │   └── TestListener.java
+│   │
+│   └── reports
+│
+│
+├── src/test/java
+│   │
+│   ├── testcases
+│   │   ├── LoginTest.java
+│   │   ├── SearchTest.java
+│   │   └── OrderTest.java
+│   │
+│   └── dataprovider
+│       └── DataProviders.java
+│
+│
+├── src/test/resources
+│   │
+│   ├── config.properties
+│   ├── log4j2.xml
+│   └── testdata.xlsx
+│
+├── test-output
+│
+├── screenshots
+│
+├── testng.xml
+│
+└── pom.xml
+
+
+“We developed a Hybrid Automation Framework using Java, Selenium WebDriver, TestNG, Maven, and Page Object Model.
+Test execution starts from testng.xml. BaseClass initializes browser setup and configuration. Test classes contain business scenarios and call reusable methods from page classes.
+Each page is designed using POM where locators and actions are maintained separately. Utilities are used for waits, screenshots, Excel handling, and configuration management.
+Test data is maintained externally in Excel and supplied using TestNG DataProvider, implementing data-driven testing.
+Logging is handled using Log4j and reporting is generated using Extent Reports with screenshots for failed scenarios.
+Listeners capture execution status and update reports automatically. The framework is scalable, reusable, maintainable, and supports parallel execution.”
+APIAutomationFramework
+│
+├── src/main/java
+│   │
+│   ├── base
+│   │   └── BaseTest.java
+│   │
+│   ├── endpoints
+│   │   └── Routes.java
+│   │
+│   ├── payloads
+│   │   ├── UserPayload.java
+│   │   └── LoginPayload.java
+│   │
+│   ├── utilities
+│   │   ├── ConfigReader.java
+│   │   ├── ExcelUtility.java
+│   │   ├── ExtentManager.java
+│   │   ├── LoggerUtility.java
+│   │   └── JsonUtility.java
+│   │
+│   ├── listeners
+│   │   └── TestListener.java
+│   │
+│   ├── helpers
+│   │   ├── RequestBuilder.java
+│   │   └── ResponseValidator.java
+│   │
+│   └── reports
+│
+│
+├── src/test/java
+│   │
+│   ├── testcases
+│   │   ├── UserTests.java
+│   │   ├── LoginTests.java
+│   │   └── OrderTests.java
+│   │
+│   └── dataproviders
+│       └── DataProviders.java
+│
+│
+├── src/test/resources
+│   │
+│   ├── config.properties
+│   ├── log4j2.xml
+│   ├── testdata.xlsx
+│   └── payload.json
+│
+├── test-output
+│
+├── logs
+│
+├── testng.xml
+│
+└── pom.xml
+3. Explain Each Folder Properly
+base/
+
+Contains common framework setup.
+
+BaseTest.java
+
+Contains:
+
+Base URI
+RequestSpecification
+Common headers
+Authentication setup
+Example
+public class BaseTest {
+
+    public RequestSpecification request;
+
+    @BeforeClass
+    public void setup() {
+
+        RestAssured.baseURI = "https://reqres.in";
+
+        request = RestAssured.given();
+
+        request.header("Content-Type", "application/json");
+    }
+}
+Interview Explanation
+
+“Base class contains reusable API setup like base URI, common headers, authentication, and request specification.”
+
+4. endpoints/ (VERY IMPORTANT)
+
+This is real industry practice.
+
+Instead of hardcoding URLs everywhere:
+
+BAD:
+
+"/api/users"
+
+Use centralized routes.
+
+Routes.java
+public class Routes {
+
+    public static String createUser = "/api/users";
+
+    public static String getUser = "/api/users/{id}";
+
+    public static String updateUser = "/api/users/{id}";
+}
+Interview Explanation
+
+“Endpoints are centralized in Routes class so if API path changes, update happens in one place only.”
+
+VERY IMPORTANT answer.
+
+5. payloads/
+
+Contains request body POJO classes.
+
+Example:
+
+UserPayload
+LoginPayload
+UserPayload.java
+public class UserPayload {
+
+    private String name;
+
+    private String job;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getJob() {
+        return job;
+    }
+
+    public void setJob(String job) {
+        this.job = job;
+    }
+}
+Why POJO?
+
+Interview answer:
+
+“POJO classes improve payload maintainability and support serialization/deserialization using Jackson or Gson.”
+
+6. helpers/
+
+Contains reusable API methods.
+
+RequestBuilder.java
+public class RequestBuilder {
+
+    public static Response createUser(UserPayload payload) {
+
+        return RestAssured
+                .given()
+                .contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .post(Routes.createUser);
+    }
+}
+Interview Explanation
+
+“RequestBuilder contains reusable API methods to avoid duplicate request code across test classes.”
+
+7. ResponseValidator.java
+
+Contains reusable validations.
+
+public class ResponseValidator {
+
+    public static void validateStatusCode(Response response, int code) {
+
+        Assert.assertEquals(response.getStatusCode(), code);
+    }
+}
+8. testcases/
+
+Contains business scenarios.
+
+UserTests.java
+public class UserTests extends BaseTest {
+
+    @Test
+    public void createUserTest() {
+
+        UserPayload payload = new UserPayload();
+
+        payload.setName("John");
+
+        payload.setJob("QA");
+
+        Response response =
+            RequestBuilder.createUser(payload);
+
+        ResponseValidator.validateStatusCode(response, 201);
+    }
+}
+9. Framework Execution Flow (MOST IMPORTANT)
+
+This is the key interview answer.
+
+COMPLETE FLOW
+Step 1 → testng.xml starts execution
+<suite name="API Suite">
+
+    <test name="Regression">
+
+        <classes>
+
+            <class name="testcases.UserTests"/>
+
+        </classes>
+
+    </test>
+
+</suite>
+Step 2 → BaseTest initializes setup
+Base URI
+Headers
+Authentication
+RequestSpecification
+Step 3 → Test class executes
+
+Example:
+
+UserTests
+
+calls
+
+RequestBuilder.createUser()
+Step 4 → Payload prepared
+
+Using:
+
+POJO class
+OR
+JSON file
+Step 5 → REST Assured sends request
+POST /api/users
+Step 6 → Response validation happens
+Status code
+Headers
+Response body
+Schema validation
+Step 7 → Logs and reports generated
+Log4j logs
+Extent report updates
+Step 8 → Final report generated
+
+Execution summary available.
+
+10. Data-Driven Testing in REST Assured
+
+VERY COMMON interview question.
+
+Excel Example
+name    job
+John    QA
+David   Dev
+DataProvider
+@DataProvider(name="userData")
+public Object[][] getData() {
+
+    return ExcelUtility.readData();
+}
+Test
+@Test(dataProvider="userData")
+public void createUser(String name, String job) {
+
+    UserPayload payload = new UserPayload();
+
+    payload.setName(name);
+
+    payload.setJob(job);
+
+    Response response =
+        RequestBuilder.createUser(payload);
+
+    Assert.assertEquals(response.statusCode(), 201);
+}
+11. config.properties in API Framework
+
+Contains:
+
+baseURI=https://reqres.in
+
+username=admin
+
+password=admin123
+
+token=abcdef12345
+
+environment=QA
+Interview Explanation
+
+“config.properties stores reusable environment configurations like base URI, authentication token, credentials, and environment details.”
+
+12. Logging
+
+Using Log4j.
+
+Example:
+
+log.info("POST request started");
+
+log.info("Response received");
+
+log.error("Validation failed");
+13. Extent Reports
+
+Contains:
+
+API name
+Request payload
+Response body
+Pass/fail status
+Execution time
+14. Real Industry Enhancements
+
+Mention these to sound senior-level:
+
+Schema Validation
+response.then().assertThat()
+.body(matchesJsonSchemaInClasspath("schema.json"));
+Authentication
+OAuth2
+Bearer Token
+JWT
+Basic Auth
+Serialization
+
+Java Object → JSON
+
+Deserialization
+
+JSON → Java Object
+
+15. Best Interview Explanation
+
+You can literally say this:
+
+“We developed a Hybrid API Automation Framework using Java, REST Assured, TestNG, Maven, and POJO-based architecture.
+Test execution starts from testng.xml. BaseTest initializes base URI, authentication, headers, and request specification.
+Endpoints are centralized in Routes class for maintainability. Payloads are managed using POJO classes to support serialization and deserialization.
+Reusable request methods are maintained in RequestBuilder and common validations are implemented in ResponseValidator.
+Test data is supplied externally using Excel and TestNG DataProvider for data-driven testing.
+Logging is implemented using Log4j and execution reports are generated using Extent Reports.
+The framework is modular, reusable, scalable, and easy to maintain.”
+
+3. Folder Structure for Schema Validation
+
+Usually:
+
+src/test/resources
+    └── schemas
+          └── UserSchema.json
+4. Example Response
+
+API Response:
+
+{
+  "name": "John",
+  "job": "QA",
+  "id": "101",
+  "createdAt": "2026-05-13"
+}
+5. JSON Schema File
+
+UserSchema.json
+
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+
+  "type": "object",
+
+  "properties": {
+
+    "name": {
+      "type": "string"
+    },
+
+    "job": {
+      "type": "string"
+    },
+
+    "id": {
+      "type": "string"
+    },
+
+    "createdAt": {
+      "type": "string"
+    }
+  },
+
+  "required": [
+    "name",
+    "job",
+    "id",
+    "createdAt"
+  ]
+}
+6. REST Assured Schema Validation Code
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
+
+@Test
+public void validateSchema() {
+
+    given()
+
+    .when()
+        .get("/api/users/2")
+
+    .then()
+        .assertThat()
+        .statusCode(200)
+        .body(matchesJsonSchemaInClasspath("schemas/UserSchema.json"));
+}
+7. How It Works
+
+REST Assured:
+
+Reads API response
+Reads JSON schema file
+Compares:
+field names
+data types
+mandatory fields
+structure
+Fails test if mismatch occurs
+8. What Schema Validation Checks
+Field Presence
+
+Checks required fields exist.
+
+Example:
+
+required: ["id", "name"]
+Data Types
+
+Checks:
+
+string
+integer
+boolean
+array
+object
+
+Example:
+
+"id": {
+   "type": "integer"
+}
+Structure Validation
+
+Nested JSON validation.
+
+Example:
+
+{
+  "data": {
+      "id": 1
+  }
+}
+Array Validation
+
+Example:
+
+"type": "array"
+
+
+. What is Database Connection in Automation?
+
+You connect your automation framework to a database using JDBC (Java Database Connectivity) to:
+
+Execute SQL queries
+Fetch test data
+Validate API/UI results with DB data
+Perform backend validation
+2. Steps to Connect Database (Interview Flow)
+
+You can say:
+
+“We connect to the database using JDBC driver, establish a connection using URL, username and password, create a statement, execute SQL query, and fetch results using ResultSet.”
+
+3. Maven Dependency (MySQL Example)
+<dependency>
+    <groupId>com.mysql</groupId>
+    <artifactId>mysql-connector-j</artifactId>
+    <version>8.0.33</version>
+</dependency>
+4. Database Connection Code (Real Framework Style)
+import java.sql.*;
+
+public class DBConnection {
+
+    Connection connection;
+
+    public Connection connectDB() {
+
+        try {
+            String url = "jdbc:mysql://localhost:3306/testdb";
+            String username = "root";
+            String password = "root123";
+
+            connection = DriverManager.getConnection(url, username, password);
+
+            System.out.println("Database connected successfully");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return connection;
+    }
+}
+5. Run SQL Query and Get Result
+import java.sql.*;
+
+public class DBUtil {
+
+    public static void main(String[] args) throws Exception {
+
+        Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/testdb",
+                "root",
+                "root123"
+        );
+
+        Statement stmt = con.createStatement();
+
+        String query = "SELECT * FROM users";
+
+        ResultSet rs = stmt.executeQuery(query);
+
+        while (rs.next()) {
+
+            String name = rs.getString("name");
+
+            String email = rs.getString("email");
+
+            System.out.println(name + " " + email);
+        }
+
+        con.close();
+    }
+}
+6. Understanding ResultSet
+Method	Purpose
+rs.next()	Moves row by row
+getString()	Fetch string column
+getInt()	Fetch integer column
+7. Framework-Level DB Utility Class
+
+In real projects, we don’t write DB code in tests.
+
+We create utility:
+
+public class DBUtils {
+
+    static Connection con;
+
+    public static void connect() throws Exception {
+
+        con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/testdb",
+                "root",
+                "root123"
+        );
+    }
+
+    public static ResultSet executeQuery(String query) throws Exception {
+
+        Statement stmt = con.createStatement();
+
+        return stmt.executeQuery(query);
+    }
+
+    public static void close() throws Exception {
+
+        con.close();
+    }
+}
+8. Using DB in Test Case
+@Test
+public void validateUserInDB() throws Exception {
+
+    DBUtils.connect();
+
+    ResultSet rs = DBUtils.executeQuery("SELECT name FROM users WHERE id=1");
+
+    rs.next();
+
+    String actualName = rs.getString("name");
+
+    Assert.assertEquals(actualName, "John");
+
+    DBUtils.close();
+}
+
+
+
+Page Object Model (POM)
+1. Simple Definition (Interview Answer)
+
+“Page Object Model is a design pattern in Selenium where each web page of an application is represented as a separate Java class. All web elements and actions on that page are stored in that class.”
+
+2. Why POM is Used?
+
+Without POM ❌
+
+Locators are written in test cases
+Code duplication
+Hard to maintain
+
+With POM ✅
+
+Clean separation of test and page logic
+Easy maintenance
+Reusable methods
+Better readability
+3. Real-Time Idea
+
+Think like this:
+
+Login Page → LoginPage.java
+Home Page  → HomePage.java
+Cart Page  → CartPage.java
+
+Each page = one class.
+
+4. Structure of POM Framework
+src
+ ├── pages
+ │     ├── LoginPage.java
+ │     ├── HomePage.java
+ │
+ ├── tests
+ │     ├── LoginTest.java
+
+
+. What DBUtils Contains (Real Framework)
+
+A typical DBUtils class handles:
+
+1. Connection
+Connect to database
+2. Query Execution
+SELECT queries
+INSERT/UPDATE/DELETE (rare in automation)
+3. Result Handling
+Fetch ResultSet
+Convert to String / List
+4. Cleanup
+Close connection
+Close statement
+4. Real-Time DBUtils Example
+import java.sql.*;
+
+public class DBUtils {
+
+    static Connection connection;
+    static Statement statement;
+    static ResultSet resultSet;
+
+    // 1. Connect to DB
+    public static void connectDB() {
+
+        try {
+            connection = DriverManager.getConnection(
+                    "jdbc:mysql://localhost:3306/testdb",
+                    "root",
+                    "root123"
+            );
+
+            System.out.println("DB Connected");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 2. Execute Query
+    public static ResultSet executeQuery(String query) {
+
+        try {
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(query);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return resultSet;
+    }
+
+    // 3. Get Single Value
+    public static String getSingleValue(String query, String column) {
+
+        String value = null;
+
+        try {
+            resultSet = executeQuery(query);
+
+            if (resultSet.next()) {
+                value = resultSet.getString(column);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return value;
+    }
+
+    // 4. Close DB
+    public static void closeDB() {
+
+        try {
+            if (connection != null) connection.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+5. How DBUtils is Used in Test Case
+@Test
+public void validateUserFromDB() {
+
+    DBUtils.connectDB();
+
+    String name = DBUtils.getSingleValue(
+            "SELECT name FROM users WHERE id=1",
+            "name"
+    );
+
+    Assert.assertEquals(name, "John");
+
+    DBUtils.closeDB();
+}
+
+
+
+import java.sql.*;
+
+public class DBUtils {
+
+    static Connection connection;
+    static Statement statement;
+    static ResultSet resultSet;
+
+    // 1. Connect to DB
+    public static void connectDB() {
+
+        try {
+            connection = DriverManager.getConnection(
+                    "jdbc:mysql://localhost:3306/testdb",
+                    "root",
+                    "root123"
+            );
+
+            System.out.println("DB Connected");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 2. Execute Query
+    public static ResultSet executeQuery(String query) {
+
+        try {
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(query);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return resultSet;
+    }
+
+    // 3. Get Single Value
+    public static String getSingleValue(String query, String column) {
+
+        String value = null;
+
+        try {
+            resultSet = executeQuery(query);
+
+            if (resultSet.next()) {
+                value = resultSet.getString(column);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return value;
+    }
+
+    // 4. Close DB
+    public static void closeDB() {
+
+        try {
+            if (connection != null) connection.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+5. How DBUtils is Used in Test Case
+@Test
+public void validateUserFromDB() {
+
+    DBUtils.connectDB();
+
+    String name = DBUtils.getSingleValue(
+            "SELECT name FROM users WHERE id=1",
+            "name"
+    );
+
+    Assert.assertEquals(name, "John");
+
+    DBUtils.closeDB();
+}
+
+
+
+
+
+1. config.properties file
+db.url=jdbc:mysql://localhost:3306/testdb
+db.username=root
+db.password=root123
+2. Step 1: Create ConfigReader class
+
+This class reads data from properties file.
+
+import java.io.FileInputStream;
+import java.util.Properties;
+
+public class ConfigReader {
+
+    Properties prop;
+
+    public ConfigReader() {
+
+        try {
+            FileInputStream fis =
+                    new FileInputStream("src/test/resources/config.properties");
+
+            prop = new Properties();
+            prop.load(fis);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getDbUrl() {
+        return prop.getProperty("db.url");
+    }
+
+    public String getDbUsername() {
+        return prop.getProperty("db.username");
+    }
+
+    public String getDbPassword() {
+        return prop.getProperty("db.password");
+    }
+}
+3. Step 2: Use ConfigReader in DBUtils
+
+Now use these values dynamically instead of hardcoding.
+
+import java.sql.*;
+
+public class DBUtils {
+
+    static Connection connection;
+
+    static ConfigReader config = new ConfigReader();
+
+    public static void connectDB() {
+
+        try {
+
+            connection = DriverManager.getConnection(
+                    config.getDbUrl(),
+                    config.getDbUsername(),
+                    config.getDbPassword()
+            );
+
+            System.out.println("DB Connected Successfully");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+4. Step 3: Use in Test Case
+@Test
+public void dbTest() {
+
+    DBUtils.connectDB();
+
+    // run query, validate data
+
+}
+
+
+
+
+1. In what form does DB data come?
+
+When you execute an SQL query in Java (JDBC), data comes in this form:
+
+👉 ResultSet
+
+So the flow is:
+
+Database → SQL Query → ResultSet (Java Object)
+2. What is ResultSet datatype?
+
+ResultSet is an interface in Java (java.sql.ResultSet) that holds tabular data returned by a SQL query.
+
+3. Structure of ResultSet
+
+It is like a table:
+
++----+--------+---------+
+| id | name   | salary  |
++----+--------+---------+
+| 1  | John   | 50000   |
+| 2  | David  | 60000   |
++----+--------+---------+
+4. How do we read data from ResultSet?
+
+We extract data row by row.
+
+Step 1: Move cursor
+rs.next()
+
+👉 Moves to next row
+
+Step 2: Read column data
+
+You use methods like:
+
+Method	Data Type
+getString()	String
+getInt()	int
+getBoolean()	boolean
+getDouble()	double
+getDate()	Date
+5. Example Code
+ResultSet rs = stmt.executeQuery("SELECT id, name FROM users");
+
+while(rs.next()) {
+
+    int id = rs.getInt("id");
+
+    String name = rs.getString("name");
+
+    System.out.println(id + " " + name);
+}
+6. What is actual data type flow?
+Step-by-step:
+SQL Query → ResultSet (object)
+              ↓
+        Column extraction
+              ↓
+   Java primitives/String
+7. Interview Answer (VERY IMPORTANT)
+
+Say this:
+
+“When we execute a SQL query using JDBC, the data is returned in the form of ResultSet object. ResultSet holds data in tabular format, and we extract values using methods like getString(), getInt(), etc., depending on the column data type.”
+
