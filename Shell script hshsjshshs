@@ -1,38 +1,74 @@
 #!/bin/bash
- dirname=$(date +%d%b%Y%H%M%S_MysqlBackup_SPECIAL_1)
- mkdir -p /nfsshare/common/${dirname}
- chmod 777 /nfsshare/common/${dirname}
+
+dirname=$(date +%d%b%Y%H%M%S_MysqlBackup_SPECIAL_1)
+mkdir -p /nfsshare/common/${dirname}
+chmod 777 /nfsshare/common/${dirname}
 
 filename=pope-1-3-5-6.lst
 
-for host in `cat $filename`
- do
- ssh $host 'bash -s' << 'EOF'
- echo ${HOSTNAME}
- export GTSENV=090
- gtsenv enter 090
- datestamp=`date +%Y%m%d`
- echo $datestamp
- dirname=$(date +%d%b%Y_MysqlBackup_LOCAL_POPE)
+#################################
+# Run backups in parallel
+#################################
 
-sudo -u xman mysqlbackup --user=root --host=127.0.0.1 --port=19000 -pMcxt7@1234 --with-timestamp --backup-dir=/nfsshare/common/${dirname}/mysqlbackup-$datestamp-${HOSTNAME,,} --backup-image=${HOSTNAME,,}-$datestamp.mbi backup-to-image
- cd /nfsshare/common/${dirname}
- sudo -u xman chmod -R 777 mysqlbackup*
+for host in $(cat "$filename")
+do
+(
+ssh "$host" 'bash -s' << 'EOF'
+echo ${HOSTNAME}
+
+export GTSENV=090
+gtsenv enter 090
+
+datestamp=$(date +%Y%m%d)
+dirname=$(date +%d%b%Y_MysqlBackup_LOCAL_POPE)
+
+sudo -u xman mysqlbackup \
+  --user=root \
+  --host=127.0.0.1 \
+  --port=19000 \
+  -pMcxt7@1234 \
+  --with-timestamp \
+  --backup-dir=/nfsshare/common/${dirname}/mysqlbackup-$datestamp-${HOSTNAME,,} \
+  --backup-image=${HOSTNAME,,}-$datestamp.mbi \
+  backup-to-image
+
+cd /nfsshare/common/${dirname}
+sudo -u xman chmod -R 777 mysqlbackup*
 
 echo "backup taken"
- EOF
- done
+EOF
+) &
+done
 
-for target in `cat target`
- do
- ssh $target 'bash -s' << 'EOF'
- echo ${HOSTNAME}
- export GTSENV=090
- gtsenv enter 090
- datestamp=`date +%Y%m%d`
- echo $datestamp
- dirname=$(date +%d%b%Y_MysqlBackup_LOCAL_POPE)
- sudo -u xman cp -rv /nfsshare/common/${dirname} /atnew/var/
- echo "backup copied"
- EOF
- done
+# Wait for all backup jobs to finish
+wait
+
+echo "All backups completed"
+
+#################################
+# Run copy jobs in parallel
+#################################
+
+for target in $(cat target)
+do
+(
+ssh "$target" 'bash -s' << 'EOF'
+echo ${HOSTNAME}
+
+export GTSENV=090
+gtsenv enter 090
+
+datestamp=$(date +%Y%m%d)
+dirname=$(date +%d%b%Y_MysqlBackup_LOCAL_POPE)
+
+sudo -u xman cp -rv /nfsshare/common/${dirname} /atnew/var/
+
+echo "backup copied"
+EOF
+) &
+done
+
+# Wait for all copy jobs to finish
+wait
+
+echo "All copy jobs completed"
