@@ -1,0 +1,480 @@
+@Input() is a decorator in Angular that allows a parent component to pass data to a child component.
+A Parent Component (AppComponent)
+A Child Component (UserComponent)
+
+Child Component
+import { Component, Input } from '@angular/core';
+@Component({
+  selector: 'app-user',
+  template: `<h2>{{ name }}</h2>`
+})
+export class UserComponent {
+  @Input() name!: string;
+}
+
+Here:
+@Input() name!: string;
+means:
+"This `name` property can receive its value from the parent component."
+Parent Component
+@Component({
+  selector: 'app-root',
+  template: `
+    <app-user [name]="userName"></app-user>
+  `
+})
+export class AppComponent {
+  userName = 'John';
+}
+Output
+John
+The value of `userName` in the parent is passed to the child's `name` property.
+
+[name]      =     "userName"── Expression (variable in the parent component            
+   └── Property of the child component
+Property binding is an Angular feature that lets you set the value of an HTML element property, directive property, or child component property using data from your component class.
+
+Lifecycle hooks are special methods provided by Angular that allow you to run your own code at specific moments in a component's life.
+1. Constructor()
+
+2. ngOnChanges()
+
+3. ngOnInit()
+
+4. ngDoCheck()
+
+5. ngAfterContentInit()
+
+6. ngAfterContentChecked()
+
+7. ngAfterViewInit()
+
+8. ngAfterViewChecked()
+
+9. ngOnDestroy()
+
+1. Constructor()
+
+This is not technically a lifecycle hook, but it is the first thing executed.
+
+constructor() {
+  console.log("Constructor");
+}
+
+Runs when Angular creates the component object.
+
+Used for:
+
+- Dependency injection
+- Basic class setup
+
+Avoid:
+
+- API calls
+- Accessing DOM elements
+
+
+2. ngOnChanges()
+
+Purpose:
+
+Runs when an @Input() value changes.
+
+Example:
+
+Child:
+
+@Input() username!: string;
+
+ngOnChanges() {
+  console.log(this.username);
+}
+
+Parent:
+
+<app-user [username]="name"></app-user>
+
+Flow:
+
+Parent changes name
+        ↓
+Angular updates @Input
+        ↓
+ngOnChanges()
+
+Runs:
+
+- Before ngOnInit()
+- Every time an input changes
+
+
+3. ngOnInit()
+
+Most commonly used hook.
+
+ngOnInit(): void {
+  console.log("Component initialized");
+}
+
+Runs:
+
+Constructor
+    ↓
+Input values assigned
+    ↓
+ngOnInit()
+
+Used for:
+
+- API calls
+- Loading data
+- Initializing variables
+
+Example:
+
+ngOnInit() {
+  this.getUsers();
+}
+
+Runs only once.
+
+
+4. ngDoCheck()
+
+Runs during every Angular change detection cycle.
+
+ngDoCheck() {
+  console.log("Checking changes");
+}
+
+Example:
+
+User clicks button
+        ↓
+Angular checks changes
+        ↓
+ngDoCheck()
+
+Be careful:
+
+It can run many times, so avoid expensive operations.
+
+
+5. ngAfterContentInit()
+
+Runs after Angular inserts external content using:
+
+<ng-content></ng-content>
+
+Example:
+
+Parent:
+
+<app-card>
+   Hello
+</app-card>
+
+Child:
+
+<ng-content></ng-content>
+
+After content is inserted:
+
+ngAfterContentInit()
+
+runs.
+
+
+6. ngAfterContentChecked()
+
+Runs after Angular checks projected content.
+
+Content checked
+        ↓
+ngAfterContentChecked()
+
+Runs many times.
+
+
+7. ngAfterViewInit()
+
+Runs after the component's HTML view is created.
+
+Example:
+
+@ViewChild('box') box!: ElementRef;
+
+ngAfterViewInit() {
+  console.log(this.box);
+}
+
+Used when accessing:
+
+- HTML elements
+- Child components
+
+Example:
+
+<input #box>
+
+Angular creates the input:
+
+HTML created
+      ↓
+ngAfterViewInit()
+
+
+8. ngAfterViewChecked()
+
+Runs after Angular checks the component view.
+
+View checked
+      ↓
+ngAfterViewChecked()
+
+Runs frequently.
+
+
+9. ngOnDestroy()
+
+Runs just before Angular removes the component.
+
+Example:
+
+ngOnDestroy() {
+  console.log("Cleaning up");
+}
+
+Used for:
+
+- Removing subscriptions
+
+subscription.unsubscribe();
+
+- Clearing timers
+
+clearInterval(timer);
+
+Example:
+
+User leaves page
+        ↓
+Component removed
+        ↓
+ngOnDestroy()
+
+@ViewChild lets TypeScript code access something that exists in the component's HTML.
+
+Normally, your TypeScript class cannot directly access HTML elements. @ViewChild creates a connection between the HTML and the TypeScript code.
+@ViewChild is an Angular decorator used to get a reference to an element, directive, or child component from the component's template. It is initialized after the view is created and is commonly accessed inside ngAfterViewInit(). It allows TypeScript code to interact with the DOM or call methods on child components.
+
+Decorators are special functions in TypeScript that add metadata to classes, properties, methods, or parameters.
+
+In Angular, decorators tell Angular:
+
+"What this class/property is and how Angular should treat it."
+
+Angular uses decorators heavily to understand:
+
+- Components
+- Services
+- Directives
+- Inputs
+- Outputs
+- Dependency injection
+
+A component is the basic building block of an Angular application.
+
+A component controls a part of the user interface (UI) and contains:
+
+HTML template → What the user sees
+
+TypeScript class → Logic and data
+
+CSS styles → How it looks
+
+
+In simple words:
+
+A component is a reusable piece of UI that combines:
+
+- View (HTML)
+- Behavior (TypeScript)
+- Styling (CSS)
+
+Bootstrapping is the process where Angular:
+
+- Finds the main entry point of the application.
+- Creates the first Angular component.
+- Initializes Angular's framework.
+- Displays the application in the browser.
+
+
+In simple words:
+
+Bootstrap = Tell Angular which component should be the root component when the application starts.
+
+How do you bootstrap a standalone Angular application?
+
+In a standalone Angular application, we use:
+
+bootstrapApplication()
+
+inside main.ts.
+
+Example:
+
+main.ts
+
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent)
+  .catch(err => console.error(err));
+
+Here:
+
+bootstrapApplication(AppComponent)
+
+means:
+
+"Start Angular and use AppComponent as the root component."
+
+Application startup flow:
+
+When you run:
+
+ng serve
+
+Angular does:
+
+Browser opens
+↓
+main.ts executes
+↓
+bootstrapApplication(AppComponent)
+↓
+Angular creates AppComponent
+↓
+AppComponent template loads
+↓
+Application appears on screen
+
+
+A Signal is a container that holds a value. When the value changes, Angular knows exactly what parts of the application need to update.
+Create a signal:
+
+name = signal("John");
+
+Now name is not a normal variable.
+
+It is a Signal object.
+
+
+How to Read a Signal:
+
+You read a signal by calling it like a function:
+
+console.log(this.name());
+
+Output:
+
+John
+
+
+Notice:
+
+this.name
+
+is the signal itself.
+
+this.name()
+
+is the value inside the signal.
+
+
+How to Update a Signal:
+
+There are two main methods:
+
+
+1. set()
+
+Used when you want to replace the value.
+
+Example:
+
+name.set("Alice");
+
+Before:
+
+name = John
+
+After:
+
+name = Alice
+
+
+2. update()
+
+Used when the new value depends on the old value.
+
+Example:
+
+count = signal(0);
+
+increase() {
+  this.count.update(value => value + 1);
+}
+
+Flow:
+
+count = 0
+↓
+click button
+↓
+update()
+↓
+count = 1
+
+Types of Signals in Angular
+Angular mainly provides three types:
+1. Writable Signal
+A signal whose value can be changed.
+Created using:
+signal()
+Example:
+age = signal<number>(25);
+You can:
+this.age.set(30);
+or:
+this.age.update(value => value + 1);
+2. Computed Signal
+A signal whose value is calculated from other signals.
+Created using:
+computed()
+Example:
+import { signal, computed } from '@angular/core';
+price = signal(100);
+tax = computed(() => this.price() * 0.18);
+Now:
+console.log(this.tax());
+Output:
+18
+If price changes:
+price.set(200);
+Angular automatically recalculates:
+tax = 36
+3. Effect Signal
+Used to perform side effects when signals change.
+Created using:
+effect()
+Example:
+import { effect } from '@angular/core';
+effect(() => {
+  console.log(this.name());
+});
+Whenever:
+name.set("Alice");
+runs:
+Alice
