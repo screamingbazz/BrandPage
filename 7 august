@@ -1,0 +1,192 @@
+@Output() → Child ➜ Parent (send events/data up)
+Parent Component → app.component
+Child Component → counter.component
+How @Output() works internally
+
+There are 4 steps.
+
+Step 1: Child creates an EventEmitter
+import { Output, EventEmitter } from '@angular/core';
+@Output()
+clicked = new EventEmitter();
+Here,
+clicked
+is an event.
+Think of it as:
+clicked
+    │
+    ▼
+waiting for someone to listen
+
+Step 2: Child emits the event
+When something happens:
+this.clicked.emit();
+or
+this.clicked.emit(data);
+This sends an event.
+
+Step 3: Parent listens to the event
+In parent HTML:
+<app-child
+    (clicked)="onClicked()">
+</app-child>
+Notice the parentheses:
+(clicked)
+These mean:
+"Whenever the child emits the clicked event, call this method."
+
+Step 4: Parent method executes
+onClicked() {
+    console.log("Child button clicked");
+}
+
+1. Writable Signal (signal())
+A writable signal stores a value that you can read and update.
+import { signal } from '@angular/core';
+count = signal(0);
+// Read
+console.log(this.count()); // 0
+// Update
+this.count.set(10);
+// Update based on previous value
+this.count.update(value => value + 1);
+Methods:
+signal(initialValue) – Create a signal.
+set(value) – Replace the value.
+update(fn) – Update using the current value.
+() – Read the current value.
+2. Computed Signal (computed())
+A computed signal derives its value from one or more other signals. It is read-only.
+import { signal, computed } from '@angular/core';
+price = signal(100);
+quantity = signal(2);
+total = computed(() => this.price() * this.quantity());
+console.log(this.total()); // 200
+If you change:
+this.price.set(150);
+then:
+this.total(); // 300
+You cannot do:
+this.total.set(500); // ❌ Error
+3. Effect (effect())
+An effect runs code automatically whenever the signals it reads change.
+import { signal, effect } from '@angular/core';
+count = signal(0);
+constructor() {
+  effect(() => {
+    console.log('Count:', this.count());
+  });
+}
+Output:
+Count: 0
+Then:
+this.count.set(5);
+Output:
+Count: 5
+
+RxJS is a library used to handle asynchronous operations and data streams in JavaScript/Angular. It provides Observables, which represent a stream of data that can arrive over time. RxJS helps us manage things like HTTP calls, user events, timers, and multiple async operations by providing operators to transform, combine, filter, and handle that data.\Data Source  --->  RxJS Operators  --->  Component
+
+An Observable is a core concept of RxJS that represents a stream of asynchronous data. It works as a producer that emits values over time, and subscribers receive those values. Observables are lazy, meaning they start executing only when we subscribe. In Angular, Observables are commonly used for HTTP requests, reactive forms, routing events, and handling asynchronous data. We can create Observables using the Observable constructor or helper functions like of(), from(), and interval().
+How does an Observable work?
+An Observable has three main parts:
+1. Creation
+You create an Observable and define what data it will send.
+2. Subscription
+Someone subscribes to listen for data.
+3. Emission
+The Observable sends values to the subscriber.
+
+
+What is a Subject in RxJS?
+A Subject is a special type of Observable that can both:
+Emit values (like an Observable producer)
+Receive values (like an Observer)
+In simple words:
+A Subject is a data broadcaster. It allows one source to send data to multiple subscribers at the same time.
+
+An Observable creates data separately for each subscriber.
+A Subject shares the same data with all subscribers.
+
+What is Routing in Angular?
+
+Routing in Angular is a mechanism that allows us to navigate between different components/pages in a Single Page Application (SPA) without reloading the entire browser page.
+
+Interpolation (Component → View)
+Interpolation displays data from the component in the HTML using {{ }}.
+2. Property Binding (Component → View)
+Property binding sets HTML element properties.
+Component
+export class AppComponent {
+  imageUrl = 'assets/angular-logo.png';
+  isDisabled = true;
+}
+Template
+<img [src]="imageUrl" alt="Angular Logo">
+<button [disabled]="isDisabled">Submit</button>
+The values come from the component and update automatically if they change.
+{{ }} → Show data
+[ ] → Send data from component to HTML
+( ) → Send data from HTML to component
+[( )] → Do both at the same time
+
+Updating the Component When the User Types
+You need an event:
+<input [value]="name" (input)="name = $any($event.target).value">
+Now what happens?
+Angular puts "John" into the input ([value]="name").
+The user types "Alice".
+The (input) event runs.
+name becomes "Alice".
+Now the component and the input stay synchronized.
+
+ngModel is used for two-way data binding in Angular, especially in template-driven forms.
+Component → View
+The value of username is displayed in the input.
+View → Component
+When the user types in the input, username is updated.
+Component (app.component.ts)
+export class AppComponent {
+  username = 'John';
+}
+Template (app.component.html)
+<input [(ngModel)]="username">
+<p>{{ username }}</p>
+
+DOM (Document Object Model) is a representation of an HTML or XML document as a tree of objects (nodes) that JavaScript can interact with.
+When a browser loads a webpage, it converts the HTML code into a DOM tree. Each HTML element becomes an object, which JavaScript can use to read, change, add, or remove elements and content.
+
+Directives are classes in Angular that are used to add extra behavior, modify the appearance, or change the structure of HTML elements. They allow Angular to manipulate the DOM.
+Component Directives
+Components are directives with their own templates.
+They create and control a part of the UI.
+Example: <app-header></app-header>
+Structural Directives
+They change the structure of the DOM by adding or removing elements.
+They use the * symbol.
+Examples:
+*ngIf → conditionally displays an element
+*ngFor → repeats elements
+Attribute Directives
+They change the appearance or behavior of existing elements.
+Examples:
+ngClass → adds/removes CSS classes
+ngStyle → changes styles
+
+pipes are used to transform data in the template before displaying it to the user.
+{{ value | pipeName }} <p>{{ name | uppercase }}</p>
+A pure pipe runs only when Angular detects a change in the input reference.
+angular calls this pipe when:
+
+Primitive value changes:
+string
+number
+boolean
+Object reference changes
+Array reference changes
+
+A change detection cycle is the process where Angular checks whether the data used in the template has changed and, if needed, updates the DOM (the webpage).
+In simple words:
+Angular periodically checks your component data → compares it with the previous state → updates the UI if something changed.
+Impure Pipe
+An impure pipe runs during every Angular change detection cycle.
+
