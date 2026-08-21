@@ -1,0 +1,3532 @@
+a constraint is a rule applied to a table/column to control what data can be inserted or updated. Constraints help maintain data integrity.
+1. PRIMARY KEY
+Must be unique.
+Cannot contain NULL.
+A table can have only one primary key constraint.
+The primary key can contain multiple columns (composite primary key).
+3. UNIQUE
+Duplicate non-NULL values are not allowed.
+A table can have multiple UNIQUE constraints.
+Can apply to multiple columns.
+4. NOT NULL
+The column must have a value.
+A column can have both NOT NULL and another constraint.
+5. CHECK
+Uses a Boolean condition.
+The condition must evaluate as allowed by MySQL's CHECK semantics.
+Can be named explicitly.
+6. DEFAULT
+Provides a default value.
+Does not mean the column cannot be NULL.
+A column can have DEFAULT together with NOT NULL, UNIQUE, etc.
+A Foreign Key in MySQL is a column (or set of columns) that links one table to another table
+A foreign key connects two tables.
+The foreign key is in the child table.
+It references a key in the parent table.
+The referenced column is typically a PRIMARY KEY or UNIQUE key.
+A table can have multiple foreign keys.
+A foreign key can contain NULL unless the column is also defined as NOT NULL.
+You can define actions such as CASCADE, SET NULL, and RESTRICT for updates/deletes.
+
+What is DDL?
+DDL stands for Data Definition Language.
+DDL commands are used to define, create, modify, and remove the structure of database objects, such as:
+Databases
+Tables
+Views
+Indexes
+Schemas
+Think of DDL as working with the structure/design of the database, rather than the actual data inside it.
+1. CREATE
+2. ALTER Used to change the structure of an existing table.
+3. DROP Used to completely remove a database object.
+4. TRUNCATE Used to remove all rows from a table while keeping the table structure.
+5. RENAME
+CREATE DATABASE database_name;
+CREATE TABLE table_name (
+    column1 datatype,
+    column2 datatype,
+    column3 datatype
+);
+ALTER TABLE table_name
+action;
+-- Add
+ALTER TABLE table_name ADD COLUMN column_name datatype;
+
+-- Modify datatype/properties
+ALTER TABLE table_name MODIFY COLUMN column_name datatype;
+
+-- Rename + modify
+ALTER TABLE table_name CHANGE old_name new_name datatype;
+
+-- Rename only
+ALTER TABLE table_name RENAME COLUMN old_name TO new_name;
+
+-- Delete column
+ALTER TABLE table_name DROP COLUMN column_name;
+
+-- Rename table
+ALTER TABLE table_name RENAME TO new_table_name;
+
+-- Add primary key
+ALTER TABLE table_name ADD PRIMARY KEY (column_name);
+
+-- Add foreign key
+ALTER TABLE table_name
+ADD CONSTRAINT constraint_name
+FOREIGN KEY (column_name) REFERENCES other_table(column_name);
+ALTER TABLE employees
+    ADD COLUMN email VARCHAR(100),
+    ADD COLUMN age INT,
+    MODIFY COLUMN name VARCHAR(150),
+    CHANGE salary monthly_salary DECIMAL(12,2),
+    RENAME COLUMN city TO location,
+    DROP COLUMN old_column,
+    ADD PRIMARY KEY (id),
+    ADD CONSTRAINT fk_department
+        FOREIGN KEY (department_id)
+        REFERENCES departments(id);
+-- Database
+DROP DATABASE database_name;
+
+-- Table
+DROP TABLE table_name;
+
+-- Multiple tables
+DROP TABLE table1, table2;
+
+MySQL ALTER TABLE — Complete Cheat Sheet
+General structure:
+
+ALTER TABLE table_name
+    operation1,
+    operation2,
+    operation3;
+
+1. Columns
+Operation	Syntax
+Add column	ADD COLUMN
+Modify column	MODIFY COLUMN
+Rename column	RENAME COLUMN
+Rename + modify column	CHANGE COLUMN
+Remove column	DROP COLUMN
+
+Add
+
+ALTER TABLE students
+ADD COLUMN age INT;
+
+Add multiple
+
+ALTER TABLE students
+ADD COLUMN age INT,
+ADD COLUMN email VARCHAR(100),
+ADD COLUMN city VARCHAR(50);
+
+Modify datatype/properties
+
+ALTER TABLE students
+MODIFY COLUMN age BIGINT NOT NULL;
+
+Rename
+
+ALTER TABLE students
+RENAME COLUMN name TO full_name;
+
+Rename + modify
+
+ALTER TABLE students
+CHANGE COLUMN name full_name VARCHAR(150) NOT NULL;
+
+Remove
+
+ALTER TABLE students
+DROP COLUMN age;
+
+2. PRIMARY KEY
+Add
+ALTER TABLE students
+ADD PRIMARY KEY (student_id);
+
+Remove
+ALTER TABLE students
+DROP PRIMARY KEY;
+
+You can also use multiple columns:
+
+ALTER TABLE students
+ADD PRIMARY KEY (student_id, course_id);
+
+This is called a composite primary key.
+
+3. UNIQUE constraint
+Add
+You don't have to provide a constraint name:
+
+ALTER TABLE students
+ADD UNIQUE (email);
+
+Or give it a name:
+
+ALTER TABLE students
+ADD CONSTRAINT uq_email UNIQUE (email);
+
+Remove
+ALTER TABLE students
+DROP INDEX email;
+
+If you gave it a constraint/index name:
+
+ALTER TABLE students
+DROP INDEX uq_email;
+
+4. FOREIGN KEY
+Add
+ALTER TABLE students
+ADD FOREIGN KEY (department_id)
+REFERENCES departments(id);
+
+Or with a name:
+
+ALTER TABLE students
+ADD CONSTRAINT fk_department
+FOREIGN KEY (department_id)
+REFERENCES departments(id);
+
+Remove
+If the foreign key is named fk_department:
+
+ALTER TABLE students
+DROP FOREIGN KEY fk_department;
+
+5. CHECK constraint
+Add
+ALTER TABLE students
+ADD CHECK (age >= 18);
+
+Or name it:
+
+ALTER TABLE students
+ADD CONSTRAINT chk_age CHECK (age >= 18);
+
+Remove
+If named:
+
+ALTER TABLE students
+DROP CHECK chk_age;
+
+6. NOT NULL
+NOT NULL is a column attribute, so you modify the column.
+
+Add NOT NULL
+ALTER TABLE students
+MODIFY COLUMN name VARCHAR(100) NOT NULL;
+
+Remove NOT NULL
+ALTER TABLE students
+MODIFY COLUMN name VARCHAR(100) NULL;
+
+7. DEFAULT value
+Add/change DEFAULT
+ALTER TABLE students
+ALTER COLUMN status SET DEFAULT 'active';
+
+Remove DEFAULT
+ALTER TABLE students
+ALTER COLUMN status DROP DEFAULT;
+
+You can also use MODIFY:
+
+ALTER TABLE students
+MODIFY COLUMN status VARCHAR(20) DEFAULT 'active';
+
+8. AUTO_INCREMENT
+Add AUTO_INCREMENT
+For example:
+
+ALTER TABLE students
+MODIFY COLUMN student_id INT AUTO_INCREMENT;
+
+Usually this is used with a key:
+
+ALTER TABLE students
+MODIFY COLUMN student_id INT NOT NULL AUTO_INCREMENT;
+
+Remove AUTO_INCREMENT
+ALTER TABLE students
+MODIFY COLUMN student_id INT NOT NULL;
+
+What is DML?
+DML = Data Manipulation Language
+DML commands are used to work with the data (rows) stored inside database tables.
+1. INSERT
+INSERT INTO table_name (column1, column2, column3)
+VALUES (value1, value2, value3);
+INSERT INTO students (id, name, age)
+VALUES
+    (2, 'Priya', 21),
+    (3, 'Amit', 19),
+What does it do?
+UPDATE is used to modify existing rows. 
+UPDATE table_name
+SET column1 = value1,
+    column2 = value2
+WHERE condition;
+3. DELETE
+DELETE is used to remove rows from a table.
+DELETE FROM students
+WHERE id = 3;
+
+General UPDATE syntax
+The most important syntax to remember is:
+
+UPDATE table_name
+SET column1 = value1,
+    column2 = value2,
+    column3 = value3
+WHERE condition;
+
+General DELETE syntax
+With condition
+DELETE FROM table_name
+WHERE condition;
+
+Multiple conditions
+DELETE FROM table_name
+WHERE condition1
+AND condition2;
+
+With IN
+DELETE FROM table_name
+WHERE column_name IN (value1, value2, value3);
+
+With BETWEEN
+DELETE FROM table_name
+WHERE column_name BETWEEN value1 AND value2;
+
+With LIKE
+DELETE FROM table_name
+WHERE column_name LIKE 'pattern';
+
+With LIMIT
+DELETE FROM table_name
+WHERE condition
+LIMIT number;
+
+Delete everything
+DELETE FROM table_name;
+
+CREATE TABLE employees (
+    id INT,
+    name VARCHAR(50),
+    age INT,
+    salary DECIMAL(10,2),
+    department VARCHAR(50),
+    city VARCHAR(50)
+);
+
+1. Update a single column
+UPDATE employees
+SET salary = 50000
+WHERE id = 1;
+
+Changes only salary for employee id = 1.
+
+2. Update multiple columns
+UPDATE employees
+SET salary = 55000,
+    city = 'Mumbai'
+WHERE id = 1;
+
+3. Update all rows
+If you don't use WHERE, every row will be updated.
+
+UPDATE employees
+SET salary = 50000;
+
+⚠️ Be careful with this.
+
+4. Update using an existing column
+You can calculate a new value from the old value.
+
+UPDATE employees
+SET salary = salary + 5000
+WHERE id = 1;
+
+For example, increase everyone's salary by 10%:
+
+UPDATE employees
+SET salary = salary * 1.10;
+
+5. Update a string/text column
+UPDATE employees
+SET name = 'Rahul'
+WHERE id = 1;
+
+6. Update a numeric column
+UPDATE employees
+SET age = 30
+WHERE id = 1;
+
+7. Update a date column
+If you have a date column:
+
+UPDATE employees
+SET joining_date = '2026-08-17'
+WHERE id = 1;
+
+8. Update using multiple conditions
+UPDATE employees
+SET salary = 60000
+WHERE department = 'IT'
+AND city = 'Mumbai';
+
+9. Update using OR
+UPDATE employees
+SET salary = 60000
+WHERE department = 'IT'
+OR department = 'HR';
+
+10. Update using comparison operators
+UPDATE employees
+SET salary = salary + 5000
+WHERE salary < 50000;
+
+You can use:
+
+=       -- equal
+<>      -- not equal
+>       -- greater than
+<       -- less than
+>=      -- greater than or equal
+<=      -- less than or equal
+
+Example:
+
+UPDATE employees
+SET department = 'Senior IT'
+WHERE salary >= 80000;
+
+11. Update using IN
+UPDATE employees
+SET salary = salary + 3000
+WHERE department IN ('IT', 'HR', 'Sales');
+
+12. Update using BETWEEN
+UPDATE employees
+SET salary = salary + 2000
+WHERE salary BETWEEN 40000 AND 60000;
+
+13. Update using LIKE
+UPDATE employees
+SET department = 'IT'
+WHERE name LIKE 'Rah%';
+
+This updates employees whose names start with Rah.
+
+14. Update using NULL
+Set a column to NULL:
+
+UPDATE employees
+SET city = NULL
+WHERE id = 1;
+
+Find rows where a column is NULL:
+
+UPDATE employees
+SET city = 'Mumbai'
+WHERE city IS NULL;
+
+15. Update using CASE
+You can give different values to different rows.
+
+UPDATE employees
+SET salary = CASE
+    WHEN department = 'IT' THEN salary + 10000
+    WHEN department = 'HR' THEN salary + 5000
+    ELSE salary
+END;
+
+16. Update with a function
+For example, convert a name to uppercase:
+
+UPDATE employees
+SET name = UPPER(name)
+WHERE id = 1;
+
+Convert to lowercase:
+
+UPDATE employees
+SET name = LOWER(name)
+WHERE id = 1;
+
+17. Update part of a string
+Using CONCAT():
+
+UPDATE employees
+SET name = CONCAT(name, ' Kumar')
+WHERE id = 1;
+
+MySQL Operators
+Arithmetic
+
++
+-
+*
+/
+DIV
+%
+MOD
+
+Comparison
+
+=
+!=
+<>
+>
+<
+>=
+<=
+<=>
+
+Logical
+
+AND
+&&
+OR
+||
+NOT
+!
+XOR
+
+Bitwise
+
+&
+|
+^
+~
+<<
+>>
+
+Other / Special
+
+BETWEEN
+NOT BETWEEN
+IN
+NOT IN
+LIKE
+NOT LIKE
+REGEXP
+RLIKE
+NOT REGEXP
+NOT RLIKE
+IS NULL
+IS NOT NULL
+IS
+IS NOT
+-> 
+->>
+= 
+:=
+
+Common places
+SELECT
+SELECT price * quantity
+FROM products;
+
+WHERE
+SELECT *
+FROM products
+WHERE price * quantity > 1000;
+
+ORDER BY
+SELECT *
+FROM products
+ORDER BY price * quantity DESC;
+
+GROUP BY
+SELECT price * 2
+FROM products
+GROUP BY price * 2;
+
+HAVING
+SELECT category, SUM(price)
+FROM products
+GROUP BY category
+HAVING SUM(price) * 2 > 1000;
+
+UPDATE
+UPDATE products
+SET price = price + 100;
+
+INSERT
+INSERT INTO products (price)
+VALUES (100 * 2);
+
+SET
+SET @total = 100 + 50;
+
+Places where comparison operators can be used
+WHERE ✅
+SELECT *
+FROM employees
+WHERE salary > 50000;
+
+HAVING ✅
+SELECT department, AVG(salary)
+FROM employees
+GROUP BY department
+HAVING AVG(salary) > 50000;
+
+JOIN / ON ✅
+SELECT *
+FROM employees e
+JOIN departments d
+ON e.department_id = d.id;
+
+IF / CASE conditions ✅
+SELECT
+    CASE
+        WHEN salary >= 50000 THEN 'High'
+        ELSE 'Low'
+    END AS salary_level
+FROM employees;
+
+SELECT ✅
+You can also use comparisons directly as expressions:
+SELECT salary > 50000 AS result
+FROM employees;
+
+1. WHERE — most common
+SELECT *
+FROM employees
+WHERE age > 18 AND salary > 30000;
+
+2. HAVING
+Used to filter grouped/aggregate results:
+
+SELECT department, AVG(salary)
+FROM employees
+GROUP BY department
+HAVING AVG(salary) > 50000 AND COUNT(*) > 5;
+
+3. ON — with JOINs
+SELECT *
+FROM employees e
+JOIN departments d
+ON e.department_id = d.id
+AND d.location = 'Mumbai';
+
+4. CASE
+SELECT name,
+       CASE
+           WHEN age >= 18 AND age < 60 THEN 'Adult'
+           WHEN age >= 60 THEN 'Senior'
+           ELSE 'Minor'
+       END AS category
+FROM employees;
+
+1. BETWEEN
+column BETWEEN lower_value AND upper_value
+SELECT *
+FROM employees
+WHERE salary BETWEEN 30000 AND 50000;
+This means:
+salary >= 30000
+AND
+salary <= 50000
+
+BETWEEN with AND
+You can combine BETWEEN with other conditions:
+
+SELECT *
+FROM employees
+WHERE salary BETWEEN 30000 AND 60000
+  AND age BETWEEN 25 AND 40;
+
+Meaning:
+
+Salary: ₹30,000–₹60,000
+AND
+Age: 25–40
+
+7. BETWEEN with OR
+SELECT *
+FROM employees
+WHERE salary BETWEEN 30000 AND 40000
+   OR salary BETWEEN 70000 AND 80000;
+
+This finds employees earning either:
+
+₹30,000–₹40,000
+OR
+₹70,000–₹80,000
+
+
+BETWEEN with NOT
+You can also combine it with other conditions:
+
+SELECT *
+FROM employees
+WHERE salary NOT BETWEEN 30000 AND 60000
+  AND age BETWEEN 20 AND 50;
+
+Meaning:
+
+Employees whose salary is outside 30k–60k AND whose age is between 20–50.
+
+12. BETWEEN with text
+BETWEEN can also work with strings according to the column's collation/sort order.
+
+For example:
+
+SELECT *
+FROM employees
+WHERE name BETWEEN 'A' AND 'M';
+
+This is less commonly used because string comparisons can behave differently depending on collation and the exact values.
+
+IN and NOT IN Operators in MySQL
+IN and NOT IN are used when you want to compare a column against multiple possible values.
+SELECT *
+FROM employees
+WHERE city = 'Mumbai'
+   OR city = 'Pune'
+   OR city = 'Delhi';
+
+You can use:
+
+SELECT *
+FROM employees
+WHERE city IN ('Mumbai', 'Pune', 'Delhi');
+. NOT IN
+NOT IN means:
+
+Is this value NOT one of these values?
+
+Example:
+
+SELECT *
+FROM employees
+WHERE city NOT IN ('Mumbai', 'Pune', 'Delhi');
+
+LIKE and NOT LIKE are used to search for patterns in text/string values.
+
+The two most important wildcards are:
+
+Wildcard	Meaning
+%	Any number of characters, including zero
+_	Exactly one character
+1. Find one exact date
+SELECT *
+FROM orders
+WHERE order_date = '2026-08-19';
+
+2. Find dates between two dates
+SELECT *
+FROM orders
+WHERE order_date BETWEEN '2026-08-01' AND '2026-08-19';
+
+Because DATE has no time component, BETWEEN works nicely here.
+
+3. Find all dates in a month
+For August 2026:
+
+SELECT *
+FROM orders
+WHERE order_date >= '2026-08-01'
+  AND order_date < '2026-09-01';
+
+This is generally better than:
+
+WHERE order_date LIKE '2026-08%';
+
+4. Find dates after a date
+SELECT *
+FROM orders
+WHERE order_date > '2026-08-01';
+
+LIKE with a DATE column
+1. Find dates starting with 2026
+SELECT *
+FROM orders
+WHERE order_date LIKE '2026%';
+
+2. Find dates from August
+SELECT *
+FROM orders
+WHERE order_date LIKE '%-08-%';
+
+CREATE TABLE datatype_demo (
+    tinyint_col TINYINT,
+    smallint_col SMALLINT,
+    mediumint_col MEDIUMINT,
+    int_col INT,
+    bigint_col BIGINT,
+
+    decimal_col DECIMAL(10,2),
+    numeric_col NUMERIC(10,2),
+    float_col FLOAT,
+    double_col DOUBLE,
+    bit_col BIT(4),
+
+    char_col CHAR(3),
+    varchar_col VARCHAR(50),
+    binary_col BINARY(3),
+    varbinary_col VARBINARY(10),
+
+    tinytext_col TINYTEXT,
+    text_col TEXT,
+    mediumtext_col MEDIUMTEXT,
+    longtext_col LONGTEXT,
+
+    tinyblob_col TINYBLOB,
+    blob_col BLOB,
+    mediumblob_col MEDIUMBLOB,
+    longblob_col LONGBLOB,
+
+    enum_col ENUM('Male','Female','Other'),
+    set_col SET('SQL','Python','Java'),
+
+    date_col DATE,
+    datetime_col DATETIME,
+    timestamp_col TIMESTAMP,
+    time_col TIME,
+    year_col YEAR,
+
+    json_col JSON,
+
+    point_col POINT,
+    geometry_col GEOMETRY,
+    linestring_col LINESTRING,
+    polygon_col POLYGON
+);
+WHERE Clause in MySQL
+What does WHERE do?
+The WHERE clause is used to filter rows from a table.
+GROUP BY in MySQL
+What does GROUP BY do?
+GROUP BY puts rows with the same value into groups.
+
+It is mainly used with aggregate functions such as:
+
+COUNT()
+SUM()
+AVG()
+MIN()
+MAX()
+
+Basic syntax
+SELECT column, AGGREGATE_FUNCTION(column)
+FROM table_name
+GROUP BY column;
+
+SELECT department, gender, COUNT(*)
+FROM employees
+GROUP BY department, gender;
+
+HAVING Clause in MySQL
+What is HAVING?
+HAVING is used to filter groups created by GROUP BY.
+Use HAVING when you want to filter based on an aggregate function, such as:
+
+COUNT()
+SUM()
+AVG()
+MIN()
+MAX()
+
+Basic syntax
+SELECT column, AGGREGATE_FUNCTION(column)
+FROM table_name
+GROUP BY column
+HAVING condition;
+SELECT department, MAX(salary)
+FROM employees
+GROUP BY department
+HAVING MAX(salary) > 100000;
+
+Multi-row functions perform calculations on multiple rows and return one result for the group/set of rows.
+
+They are also commonly called aggregate functions.
+
+Main Multi-Row Functions
+COUNT()
+SUM()
+AVG()
+MIN()
+MAX()
+
+Example
+SELECT COUNT(*)
+FROM employees;
+
+Returns the number of employees.
+
+SELECT SUM(salary)
+FROM employees;
+
+Returns the total salary.
+
+SELECT AVG(salary)
+FROM employees;
+
+Returns the average salary.
+
+SELECT MIN(salary)
+FROM employees;
+
+Returns the lowest salary.
+
+SELECT MAX(salary)
+FROM employees;
+
+Returns the highest salary.
+
+With GROUP BY
+SELECT department, AVG(salary)
+FROM employees
+GROUP BY department;
+
+Here AVG() calculates the average salary for each department.
+
+
+
+
+SELECT *
+FROM employees
+WHERE salary > (
+    SELECT AVG(salary)
+    FROM employees
+);
+What is a Subquery in MySQL?
+A subquery is simply a query inside another query.
+ALL and ANY Operators in MySQL
+ALL and ANY are used with a subquery to compare one value against multiple values returned by the subquery.
+employees
+---------------------------
+name   | salary | dept_id
+Rahul  | 40000  | 10
+Amit   | 60000  | 20
+Priya  | 80000  | 20
+John   | 50000  | 10
+
+1. ANY
+ANY means:
+
+The condition must be true for at least ONE value returned by the subquery.
+
+For example:
+
+SELECT *
+FROM employees
+WHERE salary > ANY (
+    SELECT salary
+    FROM employees
+    WHERE dept_id = 10
+);
+
+The subquery returns:
+
+40000
+50000
+
+Now MySQL checks:
+
+salary > 40000
+OR
+salary > 50000
+
+If at least one is true → the employee is selected.
+
+So:
+
+60000 > 40000  ✅
+60000 > 50000  ✅
+
+80000 > 40000  ✅
+80000 > 50000  ✅
+
+Both Amit and Priya qualify.
+
+Easy meaning:
+ANY = at least one
+
+2. ALL
+ALL means:
+
+The condition must be true for EVERY value returned by the subquery.
+
+Example:
+
+SELECT *
+FROM employees
+WHERE salary > ALL (
+    SELECT salary
+    FROM employees
+    WHERE dept_id = 10
+);
+
+Subquery:
+
+40000
+50000
+
+Now the salary must be:
+
+salary > 40000
+AND
+salary > 50000
+
+Therefore the salary must be greater than both values.
+
+So:
+
+60000 → ✅
+80000 → ✅
+50000 → ❌
+40000 → ❌
+
+Easy meaning:
+ALL = every one
+
+ANY vs ALL
+This is the most important part:
+
+Operator	Meaning
+> ANY	Greater than at least one
+> ALL	Greater than every value
+< ANY	Less than at least one
+< ALL	Less than every value
+= ANY	Equal to at least one
+= ALL	Equal to every value
+
+Think about numbers
+Suppose the subquery gives:
+
+10
+20
+30
+
+> ANY
+WHERE x > ANY (10, 20, 30)
+
+x only needs to be greater than one value.
+
+For example:
+
+x = 15
+
+15 > 10 ✅
+15 > 20 ❌
+15 > 30 ❌
+
+At least one is true → YES.
+
+> ALL
+WHERE x > ALL (10, 20, 30)
+
+x must be greater than every value.
+
+For example:
+
+x = 35
+
+35 > 10 ✅
+35 > 20 ✅
+35 > 30 ✅
+
+All are true → YES.
+
+Very useful shortcut ⭐
+For positive comparisons:
+
+x > ANY (10,20,30)
+
+is effectively:
+
+x > MIN(10,20,30)
+
+So:
+
+x > ANY → x > smallest value
+
+And:
+
+x > ALL → x > largest value
+
+Similarly:
+
+x < ANY → x < largest value
+
+x < ALL → x < smallest value
+
+ANY with a real subquery
+Find employees whose salary is greater than at least one employee in department 10:
+
+SELECT *
+FROM employees
+WHERE salary > ANY (
+    SELECT salary
+    FROM employees
+    WHERE dept_id = 10
+);
+
+A JOIN in SQL is used to combine rows from two or more tables based on a related column or condition between those tables.
+
+
+A LEFT JOIN returns all records from the left table and the matching records from the right table. If there is no matching record in the right table, it returns NULL for the right table’s columns.
+EMPLOYEES                          DEPARTMENTS
++--------+--------+---------+     +---------+------------+
+| emp_id | name   | dept_id |     | dept_id | department |
++--------+--------+---------+     +---------+------------+
+|   1    | Rahul  |   10    | → |   10    | IT         |
+|   2    | Priya  |   20    | → |   20    | HR         |
+|   3    | Amit   |   30    | → |   30    | Finance    |
+|   4    | Neha   |   40    
++--------+--------+---------+     +---------+------------+
+                                      ↑
+                                  NO MATCH
+                                      ↓
+
+LEFT JOIN RESULT
++--------+--------+---------+------------+
+| emp_id | name   | dept_id | department |
++--------+--------+---------+------------+
+|   1    | Rahul  |   10    | IT         |
+|   2    | Priya  |   20    | HR         |
+|   3    | Amit   |   30    | Finance    |
+|   4    | Neha   |   40    | NULL       |
++--------+--------+---------+------------+
+
+
+A RIGHT JOIN returns all records from the right table and the matching records from the left table. If there is no matching record in the left table, the left table’s columns will contain NULL.”
+RIGHT JOIN RESULT
++--------+--------+---------+------------+
+| emp_id | name   | dept_id | department |
++--------+--------+---------+------------+
+|   1    | Rahul  |   10    | IT         |
+|   2    | Priya  |   20    | HR         |
+|   3    | Amit   |   30    | Finance    |
+|  NULL  | NULL   |  NULL   | Marketing  |
++--------+--------+---------+------------+
+
+* MySQL does not directly support FULL OUTER JOIN; it can be simulated using LEFT JOIN + RIGHT JOIN with UNION.
+“A FULL OUTER JOIN returns all records from both tables. If there is no matching record, the columns from the other table contain NULL.”
+SELECT e.emp_id, e.name, e.dept_id, d.department
+FROM Employees e
+LEFT JOIN Departments d
+ON e.dept_id = d.dept_id
+
+UNION
+
+SELECT e.emp_id, e.name, e.dept_id, d.department
+FROM Employees e
+RIGHT JOIN Departments d
+ON e.dept_id = d.dept_id;
+EMPLOYEES                              DEPARTMENTS
++--------+--------+---------+         +---------+------------+
+| emp_id | name   | dept_id |         | dept_id | department |
++--------+--------+---------+         +---------+------------+
+|   1    | Rahul  |   10    | ─────→ |   10    | IT         |
+|   2    | Priya  |   20    | ─────→ |   20    | HR         |
+|   3    | Amit   |   30    | ─────→ |   30    | Finance    |
+|   4    | Neha   |   40    |         |   50    | Marketing  |
++--------+--------+---------+         +---------+------------+
+                                                ↑
+                                           NO MATCH
+                                                ↓
+
+FULL OUTER JOIN RESULT
++--------+--------+---------+------------+
+| emp_id | name   | dept_id | department |
++--------+--------+---------+------------+
+|   1    | Rahul  |   10    | IT         |
+|   2    | Priya  |   20    | HR         |
+|   3    | Amit   |   30    | Finance    |
+|   4    | Neha   |   40    | NULL       |  ← No matching department
+|  NULL  | NULL   |   50    | Marketing  |  ← No matching employee
++--------+--------+---------+------------+
+An INNER JOIN returns only the records that have a matching value in both tables.”
+
+Using the same tables:
+
+EMPLOYEES                              DEPARTMENTS
++--------+--------+---------+         +---------+------------+
+| emp_id | name   | dept_id |         | dept_id | department |
++--------+--------+---------+         +---------+------------+
+|   1    | Rahul  |   10    | ─────→ |   10    | IT         |
+|   2    | Priya  |   20    | ─────→ |   20    | HR         |
+|   3    | Amit   |   30    | ─────→ |   30    | Finance    |
+|   4    | Neha   |   40    |     ✕   |   50    | Marketing  |
++--------+--------+---------+         +---------+------------+
+
+
+INNER JOIN RESULT
++--------+--------+---------+------------+
+| emp_id | name   | dept_id | department |
++--------+--------+---------+------------+
+|   1    | Rahul  |   10    | IT         |
+|   2    | Priya  |   20    | HR         |
+|   3    | Amit   |   30    | Finance    |
++--------+--------+---------+------------+
+
+SQL
+SELECT e.emp_id, e.name, e.dept_id, d.department
+FROM Employees e
+INNER JOIN Departments d
+ON e.dept_id = d.dept_id;
+
+🔑 Easy Interview Answer
+INNER JOIN returns only the matching records from both tables.
+
+So:
+
+Rahul → ✅ Match
+Priya → ✅ Match
+Amit → ✅ Match
+Neha → ❌ No match → excluded
+Marketing → ❌ No match → excluded
+“A CROSS JOIN returns every possible combination of rows from the first table with rows from the second table.”
+EMPLOYEES                    DEPARTMENTS
++--------+-------+           +---------+------------+
+| emp_id | name  |           | dept_id | department |
++--------+-------+           +---------+------------+
+|   1    | Rahul |           |   10    | IT         |
+|   2    | Priya |           |   20    | HR         |
++--------+-------+           +---------+------------+
+
+              CROSS JOIN
+                  ↓
+
+RESULT
++-------+------------+
+| name  | department |
++-------+------------+
+| Rahul | IT         |
+| Rahul | HR         |
+| Priya | IT         |
+| Priya | HR         |
++-------+------------+
+
+SQL
+SELECT e.name, d.department
+FROM Employees e
+CROSS JOIN Departments d;
+
+A SELF JOIN is a join where a table is joined with itself. It is mainly used when rows in the same table have a relationship with each other.”
+Suppose we have an Employees table:
+
+EMPLOYEES
++--------+--------+------------+
+| emp_id | name   | manager_id |
++--------+--------+------------+
+|   1    | Rahul  |   NULL     |
+|   2    | Priya  |    1       |
+|   3    | Amit   |    1       |
+|   4    | Neha   |    2       |
++--------+--------+------------+
+
+Here:
+
+Rahul is the manager of Priya and Amit.
+Priya is the manager of Neha.
+SELF JOIN
+We join Employees with Employees:
+
+SELECT 
+    e.name AS employee,
+    m.name AS manager
+FROM Employees e
+LEFT JOIN Employees m
+ON e.manager_id = m.emp_id;
+
+Result
++----------+---------+
+| employee | manager |
++----------+---------+
+| Rahul    | NULL    |
+| Priya    | Rahul   |
+| Amit     | Rahul   |
+| Neha     | Priya   |
++----------+---------+
+
+How it works
+EMPLOYEES e                  EMPLOYEES m
+(Employee)                   (Manager)
+
+Priya  manager_id = 1  ───→  Rahul emp_id = 1
+Amit   manager_id = 1  ───→  Rahul emp_id = 1
+Neha   manager_id = 2  ───→  Priya emp_id = 2
+
+Find the employees who earn more than their manager.”
+
+Let's use this table:
+
+EMPLOYEES
++--------+----------+--------+------------+
+| emp_id | name     | salary | manager_id |
++--------+----------+--------+------------+
+|   1    | Rahul    | 80000 |   NULL     |
+|   2    | Priya    | 60000 |     1      |
+|   3    | Amit     | 90000 |     1      |
+|   4    | Neha     | 70000 |     2      |
+|   5    | Arjun    | 50000 |     2      |
++--------+----------+--------+------------+
+
+Step 1: Understand the relationship
+Rahul ($80,000)
+├── Priya ($60,000)
+│   ├── Neha ($70,000)
+│   └── Arjun ($50,000)
+│
+└── Amit ($90,000)
+
+We need to compare:
+
+Employee salary ↔ Manager salary
+
+So we use the same Employees table twice.
+
+Step 2: SELF JOIN
+SELECT
+    e.name AS employee,
+    e.salary AS employee_salary,
+    m.name AS manager,
+    m.salary AS manager_salary
+FROM Employees e
+JOIN Employees m
+    ON e.manager_id = m.emp_id
+WHERE e.salary > m.salary;
+
+Result
++----------+----------------+---------+---------------+
+| employee | employee_salary| manager | manager_salary|
++----------+----------------+---------+---------------+
+| Amit     | 90000          | Rahul   | 80000         |
+| Neha     | 70000          | Priya   | 60000         |
++----------+----------------+---------+---------------+
+
+EMPLOYEES                         DEPARTMENTS
++--------+--------+---------+    +---------+------------+
+| emp_id | name   | dept_id |    | dept_id | department |
++--------+--------+---------+    +---------+------------+
+|   1    | Rahul  |   10    |    |   10    | IT         |
+|   2    | Priya  |   10    |    |   20    | HR         |
+|   3    | Amit   |   20    |    +---------+------------+
++--------+--------+---------+
+
+Question:
+Find the number of employees in each department.
+
+SELECT 
+    d.department,
+    COUNT(e.emp_id) AS employee_count
+FROM Employees e
+JOIN Departments d
+    ON e.dept_id = d.dept_id
+GROUP BY d.department;
+
+Result:
++------------+---------------+
+| department | employee_count|
++------------+---------------+
+| IT         |      2        |
+| HR         |      1        |
++------------+---------------+
+
+FROM
+ ↓
+JOIN
+ ↓
+WHERE
+ ↓
+GROUP BY
+ ↓
+HAVING
+ ↓
+SELECT
+ ↓
+ORDER BY
+SELECT → What do you want to see?
+SELECT tells MySQL which columns/data you want in the result.
+FROM → Where do you get the data from?
+FROM tells MySQL which table to get the data from.
+Projection means selecting specific columns from a table.
+“An alias is a temporary name given to a table or column. We use aliases to make queries shorter, more readable, and easier to work with, especially when using joins.”
+
+Remember
+Column Alias → SELECT salary AS monthly_salary
+
+Table Alias  → FROM Employees AS e
+
+-- 1. UPPER()
+SELECT UPPER(first_name)
+FROM employees;
+
+-- 2. LOWER()
+SELECT LOWER(first_name)
+FROM employees;
+
+-- 3. CONCAT()
+SELECT CONCAT(first_name, ' ', last_name) AS full_name
+FROM employees;
+
+-- 4. LENGTH()
+SELECT first_name, LENGTH(first_name) AS name_length
+FROM employees;
+
+-- 5. SUBSTRING()
+SELECT first_name, SUBSTRING(first_name, 1, 3) AS short_name
+FROM employees;
+
+-- 6. TRIM()
+SELECT TRIM(first_name) AS clean_name
+FROM employees;
+
+-- 7. REPLACE()
+SELECT REPLACE(city, 'Mumbai', 'Delhi') AS new_city
+FROM employees;
+
+Single-Row Functions in MySQL
+Single-row functions operate on one row at a time and return one result for each row. They do not combine multiple rows into one result like aggregate functions.
+
+Main types
+1. String Functions
+
+UPPER()
+LOWER()
+CONCAT()
+LENGTH()
+SUBSTRING()
+TRIM()
+REPLACE()
+
+2. Numeric Functions
+
+ROUND()
+CEIL()
+FLOOR()
+ABS()
+POWER()
+SQRT()
+
+3. Date & Time Functions
+
+NOW()
+CURDATE()
+CURTIME()
+YEAR()
+MONTH()
+DAY()
+DATE()
+TIME()
+
+4. Conversion Functions
+
+CAST()
+CONVERT()
+
+5. Conditional Functions
+
+IF()
+IFNULL()
+COALESCE()
+NULLIF()
+
+Example
+If you have:
+
+name	salary
+John	50000
+Sarah	60000
+Mike	70000
+
+SELECT name, UPPER(name), salary * 1.10
+FROM employees;
+
+Result:
+
+name	UPPER(name)	salary * 1.10
+John	JOHN	55000
+Sarah	SARAH	66000
+Mike	MIKE
+
+What is CASE in MySQL?
+CASE
+    WHEN condition1 THEN result1
+    WHEN condition2 THEN result2
+    WHEN condition3 THEN result3
+    ELSE default_result
+END
+CASE
+Starts the decision-making logic.
+CASE
+It basically tells MySQL:
+"I'm going to give you multiple conditions and you need to determine which result to return."
+WHEN
+WHEN means:
+"Check this condition."
+Example:
+WHEN marks >= 80
+
+MySQL checks:
+
+Is marks >= 80?
+
+If yes, it goes to THEN.
+
+THEN
+THEN specifies what should be returned if the WHEN condition is true.
+
+WHEN marks >= 80 THEN 'A'
+
+Meaning:
+
+IF marks >= 80
+THEN return 'A'
+
+Multiple WHENs
+You can have multiple conditions:
+
+CASE
+    WHEN marks >= 80 THEN 'A'
+    WHEN marks >= 60 THEN 'B'
+    WHEN marks >= 40 THEN 'C'
+    ELSE 'Fail'
+END
+
+MySQL checks them from top to bottom.
+
+That's important.
+
+For example, if marks = 85:
+
+marks >= 80 → TRUE
+
+So MySQL returns:
+
+A
+
+It doesn't continue checking the other conditions.
+
+ELSE
+ELSE means:
+
+"If none of the previous conditions are true, return this."
+
+ELSE 'Fail'
+
+So:
+
+CASE
+    WHEN marks >= 80 THEN 'A'
+    WHEN marks >= 60 THEN 'B'
+    ELSE 'Fail'
+END
+
+If marks are 30:
+
+30 >= 80 → false
+30 >= 60 → false
+
+Therefore:
+
+ELSE → Fail
+
+ELSE is optional.
+
+You can technically write:
+
+CASE
+    WHEN marks >= 80 THEN 'A'
+    WHEN marks >= 60 THEN 'B'
+END
+
+If none of the conditions match, MySQL returns NULL.
+
+Generally, using ELSE is safer and clearer.
+
+END
+END tells MySQL:
+
+"The CASE expression is finished."
+
+CASE
+    ...
+END
+SELECT
+    name,
+    salary,
+    CASE
+        WHEN salary >= 100000 THEN 'High'
+        WHEN salary >= 50000 THEN 'Medium'
+        ELSE 'Low'
+    END AS salary_level
+FROM employees;
+Log in
+Sign up for free
+You said:
+
+SELECT
+    name,
+    salary,
+    CASE
+        WHEN salary >= 100000 THEN 'High'
+        WHEN salary >= 50000 THEN 'Medium'
+        ELSE 'Low'
+    END AS salary_level
+FROM employees;
+ END AS salary_level meaning
+
+ChatGPT said:
+END AS salary_level is not a single phrase. It has two parts:
+
+1. END
+END marks the end of the CASE expression.
+
+Your CASE checks the salary:
+
+CASE
+    WHEN salary >= 100000 THEN 'High'
+    WHEN salary >= 50000 THEN 'Medium'
+    ELSE 'Low'
+END
+
+For example:
+
+salary = 120000 → 'High'
+salary = 70000 → 'Medium'
+salary = 30000 → 'Low'
+2. AS salary_level
+AS salary_level gives the result of the CASE expression a column name (alias).
+
+So:
+
+END AS salary_level
+
+means:
+
+"The value produced by this CASE expression should appear in the output as a column called salary_level."
+name	salary	salary_level
+John	120000	High
+CASE ... END = calculate a value
+AS salary_level = name that calculated column
+
+Log in
+Sign up for free
+You said:
+
+in mysql what is case statement how to use explain syntax what syntax means and when to use in which scenarios
+
+ChatGPT said:
+Absolutely. In MySQL, the CASE statement/expression is used when you want SQL to make a decision: “if this condition is true, return/do this; otherwise, check the next condition.”
+
+Think of it like if / else if / else in programming.
+
+1. What is CASE in MySQL?
+Suppose you have students and their marks:
+
+student	marks
+John	85
+Alice	62
+Bob	35
+
+You might want to convert marks into grades:
+
+80 or more → A
+60–79 → B
+40–59 → C
+below 40 → Fail
+You can do this with CASE:
+
+SELECT
+    student,
+    marks,
+    CASE
+        WHEN marks >= 80 THEN 'A'
+        WHEN marks >= 60 THEN 'B'
+        WHEN marks >= 40 THEN 'C'
+        ELSE 'Fail'
+    END AS grade
+FROM students;
+
+Result:
+
+student	marks	grade
+John	85	A
+Alice	62	B
+Bob	35	Fail
+
+So conceptually:
+
+IF marks >= 80
+    return A
+ELSE IF marks >= 60
+    return B
+ELSE IF marks >= 40
+    return C
+ELSE
+    return Fail
+
+2. Basic syntax
+The most common form is:
+
+CASE
+    WHEN condition1 THEN result1
+    WHEN condition2 THEN result2
+    WHEN condition3 THEN result3
+    ELSE default_result
+END
+
+Let's understand every word.
+
+CASE
+Starts the decision-making logic.
+
+CASE
+
+It basically tells MySQL:
+
+"I'm going to give you multiple conditions and you need to determine which result to return."
+
+WHEN
+WHEN means:
+
+"Check this condition."
+
+Example:
+
+WHEN marks >= 80
+
+MySQL checks:
+
+Is marks >= 80?
+
+If yes, it goes to THEN.
+
+THEN
+THEN specifies what should be returned if the WHEN condition is true.
+
+WHEN marks >= 80 THEN 'A'
+
+Meaning:
+
+IF marks >= 80
+THEN return 'A'
+
+Multiple WHENs
+You can have multiple conditions:
+
+CASE
+    WHEN marks >= 80 THEN 'A'
+    WHEN marks >= 60 THEN 'B'
+    WHEN marks >= 40 THEN 'C'
+    ELSE 'Fail'
+END
+
+MySQL checks them from top to bottom.
+
+That's important.
+
+For example, if marks = 85:
+
+marks >= 80 → TRUE
+
+So MySQL returns:
+
+A
+
+It doesn't continue checking the other conditions.
+
+ELSE
+ELSE means:
+
+"If none of the previous conditions are true, return this."
+
+ELSE 'Fail'
+
+So:
+
+CASE
+    WHEN marks >= 80 THEN 'A'
+    WHEN marks >= 60 THEN 'B'
+    ELSE 'Fail'
+END
+
+If marks are 30:
+
+30 >= 80 → false
+30 >= 60 → false
+
+Therefore:
+
+ELSE → Fail
+
+ELSE is optional.
+
+You can technically write:
+
+CASE
+    WHEN marks >= 80 THEN 'A'
+    WHEN marks >= 60 THEN 'B'
+END
+
+If none of the conditions match, MySQL returns NULL.
+
+Generally, using ELSE is safer and clearer.
+
+END
+END tells MySQL:
+
+"The CASE expression is finished."
+
+CASE
+    ...
+END
+
+3. The most important thing: CASE is usually an expression
+In MySQL, you will very often see CASE used inside a SELECT.
+
+For example:
+
+SELECT
+    name,
+    salary,
+    CASE
+        WHEN salary >= 100000 THEN 'High'
+        WHEN salary >= 50000 THEN 'Medium'
+        ELSE 'Low'
+    END AS salary_level
+FROM employees;
+
+Here CASE is producing a value.
+
+For each employee, MySQL calculates:
+
+salary → CASE → salary_level
+
+So you can think of it as:
+
+CASE = calculate a value based on conditions
+
+4. Why do we need CASE?
+Suppose you have:
+
+employees
+--------------------------------
+name       salary
+John       120000
+Alice       70000
+Bob         35000
+
+And management asks:
+
+Show me whether each employee is High, Medium, or Low salary.
+
+The database contains numbers, but you want to derive a category from those numbers.
+
+That's where CASE is useful.
+
+SELECT
+    name,
+    salary,
+    CASE
+        WHEN salary >= 100000 THEN 'High'
+        WHEN salary >= 50000 THEN 'Medium'
+        ELSE 'Low'
+    END AS category
+FROM employees;
+
+5. CASE vs IF
+MySQL also has IF().
+
+For a simple condition:
+
+IF(condition, value_if_true, value_if_false)
+
+Example:
+
+SELECT
+    name,
+    IF(salary >= 50000, 'Good', 'Low') AS salary_status
+FROM employees;
+
+This is fine when you have one simple condition.
+
+But imagine you have:
+
+salary >= 100000 → High
+salary >= 50000  → Medium
+salary >= 30000  → Low
+otherwise        → Very Low
+
+CASE is much easier to read:
+
+CASE
+    WHEN salary >= 100000 THEN 'High'
+    WHEN salary >= 50000 THEN 'Medium'
+    WHEN salary >= 30000 THEN 'Low'
+    ELSE 'Very Low'
+END
+
+Rule of thumb
+Use:
+
+IF()
+
+for a simple yes/no decision.
+
+Use:
+
+CASE
+    WHEN ...
+    WHEN ...
+    WHEN ...
+    ELSE ...
+END
+
+when you have multiple possibilities or more complex logic.
+
+6. Two types of CASE syntax
+There are actually two common forms.
+
+A. Searched CASE
+This is the form you'll probably use most often.
+
+CASE
+    WHEN condition THEN result
+    WHEN condition THEN result
+    ELSE result
+END
+
+Example:
+
+SELECT
+    name,
+    CASE
+        WHEN age >= 60 THEN 'Senior'
+        WHEN age >= 18 THEN 'Adult'
+        ELSE 'Minor'
+    END AS age_group
+FROM people;
+
+Notice that every WHEN contains a complete condition:
+
+WHEN age >= 60
+WHEN age >= 18
+
+7. Simple CASE
+The second form compares one value against several possible values.
+
+Syntax:
+
+CASE expression
+    WHEN value1 THEN result1
+    WHEN value2 THEN result2
+    WHEN value3 THEN result3
+    ELSE default_result
+END
+
+Example:
+
+SELECT
+    name,
+    department_id,
+    CASE department_id
+        WHEN 1 THEN 'HR'
+        WHEN 2 THEN 'Finance'
+        WHEN 3 THEN 'IT'
+        ELSE 'Unknown'
+    END AS department
+FROM employees;
+
+This essentially means:
+
+CASE department_id
+
+WHEN department_id = 1 → HR
+WHEN department_id = 2 → Finance
+WHEN department_id = 3 → IT
+otherwise → Unknown
+
+8. Difference between the two
+Simple CASE
+Use when you're comparing one column/value with different values:
+
+CASE department_id
+    WHEN 1 THEN 'HR'
+    WHEN 2 THEN 'Finance'
+    WHEN 3 THEN 'IT'
+END
+
+Searched CASE
+Use when you need conditions, ranges, comparisons, or multiple columns:
+
+CASE
+    WHEN salary > 100000 THEN 'High'
+    WHEN salary BETWEEN 50000 AND 100000 THEN 'Medium'
+    ELSE 'Low'
+END
+
+9. CASE in SELECT
+This is probably the first scenario you should learn.
+
+Example table:
+
+orders
+--------------------------------
+id    amount
+1     500
+2     1500
+3     5000
+
+You want to classify orders.
+
+SELECT
+    id,
+    amount,
+    CASE
+        WHEN amount >= 5000 THEN 'Large'
+        WHEN amount >= 1000 THEN 'Medium'
+        ELSE 'Small'
+    END AS order_size
+FROM orders;
+
+Result:
+
+id    amount    order_size
+1     500       Small
+2     1500      Medium
+3     5000      Large
+
+This is one of the most common uses.
+
+10. CASE in ORDER BY
+This is a very useful real-world scenario.
+
+Suppose you have:
+
+priority
+--------
+High
+Medium
+Low
+
+Normal alphabetical sorting would give something like:
+
+High
+Low
+Medium
+
+But you want:
+
+High
+Medium
+Low
+
+You can tell MySQL your custom order:
+
+SELECT *
+FROM tasks
+ORDER BY
+    CASE priority
+        WHEN 'High' THEN 1
+        WHEN 'Medium' THEN 2
+        WHEN 'Low' THEN 3
+        ELSE 4
+    END;
+
+MySQL sorts by the numbers:
+
+High   → 1
+Medium → 2
+Low    → 3
+
+This is a very practical use of CASE.
+
+11. CASE in GROUP BY
+You can also categorize data first and then group it.
+
+For example:
+
+SELECT
+    CASE
+        WHEN salary >= 100000 THEN 'High'
+        WHEN salary >= 50000 THEN 'Medium'
+        ELSE 'Low'
+    END AS salary_group,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY
+    CASE
+        WHEN salary >= 100000 THEN 'High'
+        WHEN salary >= 50000 THEN 'Medium'
+        ELSE 'Low'
+    END;
+
+You might get:
+
+salary_group    employee_count
+High            10
+Medium          25
+Low             15
+
+You're essentially saying:
+
+Categorize employees, then count how many are in each category.
+
+12. CASE with aggregate functions
+This is very important in SQL.
+
+Suppose you want to count how many employees have a salary above 50,000.
+
+You can do:
+
+SELECT
+    SUM(
+        CASE
+            WHEN salary >= 50000 THEN 1
+            ELSE 0
+        END
+    ) AS employees_above_50000
+FROM employees;
+
+Why does this work?
+
+Imagine salaries:
+
+60000
+30000
+80000
+40000
+
+The CASE produces:
+
+1
+0
+1
+0
+
+Then:
+
+SUM(1 + 0 + 1 + 0)
+
+gives:
+
+2
+
+This technique is often called conditional aggregation.
+
+13. Multiple conditional counts
+You can use the same technique to calculate several things at once:
+
+SELECT
+    SUM(CASE WHEN salary >= 100000 THEN 1 ELSE 0 END) AS high_salary,
+    SUM(CASE WHEN salary >= 50000
+              AND salary < 100000 THEN 1 ELSE 0 END) AS medium_salary,
+    SUM(CASE WHEN salary < 50000 THEN 1 ELSE 0 END) AS low_salary
+FROM employees;
+
+This is extremely common in reporting and analytics.
+
+14. CASE in UPDATE
+You can also use CASE to update different rows differently.
+
+For example, suppose salaries need to be increased according to department:
+
+UPDATE employees
+SET salary =
+    CASE
+        WHEN department = 'IT' THEN salary * 1.10
+        WHEN department = 'HR' THEN salary * 1.05
+        ELSE salary
+    END;
+
+Meaning:
+
+IT → increase salary by 10%
+HR → increase salary by 5%
+everyone else → don't change salary
+
+Be careful with UPDATE because you're modifying actual data.
+
+15. CASE in WHERE
+You can use CASE in filtering, but this is generally not the first choice.
+
+For example, you might encounter:
+
+WHERE
+    CASE
+        WHEN status = 'active' THEN 1
+        ELSE 0
+    END = 1
+
+But this is usually unnecessarily complicated.
+
+You would normally write:
+
+WHERE status = 'active'
+
+So an important lesson is:
+
+Don't use CASE just because you can.
+
+Use it when you're actually deriving different values or applying conditional logic.
+
+16. A very important example: CASE + NULL
+Suppose:
+
+employee
+salary
+------
+50000
+NULL
+80000
+
+You could write:
+
+SELECT
+    name,
+    CASE
+        WHEN salary IS NULL THEN 'Salary Not Available'
+        WHEN salary >= 70000 THEN 'High'
+        ELSE 'Normal'
+    END AS salary_status
+FROM employees;
+
+Notice:
+
+salary IS NULL
+
+rather than:
+
+salary = NULL
+
+That's a separate but important SQL concept.
+
+17. Order of WHEN conditions matters
+Consider:
+
+CASE
+    WHEN salary >= 50000 THEN 'Medium'
+    WHEN salary >= 100000 THEN 'High'
+    ELSE 'Low'
+END
+
+This is wrong for your intended categories.
+
+Why?
+
+For salary:
+
+120000
+
+MySQL checks:
+
+120000 >= 50000 → TRUE
+
+So it immediately returns:
+
+Medium
+
+It never gets to:
+
+WHEN salary >= 100000
+
+Therefore, put the more specific/highest threshold first:
+
+CASE
+    WHEN salary >= 100000 THEN 'High'
+    WHEN salary >= 50000 THEN 'Medium'
+    ELSE 'Low'
+END
+
+Think:
+
+CASE checks from top to bottom and stops at the first matching WHEN.
+
+This is one of the most important things to remember.
+
+1. CASE in SELECT
+You use CASE to create or calculate a value/column in the result.
+
+Example:
+
+SELECT
+    name,
+    salary,
+    CASE
+        WHEN salary >= 100000 THEN 'High'
+        WHEN salary >= 50000 THEN 'Medium'
+        ELSE 'Low'
+    END AS salary_level
+FROM employees;
+
+
+Here, CASE creates a new output column called salary_level.
+
+Result:
+
+name	salary	salary_level
+John	120000	High
+Sarah	75000	Medium
+Mike	30000	Low
+
+
+Think:
+CASE in SELECT → "What should I display?"
+
+SELECT name, salary
+FROM employees
+ORDER BY
+    CASE
+        WHEN salary >= 100000 THEN 1
+        WHEN salary >= 50000 THEN 2
+        ELSE 3
+    END;
+
+There is no column containing the order numbers.
+
+The CASE result (1, 2, 3) is temporary and is used only for sorting.
+
+The output columns are only:
+
+name	salary
+Sarah	100000
+Mike	60000
+John	30000
+
+If you want to see the sorting number as a column, put the CASE in SELECT and give it a name:
+
+SELECT
+    name,
+    salary,
+    CASE
+        WHEN salary >= 100000 THEN 1
+        WHEN salary >= 50000 THEN 2
+        ELSE 3
+    END AS salary_order
+FROM employees
+ORDER BY salary_order;
+
+Now salary_order is the column name:
+
+name	salary	salary_order
+Sarah	100000	1
+Mike	60000	2
+John	30000	3
+
+What is Normalization in MySQL?
+Normalization is the process of organizing data in a database to reduce data redundancy (duplicate data) and improve data consistency.
+Normalization means splitting a large table into smaller related tables and connecting them using keys.
+
+ Consistency = Data stays correct everywhere
+Consistency means the same piece of information has the same correct value wherever it appears.
+Consistency means that data in the database remains correct, accurate, and the same wherever it is stored or used.
+
+Let's take a simple example.
+
+Suppose John's email address is:
+
+john@gmail.com
+
+If the database stores John's email in two places:
+
+Table	Email
+Students	john@gmail.com
+Payments	john@gmail.com
+
+The data is consistent because both places have the same email.
+
+Now imagine John's email changes to:
+
+john.smith@gmail.com
+
+If we update only one place:
+
+Table	Email
+Students	john.smith@gmail.com
+Payments	john@gmail.com
+
+Now the data is inconsistent because the database has two different email addresses for the same person.
+
+In very simple words
+Consistency = keeping data correct and matching throughout the database.
+
+Normal forms are rules used during database normalization. They tell us how to structure tables so that data is not unnecessarily duplicated and remains consistent.
+1NF — First Normal Form
+A table is in 1NF when:
+
+Each column contains atomic (single) values.
+There are no multiple values in a single cell.
+There are no repeating groups of columns.
+
+Step 1: Start with a table that is NOT in 1NF
+Imagine we have a Students table:
+
+Students
+---------------------------------------------------------
+Student_ID | Student_Name | Courses
+---------------------------------------------------------
+1          | John         | MySQL, Java
+2          | Sarah        | Python, HTML, CSS
+3          | Michael      | MySQL, JavaScript
+
+The problem is the Courses column.
+
+For example:
+
+MySQL, Java
+
+There are multiple values inside one cell.
+
+That violates 1NF.
+
+Step 2: What is the rule of 1NF?
+The main rule is:
+
+Each cell should contain only ONE value (atomic value).
+
+So this is NOT 1NF:
+
+Courses
+----------------
+MySQL, Java
+
+Because one cell contains two values.
+
+This is okay:
+
+Course
+----------------
+MySQL
+Java
+
+Because each cell contains only one value.
+
+Step 3: Convert it to 1NF
+We can create rows for each course:
+
+Students
+---------------------------------------------------------
+Student_ID | Student_Name | Course
+---------------------------------------------------------
+1          | John         | MySQL
+1          | John         | Java
+2          | Sarah        | Python
+2          | Sarah        | HTML
+2          | Sarah        | CSS
+3          | Michael      | MySQL
+3          | Michael      | JavaScript
+
+Now every cell contains one value only.
+
+Therefore, this table satisfies the basic requirement of 1NF.
+
+How do I know whether a table is in 1NF?
+When you see a table, check these things:
+
+1. Look at each cell
+Ask:
+
+Does any cell contain multiple values?
+
+For example:
+
+❌ MySQL, Java
+❌ 98765, 12345
+❌ Delhi, Mumbai
+
+These contain multiple values.
+
+You should separate them into different rows.
+
+✅ MySQL
+✅ Java
+
+2. Look for lists inside a column
+For example:
+
+Student_ID | Student_Name | Phone_Numbers
+-------------------------------------------
+1          | John         | 111111, 222222
+
+Phone_Numbers contains two values.
+
+Convert it to:
+
+Student_ID | Student_Name | Phone_Number
+-----------------------------------------
+1          | John         | 111111
+1          | John         | 222222
+
+Now each cell has one value.
+
+The procedure to convert a table to 1NF
+Remember these 3 steps:
+
+STEP 1 → Find columns containing multiple values
+         ↓
+STEP 2 → Separate those values into individual rows
+         ↓
+STEP 3 → Make sure every cell contains only ONE value
+
+Easy example
+Before 1NF:
+
+Student_ID | Name  | Courses
+-----------------------------
+1          | John  | MySQL, Java
+
+After 1NF:
+
+Student_ID | Name  | Course
+----------------------------
+1          | John  | MySQL
+1          | John  | Java
+
+That's the basic idea of 1NF: one cell = one value.
+
+One important point: 1NF is not simply "remove duplicate rows." The key thing you're checking is atomic values / no repeating groups or lists inside a cell
+
+Step 1: Start with a table that is NOT in 1NF
+Imagine we have a Students table:
+Students
+---------------------------------------------------------
+Student_ID | Student_Name | Courses
+---------------------------------------------------------
+1          | John         | MySQL, Java
+2          | Sarah        | Python, HTML, CSS
+3          | Michael      | MySQL, JavaScript
+The problem is the Courses column.
+For example:
+MySQL, Java
+There are multiple values inside one cell.
+That violates 1NF.
+Step 2: What is the rule of 1NF?
+The main rule is:
+Each cell should contain only ONE value (atomic value).
+So this is NOT 1NF:
+Courses
+----------------
+MySQL, Java
+Because one cell contains two values.
+This is okay:
+Course
+----------------
+MySQL
+Java
+Because each cell contains only one value.
+Step 3: Convert it to 1NF
+We can create rows for each course:
+Students
+---------------------------------------------------------
+Student_ID | Student_Name | Course
+---------------------------------------------------------
+1          | John         | MySQL
+1          | John         | Java
+2          | Sarah        | Python
+2          | Sarah        | HTML
+2          | Sarah        | CSS
+3          | Michael      | MySQL
+3          | Michael      | JavaScript
+Now every cell contains one value only.
+Therefore, this table satisfies the basic requirement of 1NF.
+How do I know whether a table is in 1NF?
+When you see a table, check these things:
+1. Look at each cell
+Ask:
+Does any cell contain multiple values?
+For example:
+❌ MySQL, Java
+❌ 98765, 12345
+❌ Delhi, Mumbai
+These contain multiple values.
+You should separate them into different rows.
+✅ MySQL
+✅ Java
+2. Look for lists inside a column
+For example:
+Student_ID | Student_Name | Phone_Numbers
+-------------------------------------------
+1          | John         | 111111, 222222
+Phone_Numbers contains two values.
+Convert it to:
+Student_ID | Student_Name | Phone_Number
+-----------------------------------------
+1          | John         | 111111
+1          | John         | 222222
+Now each cell has one value.
+The procedure to convert a table to 1NF
+Remember these 3 steps:
+STEP 1 → Find columns containing multiple values
+         ↓
+STEP 2 → Separate those values into individual rows
+         ↓
+STEP 3 → Make sure every cell contains only ONE value
+Easy example
+Before 1NF:
+Student_ID | Name  | Courses
+-----------------------------
+1          | John  | MySQL, Java
+After 1NF:
+Student_ID | Name  | Course
+----------------------------
+1          | John  | MySQL
+1          | John  | Java
+That's the basic idea of 1NF: one cell = one value.
+One important point: 1NF is not simply "remove duplicate rows." The key thing you're checking is atomic values / no repeating groups or lists inside a cell
+
+student_id	student_name	phone_numbers	courses
+1	John	9876543210, 9123456789	MySQL, Java
+2	Sarah	9988776655	Python
+3	Michael	9000011111, 9000022222	MySQL, Python, Java
+
+student_id	student_name	phone_number	course
+1	John	9876543210	MySQL
+1	John	9876543210	Java
+1	John	9123456789	MySQL
+1	John	9123456789	Java
+2	Sarah	9988776655	Python
+3	Michael	9000011111	MySQL
+3	Michael	9000011111	Python
+3	Michael	9000011111	Java
+3	Michael	9000022222	MySQL
+3	Michael	9000022222	Python
+3	Michael	9000022222	Java
+
+2NF = Second Normal Form.
+A table is in 2NF when:
+It is already in 1NF.
+There is no partial dependency.
+The second point is the important one.
+2NF is about the PRIMARY KEY.
+The question you ask is:
+"Does every other column need the WHOLE primary key to know its value?"
+If yes → 2NF ✅
+If a column needs only PART of the primary key → not 2NF ❌
+Let's take a very simple example
+Imagine this table:
+Student_ID	Subject_ID	Student_Name	Subject_Name	Marks
+1	S1	Rahul	DBMS	80
+1	S2	Rahul	Java	90
+2	S1	Priya	DBMS	85
+2	S2	Priya	Java	95
+Step 1: Find the primary key
+Can Student_ID alone identify a row?
+No.
+Student 1 appears twice.
+Can Subject_ID alone identify a row?
+No.
+S1 appears twice.
+But:
+Student_ID + Subject_ID
+together identify one particular row.
+So:
+Primary Key = (Student_ID, Subject_ID)
+This is called a composite key.
+Step 2: Check each column
+Now ask:
+"What do I need to know to determine this column?"
+Student_Name
+If I tell you:
+Student_ID = 1
+do you already know the student name?
+Yes → Rahul.
+You don't need Subject_ID.
+So:
+Student_ID → Student_Name
+But our primary key is:
+Student_ID + Subject_ID
+Therefore, Student_Name depends on only part of the primary key.
+❌ Problem!
+Subject_Name
+If I tell you:
+Subject_ID = S1
+do you know the subject name?
+Yes → DBMS.
+You don't need Student_ID.
+So:
+Subject_ID → Subject_Name
+Again, it depends on only part of the primary key.
+❌ Problem!
+Marks
+Now consider Marks.
+If I tell you:
+Student_ID = 1
+Can you know the marks?
+No.
+Rahul has 80 in DBMS and 90 in Java.
+If I tell you:
+Subject_ID = S1
+Can you know the marks?
+No.
+Rahul has 80, but Priya has 85.
+You need both:
+Student_ID + Subject_ID → Marks
+So Marks depends on the whole primary key.
+✅ Good.
+Therefore this table is NOT in 2NF
+Because:
+Primary Key = Student_ID + Subject_ID
+Student_ID → Student_Name       ❌
+Subject_ID → Subject_Name       ❌
+Student_ID + Subject_ID → Marks  ✅
+Student_Name and Subject_Name have partial dependency.
+That's the entire idea behind 2NF.
+So how do we make it 2NF?
+We separate the columns.
+
+Student table
+Student_ID	Student_Name
+1	Rahul
+2	Priya
+
+Subject table
+Subject_ID	Subject_Name
+S1	DBMS
+S2	Java
+
+Marks table
+Student_ID	Subject_ID	Marks
+1	S1	80
+1	S2	90
+2	S1	85
+2	S2	95
+
+Now each piece of information depends on the appropriate key.
+
+The easiest way to check 2NF
+Whenever you get a question, do these 3 steps:
+
+1. Is the table in 1NF?
+If no → it's definitely not 2NF.
+
+2. Find the primary key
+Ask:
+
+Is the primary key made of one column or multiple columns?
+
+If it's one column, then you don't have a partial-dependency problem.
+
+If it's multiple columns, continue.
+
+3. Check every non-key column
+For each column, ask:
+
+"Does this column depend on the entire primary key, or just one part of it?"
+
+For example:
+
+Primary Key = A + B
+
+Column C:
+A → C
+
+❌ Not 2NF.
+
+But:
+
+Primary Key = A + B
+
+Column C:
+A + B → C
+
+✅ Okay for 2NF.
+
+One sentence to memorize
+2NF means: Every non-key attribute must depend on the FULL primary key, not just PART of it.
+
+3NF — Third Normal Form
+A table must already be in 2NF before you can say it is in 3NF.
+The main goal of 3NF is to remove transitive dependency.
+Transitive dependency means:
+
+A non-key column depends on another non-key column.
+In simple terms:
+Primary Key → Non-key column → Another non-key column
+In 3NF, every non-key column should depend directly on the primary key.
+How to identify that a table is NOT in 3NF
+
+Step 1: Find the Primary Key
+
+First ask:
+
+What uniquely identifies each row?
+
+Example:
+
+| StudentID | StudentName | DepartmentID | DepartmentName    |
+|-----------|-------------|--------------|-------------------|
+| 101       | John        | D1           | Computer Science  |
+| 102       | Sarah       | D1           | Computer Science  |
+| 103       | Mike        | D2           | Mathematics       |
+
+Here:
+
+Primary Key = StudentID
+
+Step 2: Identify the non-key columns
+
+The primary key is:
+
+StudentID
+
+So the non-key columns are:
+
+StudentName
+DepartmentID
+DepartmentName
+
+Step 3: Ask what each column depends on
+
+Check them one by one.
+
+StudentName:
+
+StudentID → StudentName
+
+✅ Fine.
+
+DepartmentID:
+
+StudentID → DepartmentID
+
+✅ Fine.
+
+Now check DepartmentName.
+
+Ask:
+
+Does DepartmentName directly depend on StudentID?
+
+Actually:
+
+DepartmentID → DepartmentName
+
+So we have:
+
+StudentID → DepartmentID → DepartmentName
+
+🚨 This is the problem.
+
+DepartmentName is depending on another non-key column, DepartmentID.
+
+Therefore, the table is NOT in 3NF.
+The approach to convert a table to 3NF
+
+Step 1: Make sure the table is already in 2NF
+
+You don't jump directly to 3NF.
+
+First:
+
+1NF → 2NF → 3NF
+
+So before starting 3NF, make sure there are no partial dependencies.
+
+Step 2: Find the primary key
+
+Suppose we have:
+
+| StudentID | StudentName | DepartmentID | DepartmentName   |
+|-----------|-------------|--------------|------------------|
+| 101       | John        | D1           | Computer Science |
+| 102       | Sarah       | D1           | Computer Science |
+| 103       | Mike        | D2           | Mathematics      |
+
+Primary key:
+
+StudentID
+
+Step 3: Find the dependencies
+
+Write down what determines what:
+
+StudentID → StudentName
+StudentID → DepartmentID
+DepartmentID → DepartmentName
+
+Now look carefully.
+
+We have:
+
+StudentID → DepartmentID → DepartmentName
+
+This is a transitive dependency.
+
+That's our 3NF problem.
+
+Step 4: Find the non-key → non-key dependency
+
+Ask:
+
+"Is one non-key column determining another non-key column?"
+
+Here:
+
+DepartmentID → DepartmentName
+
+DepartmentID is not the primary key of the Student table.
+
+So this is the dependency we need to remove.
+
+Step 5: Separate those columns into a new table
+
+Take:
+
+DepartmentID
+DepartmentName
+
+and create a new table:
+
+Department
+
+| DepartmentID | DepartmentName   |
+|--------------|------------------|
+| D1           | Computer Science |
+| D2           | Mathematics      |
+
+Now DepartmentID becomes the primary key of this new table.
+
+Step 6: Keep the foreign key in the original table
+
+Don't completely remove DepartmentID from Student.
+
+Keep it because it tells us which department the student belongs to.
+
+Student
+
+| StudentID | StudentName | DepartmentID |
+|-----------|-------------|--------------|
+| 101       | John        | D1           |
+| 102       | Sarah       | D1           |
+| 103       | Mike        | D2           |
+
+Here:
+
+StudentID = Primary Key
+DepartmentID = Foreign Key
+
+So what did we actually do?
+
+Before
+
+STUDENT
+
+| StudentID | StudentName | DepartmentID | DepartmentName   |
+|-----------|-------------|--------------|------------------|
+| 101       | John        | D1           | Computer Science |
+| 102       | Sarah       | D1           | Computer Science |
+| 103       | Mike        | D2           | Mathematics      |
+
+Problem:
+
+StudentID → DepartmentID → DepartmentName
+
+After
+
+STUDENT
+
+| StudentID | StudentName | DepartmentID |
+|-----------|-------------|--------------|
+| 101       | John        | D1           |
+| 102       | Sarah       | D1           |
+| 103       | Mike        | D2           |
+
+and:
+
+DEPARTMENT
+
+| DepartmentID | DepartmentName   |
+|--------------|------------------|
+| D1           | Computer Science |
+| D2           | Mathematics      |
+
+Now:
+
+StudentID → StudentName
+StudentID → DepartmentID
+
+and separately:
+
+DepartmentID → DepartmentName
+
+No transitive dependency remains in the Student table.
+
+✅ Student table is in 3NF.
+
+The rule you should use every time
+
+When converting a table to 3NF, follow this:
+
+1. Make sure it is in 2NF
+          ↓
+2. Find the primary key
+          ↓
+3. Find all dependencies
+          ↓
+4. Look for:
+   Key → Non-key → Non-key
+          ↓
+5. Find the Non-key → Non-key dependency
+          ↓
+6. Move those columns into a new table
+          ↓
+7. Keep the determining column as a Foreign Key
+   in the original table
+
+Very important: what do you move?
+
+Suppose you find:
+
+A → B
+
+and A is a non-key column.
+
+Then create:
+
+NewTable
+
+| A | B |
+|---|---|
+
+A ← Primary Key
+B
+
+And leave A in the original table as a foreign key.
+
+For example
+
+If you find:
+
+EmployeeID → ManagerID
+ManagerID → ManagerName
+
+You create:
+
+Employee
+
+| EmployeeID | EmployeeName | ManagerID |
+|------------|--------------|-----------|
+|            |              |           |
+
+EmployeeID = Primary Key
+ManagerID = Foreign Key
+
+and:
+
+Manager
+
+| ManagerID | ManagerName |
+|-----------|-------------|
+|           |             |
+
+ManagerID = Primary Key
+
+That's the actual conversion process.
+
+Super-short memory trick
+
+2NF:
+
+Remove things that depend on part of the key.
+
+3NF:
+
+Remove things that depend on another non-key column.
+
+So when converting to 3NF, you're basically taking the non-key → non-key dependency and giving it its own table.
+
+BCNF — Boyce-Codd Normal Form
+BCNF is a stronger version of 3NF. The main idea is about who determines whom.
+
+In points
+BCNF stands for Boyce-Codd Normal Form.
+
+A table must generally be in 3NF before checking BCNF.
+
+The main rule is:
+
+For every functional dependency A → B, A must be a superkey.
+
+What is a superkey?
+
+A superkey is a column or combination of columns that can uniquely identify a row.
+
+For example:
+
+StudentID → StudentName
+
+
+If StudentID uniquely identifies a student, then StudentID is a superkey.
+
+ChatGPT said:
+Yes. These two terms sound complicated, but the idea is actually simple.
+
+1. What is a determinant?
+A determinant is a column or group of columns that determines the value of another column.
+
+
+
+BCNF asks:
+
+"Is the left side of every dependency a superkey?"
+
+Yes → okay.
+No → ❌ table is not in BCNF.
+Simple example
+Consider:
+
+Student	Course	Teacher
+John	MySQL	David
+Sarah	MySQL	David
+John	Java	Robert
+Mike	Java	Robert
+
+Suppose:
+
+A student can take many courses.
+Each course has one teacher.
+Each teacher teaches only one course.
+So we have:
+
+(Student, Course) → Teacher
+Teacher → Course
+
+The primary key is:
+
+(Student, Course)
+
+Now look at:
+
+Teacher → Course
+
+Ask:
+
+Is Teacher a superkey?
+
+No.
+
+Teacher doesn't uniquely identify a row because David teaches MySQL to multiple students.
+
+Therefore:
+
+Teacher → Course
+
+violates BCNF.
+
+❌ The table is not in BCNF.
+
+How do we fix it?
+Split the table.
+
+StudentCourse
+Student	Teacher
+John	David
+Sarah	David
+John	Robert
+Mike	Robert
+
+TeacherCourse
+Teacher	Course
+David	MySQL
+Robert	Java
+
+Now:
+
+Teacher → Course
+
+is inside the TeacherCourse table, where Teacher is the primary key.
+
+So the dependency is valid.
+
+BCNF vs 3NF
+This is important.
+
+3NF says:
+A dependency can sometimes be allowed even when the determinant isn't a superkey, under a specific condition involving a prime attribute.
+
+BCNF says:
+No exceptions. The determinant must always be a superkey.
+
+That's why:
+
+BCNF is stricter than 3NF.
+
+So you can have a table that is:
+
+3NF ✅
+BCNF ❌
+
+But if a table is in BCNF, it satisfies 3NF as well.
+
+Easy way to remember
+Think of BCNF as asking:
+
+"Whenever someone determines something, is that someone capable of uniquely identifying a row?"
+
+If:
+
+A → B
+
+then check:
+
+Is A a superkey?
+
+Yes → okay.
+
+No → not BCNF.
+
+Normal forms so far
+
+1. What is a determinant?
+
+A determinant is a column or group of columns that determines the value of another column.
+
+In simple words:
+
+If I know A, and that lets me know B, then A is the determinant.
+
+We write it like this:
+
+A → B
+
+Read it as:
+
+A determines B
+
+Example
+
+Suppose we have:
+
+| StudentID | StudentName |
+|-----------|-------------|
+| 101       | John        |
+| 102       | Sarah       |
+| 103       | Michael     |
+
+Here:
+
+StudentID → StudentName
+
+If I know:
+
+StudentID = 101
+
+I can determine:
+
+StudentName = John
+
+Therefore:
+
+StudentID
+
+is the determinant.
+
+Another example
+
+CourseID → CourseName
+
+If:
+
+CourseID = C1
+
+then:
+
+CourseName = MySQL
+
+So:
+
+CourseID
+
+is the determinant.
+
+2. What is a candidate key?
+
+A candidate key is a column, or combination of columns, that can uniquely identify every row in a table.
+
+The important word is:
+
+UNIQUE
+
+For example:
+
+| StudentID | StudentName |
+|-----------|-------------|
+| 101       | John        |
+| 102       | Sarah       |
+| 103       | Michael     |
+
+StudentID is unique:
+
+101
+102
+103
+
+So StudentID can uniquely identify each student.
+
+Therefore:
+
+StudentID = Candidate Key
+
+3. Why is it called "candidate" key?
+
+Imagine you have multiple columns that could uniquely identify a row.
+
+For example:
+
+| StudentID | Email             | StudentName |
+|-----------|-------------------|-------------|
+| 101       | john@gmail.com    | John        |
+| 102       | sarah@gmail.com   | Sarah       |
+| 103       | michael@gmail.com | Michael     |
+
+Both:
+
+StudentID
+
+and:
+
+Email
+
+are unique.
+
+So both can be candidates for being the primary key.
+
+Candidate keys:
+
+StudentID
+Email
+
+You then choose one of them as the primary key.
+
+For example:
+
+PRIMARY KEY = StudentID
+
+The other candidate key (Email) can still be a unique key.
+
+4. Now connect this to BCNF
+
+BCNF says:
+
+Every determinant must be a candidate key.
+
+Let's break that sentence apart.
+
+Determinant
+
+Something that determines another column:
+
+A → B
+
+Candidate key
+
+Something that can uniquely identify a row.
+
+Therefore BCNF is basically saying:
+
+If a column determines another column, that determining column should be capable of uniquely identifying a row.
+
+Simple example
+
+Suppose:
+
+| StudentID | StudentName |
+|-----------|-------------|
+| 101       | John        |
+| 102       | Sarah       |
+| 103       | Michael     |
+
+We have:
+
+StudentID → StudentName
+
+StudentID is:
+
+A determinant ✅
+A candidate key ✅
+
+So this dependency is fine under the BCNF rule.
+
+Super simple memory trick
+
+Think of it this way:
+
+Determinant
+
+"Who determines whom?"
+
+StudentID → StudentName
+    ↑
+    |
+determinant
+
+Candidate key
+
+"Who can uniquely identify a row?"
+
+StudentID
+    ↓
+101 → John
+102 → Sarah
+103 → Michael
+
+So:
+
+Determinant = the thing on the LEFT side of →.
+
+Candidate key = something that can uniquely identify a row.
+
+And:
+
+BCNF = Every determinant should be a candidate key.
+
+
+employees
+---------------------------------------------------------------
+emp_id | emp_name | salary | department | hire_date
+---------------------------------------------------------------
+101    | John     | 45000  | IT         | 2020-05-15
+102    | Sarah    | 52000  | HR         | 2019-08-20
+103    | Michael  | 68000  | IT         | 2018-03-10
+104    | Emma     | 39000  | Sales      | 2021-11-25
+105    | David    | 75000  | IT         | 2017-01-05
+String Functions
+1. Display all employee names in uppercase
+SELECT UPPER(emp_name) AS upper_name
+FROM employees;
+
+2. Display all employee names in lowercase
+SELECT LOWER(emp_name) AS lower_name
+FROM employees;
+
+3. Name along with number of characters
+SELECT emp_name, LENGTH(emp_name) AS name_length
+FROM employees;
+
+4. First 3 characters of each name
+SELECT emp_name, LEFT(emp_name, 3) AS first_3_chars
+FROM employees;
+
+5. Last 2 characters of each name
+SELECT emp_name, RIGHT(emp_name, 2) AS last_2_chars
+FROM employees;
+
+6. Remove leading and trailing spaces
+SELECT TRIM(emp_name) AS trimmed_name
+FROM employees;
+
+7. Position of letter 'a' in each name
+SELECT emp_name, INSTR(LOWER(emp_name), 'a') AS position_of_a
+FROM employees;
+
+I used LOWER() so that both a and A are detected.
+
+8. Add "Employee: " before each name
+SELECT CONCAT('Employee: ', emp_name) AS employee_label
+FROM employees;
+
+Numeric Functions
+9. Salary rounded to nearest thousand
+SELECT emp_name, ROUND(salary, -3) AS rounded_salary
+FROM employees;
+
+Example:
+
+45000 → 45000
+52000 → 52000
+68000 → 68000
+
+10. Absolute difference between salary and 50000
+SELECT emp_name, ABS(salary - 50000) AS difference
+FROM employees;
+
+For John:
+
+ABS(45000 - 50000)
+= ABS(-5000)
+= 5000
+
+11. Remainder when salary is divided by 10000
+SELECT emp_name, MOD(salary, 10000) AS remainder
+FROM employees;
+
+For Sarah:
+
+52000 MOD 10000 = 2000
+
+12. Salary rounded to nearest hundred
+SELECT emp_name, ROUND(salary, -2) AS rounded_salary
+FROM employees;
+
+13. Square root of salary
+SELECT emp_name, SQRT(salary) AS salary_sqrt
+FROM employees;
+
+Date Functions
+14. Display hire year
+SELECT emp_name, YEAR(hire_date) AS hire_year
+FROM employees;
+
+15. Display hire month
+SELECT emp_name, MONTH(hire_date) AS hire_month
+FROM employees;
+
+16. Display hire day
+SELECT emp_name, DAY(hire_date) AS hire_day
+FROM employees;
+
+17. Display hire date as DD-MM-YYYY
+SELECT emp_name,
+       DATE_FORMAT(hire_date, '%d-%m-%Y') AS formatted_date
+FROM employees;
+
+For John:
+
+2020-05-15 → 15-05-2020
+
+18. Number of days between today and hire date
+SELECT emp_name,
+       DATEDIFF(CURDATE(), hire_date) AS days_since_hire
+FROM employees;
+
+CURDATE() gives today's date, and DATEDIFF() calculates the difference in days.
+
+Conditional / NULL Functions
+19. High Salary or Normal Salary
+SELECT emp_name,
+       CASE
+           WHEN salary > 60000 THEN 'High Salary'
+           ELSE 'Normal Salary'
+       END AS salary_status
+FROM employees;
+
+For example:
+
+John    → Normal Salary
+Sarah   → Normal Salary
+Michael → High Salary
+Emma    → Normal Salary
+David   → High Salary
+
+20. Department, but NULL becomes "Not Assigned"
+SELECT emp_name,
+       COALESCE(department, 'Not Assigned') AS department
+FROM employees;
+
+If department is:
+
+IT
+
+→ IT
+
+If department is:
+
+NULL
+
+→ Not Assigned
+
+
