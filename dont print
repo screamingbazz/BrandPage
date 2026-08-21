@@ -1,0 +1,367 @@
+don't print
+
+ 
+Example: Student Course Enrollment
+Imagine we have this table:
+StudentID	CourseID	StudentName	CourseName	Teacher	Marks
+101	C1	John	MySQL	David	85
+101	C2	John	Java	Robert	90
+102	C1	Sarah	MySQL	David	78
+102	C3	Sarah	Python	Emily	88
+Suppose the primary key is:
+(StudentID, CourseID)
+Why?
+Because StudentID alone isn't enough:
+John can take MySQL and Java.
+And CourseID alone isn't enough:
+MySQL can be taken by John and Sarah.
+But together:
+StudentID + CourseID
+uniquely identify one enrollment.
+Step 1: Look at every column
+Our complete primary key is:
+(StudentID, CourseID)
+Now ask:
+"What does each column depend on?"
+StudentName
+If I tell you:
+StudentID = 101
+you immediately know:
+StudentName = John
+You don't need CourseID.
+So:
+StudentID → StudentName
+🚨 Problem!
+StudentName depends on only part of the primary key.
+That's called partial dependency.
+CourseName
+Same thing.
+If:
+CourseID = C1
+you know:
+CourseName = MySQL
+You don't need StudentID.
+So:
+CourseID → CourseName
+🚨 Another partial dependency.
+Teacher
+Same:
+CourseID → Teacher
+🚨 Partial dependency.
+Marks
+Now look at Marks.
+Can I know the marks using only StudentID?
+No.
+John has:
+MySQL → 85
+Java → 90
+So I need both:
+StudentID + CourseID → Marks
+✅ This is correct.
+So what's wrong with the original table?
+We have:
+(StudentID, CourseID) = Primary Key
+But:
+StudentID → StudentName
+CourseID → CourseName
+CourseID → Teacher
+These columns don't need the entire primary key.
+Therefore:
+The table is NOT in 2NF.
+Now how do we fix it?
+Here's the most important rule:
+If something depends only on StudentID, put it in a Student table.
+If something depends only on CourseID, put it in a Course table.
+If something depends on StudentID + CourseID, keep it in the Enrollment table.
+Let's do that.
+Table 1: Student
+We know:
+StudentID → StudentName
+So create:
+StudentID	StudentName
+101	John
+102	Sarah
+Primary key:
+StudentID
+Table 2: Course
+We know:
+CourseID → CourseName, Teacher
+So create:
+CourseID	CourseName	Teacher
+C1	MySQL	David
+C2	Java	Robert
+C3	Python	Emily
+Primary key:
+CourseID
+Table 3: Enrollment
+Now keep the information that requires both StudentID and CourseID.
+That's Marks.
+StudentID	CourseID	Marks
+101	C1	85
+101	C2	90
+102	C1	78
+102	C3	88
+Primary key:
+(StudentID, CourseID)
+Look at what happened
+Originally:
+StudentID | CourseID | StudentName | CourseName | Teacher | Marks
+We split it into:
+STUDENT
+-------------------------
+StudentID | StudentName
+COURSE
+-------------------------------
+CourseID | CourseName | Teacher
+ENROLLMENT
+------------------------------
+StudentID | CourseID | Marks
+Now everything is in the correct place.
+The easiest way to think about 2NF
+Imagine your primary key is:
+(A + B)
+For every other column, ask:
+Does it depend on A only?
+A → X
+❌ Move X to another table.
+Does it depend on B only?
+B → X
+❌ Move X to another table.
+Does it depend on A + B?
+(A + B) → X
+✅ Keep X in the current table.
+That's 2NF.
+A simple real-life analogy
+Think of:
+StudentID + CourseID
+as a combination lock with two numbers.
+Some information needs only the first number:
+StudentID → StudentName
+Some information needs only the second number:
+CourseID → CourseName
+But some information needs the whole combination:
+StudentID + CourseID → Marks
+2NF says:
+Don't keep information in a table if it only needs half of the key.
+Put it where it belongs.
+Exam shortcut
+When you see a 2NF question, do this:
+Find the primary key.
+Check whether it has multiple columns.
+If it has multiple columns, check every non-key column.
+Ask: "Does this column depend on the whole key or only part of it?"
+If it depends on only part → partial dependency → move it to another table.
+If it depends on the whole key → keep it.
+That's the entire thought process for converting 1NF → 2NF.
+
+  don't print
+
+
+Start with this table
+
+Suppose we have:
+
+| StudentID | CourseID | StudentName | CourseName | Marks |
+|-----------|----------|-------------|------------|-------|
+| 101       | C1       | John        | MySQL      | 85    |
+| 101       | C2       | John        | Java       | 90    |
+| 102       | C1       | Sarah       | MySQL      | 78    |
+
+Primary key:
+
+(StudentID, CourseID)
+
+We want to convert this table into 2NF.
+
+Step 1: Find out what each column depends on
+
+Look at StudentName.
+
+Ask:
+
+"Do I need StudentID AND CourseID to know StudentName?"
+
+No.
+
+If StudentID = 101, I already know the student is John.
+
+So:
+
+StudentID → StudentName
+
+This means StudentName depends only on part of the primary key.
+
+So we need to remove StudentName from this table.
+
+Now look at CourseName.
+
+Ask:
+
+"Do I need StudentID AND CourseID to know CourseName?"
+
+No.
+
+If CourseID = C1, I already know the course is MySQL.
+
+So:
+
+CourseID → CourseName
+
+Again, it depends on only part of the primary key.
+
+So we remove CourseName from this table too.
+
+Step 2: Create a Student table
+
+We removed:
+
+StudentName
+
+because it belongs to StudentID.
+
+So create:
+
+| StudentID | StudentName |
+|-----------|-------------|
+| 101       | John        |
+| 102       | Sarah       |
+
+The primary key is:
+
+StudentID
+
+Step 3: Create a Course table
+
+We removed:
+
+CourseName
+
+because it belongs to CourseID.
+
+So create:
+
+| CourseID | CourseName |
+|----------|------------|
+| C1       | MySQL      |
+| C2       | Java       |
+
+The primary key is:
+
+CourseID
+
+Step 4: Keep the things that depend on BOTH
+
+Now look at Marks.
+
+Ask:
+
+"Can I know John's marks using only StudentID?"
+
+No.
+
+John has:
+
+MySQL → 85
+Java → 90
+
+So we need:
+
+StudentID + CourseID → Marks
+
+Therefore, Marks stays in the original table.
+
+The remaining table becomes:
+
+| StudentID | CourseID | Marks |
+|-----------|----------|-------|
+| 101       | C1       | 85    |
+| 101       | C2       | 90    |
+| 102       | C1       | 78    |
+
+Primary key:
+
+(StudentID, CourseID)
+
+So the conversion is basically this
+
+BEFORE
+
+One big table:
+
+| StudentID | CourseID | StudentName | CourseName | Marks |
+|-----------|----------|-------------|------------|-------|
+| 101       | C1       | John        | MySQL      | 85    |
+| 101       | C2       | John        | Java       | 90    |
+| 102       | C1       | Sarah       | MySQL      | 78    |
+
+We check each column.
+
+StudentID → StudentName       ❌ depends on only StudentID
+
+CourseID → CourseName         ❌ depends on only CourseID
+
+StudentID + CourseID → Marks  ✅ depends on both
+
+AFTER
+
+We separate them:
+
+STUDENT
+
+| StudentID | StudentName |
+|-----------|-------------|
+| 101       | John        |
+| 102       | Sarah       |
+
+COURSE
+
+| CourseID | CourseName |
+|----------|------------|
+| C1       | MySQL      |
+| C2       | Java       |
+
+ENROLLMENT
+
+| StudentID | CourseID | Marks |
+|-----------|----------|-------|
+| 101       | C1       | 85    |
+| 101       | C2       | 90    |
+| 102       | C1       | 78    |
+
+That's the conversion to 2NF.
+
+The trick you should remember
+
+When converting to 2NF, don't randomly split the table.
+
+You do this:
+
+Find the composite primary key → find columns that depend on only one part → move those columns to their own table → leave columns that depend on the whole key.
+
+For example:
+
+Primary Key = (A, B)
+
+If you find:
+
+A → X
+
+move X with A.
+
+If you find:
+
+B → Y
+
+move Y with B.
+
+If you find:
+
+(A, B) → Z
+
+keep Z in the original table.
+
+That's exactly what you "do" to convert a table to 2NF.
+
+
+
+  
